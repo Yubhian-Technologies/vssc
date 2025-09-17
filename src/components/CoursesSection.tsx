@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
-// Images
+
 import FindingNemo1 from "@/assets/FindingNemo1.jpg";
 import FindingNemo2 from "@/assets/FindingNemo2.jpg";
 import FindingNemo3 from "@/assets/FindingNemo3.jpg";
@@ -77,7 +77,7 @@ const CoursesSection = () => {
     "HIDDEN FIGURES": "bg-green-400 text-black",
   };
 
-  // Each category has 6 courses
+ 
   const courses = {
     "FINDING NEMO": [
       { focus: "Ice-breaker activities for Interpersonal Exchange", desc: "Discover Networks and Opportunities", image: FindingNemo1 },
@@ -137,26 +137,27 @@ const CoursesSection = () => {
             Explore Our Courses by Category
           </h2>
 
-          {/* Category Tabs */}
-          <div className="flex flex-wrap justify-center gap-4 mb-12">
-            {categories.map((category) => (
-              <Button
-                key={category}
-                variant="ghost"
-                className={`px-6 py-2 rounded-full transition-colors ${
-                  activeCategory === category
-                    ? activeColors[category] // Solid colors for active
-                    : `bg-muted text-muted-foreground ${categoryColors[category]}`
-                }`}
-                onClick={() => setActiveCategory(category)}
-              >
-                {category}
-              </Button>
-            ))}
-          </div>
+         
+          <div className="flex flex-wrap justify-center gap-2 sm:gap-3 md:gap-4 mb-12">
+  {categories.map((category) => (
+    <Button
+      key={category}
+      variant="ghost"
+      className={`px-2 sm:px-4 md:px-6 py-1 sm:py-2 rounded-full transition-colors text-xs sm:text-sm md:text-base ${
+        activeCategory === category
+          ? activeColors[category] 
+          : `bg-muted text-muted-foreground ${categoryColors[category]}`
+      }`}
+      onClick={() => setActiveCategory(category)}
+    >
+      {category}
+    </Button>
+  ))}
+</div>
+
         </div>
 
-        {/* Continuous Scrolling Courses */}
+        
         <div className="overflow-hidden relative">
           <div className="flex animate-scroll gap-4">
             {[...courses[activeCategory], ...courses[activeCategory]].map(
@@ -183,7 +184,7 @@ const CoursesSection = () => {
         </div>
       </div>
 
-      {/* Add animation CSS */}
+    
       <style>
         {`
           @keyframes scroll {

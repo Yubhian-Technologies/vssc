@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Star } from "lucide-react";
@@ -7,31 +7,53 @@ import instructorMan from "@/assets/instructor-man.jpg";
 
 const TestimonialsSection = () => {
   const testimonials = [
-    { id: 1, name: "Antoni Alex", role: "10th Batch Students", rating: 5, content: "Far far away, behind the mountains, far from the Conson antia, there live the blind texts. Separated they marks word for a live new.", image: instructorMan },
-    { id: 2, name: "Revert Alexan", role: "12th Batch Students", rating: 5, content: "Far far away, behind the mountains, far from the Conson antia, there live the blind texts. Separated they marks word for a live new.", image: instructorWoman },
-    { id: 3, name: "Anthonia Alex", role: "10th Batch Students", rating: 4, content: "Far far away, behind the mountains, far from the Conson antia, there live the blind texts. Separated they marks word for a live new.", image: instructorMan },
-    { id: 4, name: "Emily Clark", role: "11th Batch Students", rating: 5, content: "Amazing experience! Learned a lot from instructors and peers alike.", image: instructorWoman },
-    { id: 5, name: "Michael Scott", role: "12th Batch Students", rating: 4, content: "Great teaching style and practical knowledge, highly recommend.", image: instructorMan },
-    { id: 6, name: "Sophia Turner", role: "10th Batch Students", rating: 5, content: "The sessions are engaging and informative. Loved every bit!", image: instructorWoman }
+    { id: 1, name: "Antoni Alex", role: "10th Batch Student", rating: 5, content: "Far far away, behind the mountains...", image: instructorMan },
+    { id: 2, name: "Revert Alexan", role: "12th Batch Student", rating: 5, content: "Far far away, behind the mountains...", image: instructorWoman },
+    { id: 3, name: "Anthonia Alex", role: "10th Batch Student", rating: 4, content: "Far far away, behind the mountains...", image: instructorMan },
+    { id: 4, name: "Emily Clark", role: "11th Batch Student", rating: 5, content: "Amazing experience! Learned a lot...", image: instructorWoman },
+    { id: 5, name: "Michael Scott", role: "12th Batch Student", rating: 4, content: "Great teaching style and practical knowledge...", image: instructorMan },
+    { id: 6, name: "Sophia Turner", role: "10th Batch Student", rating: 5, content: "The sessions are engaging and informative...", image: instructorWoman }
   ];
 
   const [currentIndex, setCurrentIndex] = useState(0);
-  const visibleCount = 3;
+  const [visibleCount, setVisibleCount] = useState(3);
+
+  
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 640) setVisibleCount(1);
+      else if (window.innerWidth < 1024) setVisibleCount(2); 
+      else setVisibleCount(3); 
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      handleNext();
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [currentIndex, visibleCount]);
 
   const handlePrev = () => {
-    setCurrentIndex((prev) => Math.max(prev - 1, 0)); // move one testimonial back
+    setCurrentIndex((prev) =>
+      prev === 0 ? testimonials.length - visibleCount : prev - 1
+    );
   };
 
   const handleNext = () => {
-    setCurrentIndex((prev) => Math.min(prev + 1, testimonials.length - visibleCount)); // move one testimonial forward
+    setCurrentIndex((prev) =>
+      prev >= testimonials.length - visibleCount ? 0 : prev + 1
+    );
   };
 
-  const visibleTestimonials = testimonials.slice(currentIndex, currentIndex + visibleCount);
-
   return (
-    <section className="py-20 bg-background relative">
+    <section className="py-20 bg-background relative overflow-hidden">
       <div className="container mx-auto px-4">
-        {/* Header */}
+       
         <div className="text-center mb-16">
           <span className="text-primary font-semibold text-sm tracking-wide uppercase">
             TESTIMONIALS
@@ -42,42 +64,67 @@ const TestimonialsSection = () => {
           </h2>
         </div>
 
-        {/* Testimonials Grid */}
-        <div className="grid md:grid-cols-3 gap-8 mb-12">
-          {visibleTestimonials.map((testimonial) => (
-            <Card key={testimonial.id} className="bg-card shadow-card hover:shadow-hover transition-all duration-300">
-              <CardContent className="p-8 space-y-6">
-                <div className="flex">
-                  {[...Array(5)].map((_, i) => (
-                    <Star 
-                      key={i} 
-                      className={`w-5 h-5 ${i < testimonial.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
-                    />
-                  ))}
-                </div>
-                <p className="text-muted-foreground italic leading-relaxed">
-                  {testimonial.content}
-                </p>
-                <div className="flex items-center gap-4 pt-4 border-t border-border">
-                  <img src={testimonial.image} alt={testimonial.name} className="w-12 h-12 rounded-full object-cover" />
-                  <div>
-                    <h4 className="font-semibold text-foreground">{testimonial.name}</h4>
-                    <p className="text-sm text-muted-foreground">{testimonial.role}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+        
+        <div className="relative overflow-hidden">
+          <div
+            className="flex transition-transform duration-700 ease-in-out"
+            style={{
+              transform: `translateX(-${(currentIndex * 100) / visibleCount}%)`,
+              width: `${(testimonials.length * 100) / visibleCount}%`,
+            }}
+          >
+            {testimonials.map((testimonial) => (
+              <div
+                key={testimonial.id}
+                className={`px-4`}
+                style={{ flex: `0 0 ${100 / visibleCount}%` }}
+              >
+                <Card className="bg-card shadow-card hover:shadow-hover transition-all duration-300 h-full">
+                  <CardContent className="p-6 space-y-4">
+                    <div className="flex">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`w-5 h-5 ${
+                            i < testimonial.rating
+                              ? "fill-yellow-400 text-yellow-400"
+                              : "text-gray-300"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <p className="text-muted-foreground italic leading-relaxed text-sm">
+                      {testimonial.content}
+                    </p>
+                    <div className="flex items-center gap-4 pt-4 border-t border-border">
+                      <img
+                        src={testimonial.image}
+                        alt={testimonial.name}
+                        className="w-12 h-12 rounded-full object-cover"
+                      />
+                      <div>
+                        <h4 className="font-semibold text-foreground">
+                          {testimonial.name}
+                        </h4>
+                        <p className="text-sm text-muted-foreground">
+                          {testimonial.role}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* Navigation */}
-        <div className="flex justify-center gap-4">
+       
+        <div className="flex justify-center gap-4 mt-8">
           <Button
             variant="outline"
             size="icon"
             className="w-12 h-12 rounded-full border-primary/20 hover:bg-primary hover:text-primary-foreground"
             onClick={handlePrev}
-            disabled={currentIndex === 0}
           >
             <ChevronLeft className="w-5 h-5" />
           </Button>
@@ -86,7 +133,6 @@ const TestimonialsSection = () => {
             size="icon"
             className="w-12 h-12 rounded-full border-primary/20 hover:bg-primary hover:text-primary-foreground"
             onClick={handleNext}
-            disabled={currentIndex >= testimonials.length - visibleCount}
           >
             <ChevronRight className="w-5 h-5" />
           </Button>

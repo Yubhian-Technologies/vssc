@@ -1,86 +1,61 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, User } from "lucide-react";
-import VSSCLogo from "@/assets/VSSC LOGO[1].png"
+import { User, Menu, X } from "lucide-react";
+import VSSCLogo from "@/assets/VSSC LOGO[1].png";
 
 const Header = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const handleLoginToggle = () => {
-    setIsLoggedIn(!isLoggedIn);
-  };
+  const handleLoginToggle = () => setIsLoggedIn(!isLoggedIn);
+  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
   return (
     <header className="w-full relative bg-background border-b border-border">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between relative z-10">
         {/* Logo */}
-        <div className="flex items-center">
-  <img
-    src={VSSCLogo} // your logo import
-    alt="Educve Logo"
-    className="w-16 h-16 object-contain"
-  />
-</div>
+        <div className="flex items-center hover:scale-105 transition-transform">
+          <img
+            src={VSSCLogo}
+            alt="VSSC Logo"
+            className="w-12 h-12 sm:w-16 sm:h-16 object-contain"
+          />
+        </div>
 
-
-
-        {/* Navigation Menu */}
+        
         <nav className="hidden lg:flex items-center gap-8">
-          <a
-            href="#"
-            className="flex items-center gap-1 text-foreground hover:text-primary transition-colors relative"
-          >
-            Home 
-          </a>
-          <a
-            href="#"
-            className="flex items-center gap-1 text-foreground hover:text-primary transition-colors relative"
-          >
-            About 
-          </a>
-          <a
-            href="#"
-            className="text-foreground hover:text-primary transition-colors relative"
-          >
-            Services
-          </a>
-          <a
-            href="#"
-            className="flex items-center gap-1 text-foreground hover:text-primary transition-colors relative"
-          >
-            Tour 
-          </a>
-          
-          <a
-            href="#"
-            className="text-foreground hover:text-primary transition-colors relative"
-          >
-            Help
-          </a>
+          {["Home", "About", "Services", "Tour", "Help"].map((link) => (
+            <a
+              key={link}
+              href="#"
+              className="text-foreground hover:text-primary transition-colors"
+            >
+              {link}
+            </a>
+          ))}
         </nav>
 
-        {/* Action Buttons */}
-        <div className="flex items-center gap-4 relative">
-          {!isLoggedIn && (
+        
+        <div className="hidden lg:flex items-center gap-4 relative z-20">
+          {!isLoggedIn ? (
             <Button
               variant="outline"
               size="sm"
-              className="px-4 py-2 font-semibold rounded-full border border-primary text-black hover:bg-primary hover:text-white border-white  transition-all shadow-sm"
+              className="px-4 py-2 font-semibold rounded-full border border-primary text-black hover:bg-primary hover:text-white transition-all shadow-sm"
               onClick={handleLoginToggle}
             >
               Login/Register
             </Button>
-          )}
-
-          {isLoggedIn && (
+          ) : (
             <>
               <Button
                 size="sm"
-                className="px-5 py-2 bg-white text-black  border border-white text-white font-semibold rounded-full hover:bg-primary text-black transition-all"
+                className="px-5 py-2 bg-white text-black border border-white font-semibold rounded-full hover:bg-primary hover:text-white transition-all"
               >
                 Apply Now →
               </Button>
 
+             
               <div className="relative group">
                 <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center cursor-pointer shadow hover:shadow-md transition-shadow">
                   <User className="w-5 h-5 text-foreground" />
@@ -103,10 +78,66 @@ const Header = () => {
             </>
           )}
         </div>
+
+        <button
+          className="lg:hidden flex items-center justify-center w-10 h-10 rounded-md border border-border text-foreground"
+          onClick={toggleMenu}
+        >
+          {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
       </div>
 
-      {/* Blue strip with left slant */}
-      <div className="absolute top-0 right-0 h-full w-64 bg-primary -skew-x-12 origin-top-right"></div>
+     
+      {isMenuOpen && (
+        <div className="lg:hidden absolute top-full left-0 w-full bg-background border-t border-border shadow-md z-20">
+          <nav className="flex flex-col items-start px-6 py-4 gap-4">
+            {["Home", "About", "Services", "Tour", "Help"].map((link) => (
+              <a
+                key={link}
+                href="#"
+                className="text-foreground hover:text-primary transition-colors"
+              >
+                {link}
+              </a>
+            ))}
+
+            {!isLoggedIn ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full px-4 py-2 font-semibold rounded-full border border-primary text-black hover:bg-primary hover:text-white transition-all"
+                onClick={handleLoginToggle}
+              >
+                Login/Register
+              </Button>
+            ) : (
+              <>
+                <Button
+                  size="sm"
+                  className="w-full px-5 py-2 bg-primary text-white font-semibold rounded-full hover:bg-primary/90 transition-all"
+                >
+                  Apply Now →
+                </Button>
+                <a
+                  href="#"
+                  className="text-foreground hover:text-primary transition-colors"
+                >
+                  Your Reservations
+                </a>
+                <a
+                  href="#"
+                  className="text-foreground hover:text-primary transition-colors"
+                >
+                  Account
+                </a>
+              </>
+            )}
+          </nav>
+        </div>
+      )}
+
+      
+      <div className="absolute top-0 right-0 h-full w-1/4 bg-primary z-0 [clip-path:polygon(20%_0,100%_0,100%_100%,0%_100%)] hover:opacity-90 transition-opacity"></div>
     </header>
   );
 };

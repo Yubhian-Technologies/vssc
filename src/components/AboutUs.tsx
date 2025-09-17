@@ -4,10 +4,16 @@ import Instructorman from "@/assets/instructor-man.jpg";
 
 const AboutUs = () => {
   return (
+    
     <section className="py-16 bg-white">
+       <div className="text-center mb-12">
+        <span className="text-primary font-semibold uppercase text-2xl mb-2 block">
+          About Us
+        </span>
+      </div>
   <div className="container mx-auto px-6 lg:px-20 flex flex-col lg:flex-row items-center gap-12">
     
-    {/* Left Column: Image */}
+    
     <div className="lg:w-1/2 w-full relative" style={{ minHeight: "300px" }}>
   
   <img
@@ -29,12 +35,10 @@ const AboutUs = () => {
   />
 </div>
 
-    {/* Right Column: Text Content */}
+    
     <div className="lg:w-1/2 w-full flex flex-col justify-center">
-  {/* About Us Label */}
-  <span className="text-primary font-semibold uppercase text-2xl mb-2 ">
-    About Us
-  </span>
+  
+ 
 
   <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
     We are Always the Best Course <br /> For Your Learning
@@ -45,7 +49,7 @@ const AboutUs = () => {
     Separated they mark grove right at the coast of the Semantics, a large language ocean.
   </p>
 
-  {/* Features */}
+  
   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
     <div className="flex items-start gap-4">
     <div className="text-primary text-3xl flex items-center">
@@ -61,10 +65,10 @@ const AboutUs = () => {
     </div>
   </div>
 
-  {/* Feature 2 */}
+  
   <div className="flex items-start gap-4">
     <div className="text-primary text-3xl flex items-center">
-      {/* Event Icon */}
+   
       <svg xmlns="http://www.w3.org/2000/svg" className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-6h6v6m2 0H7a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v8a2 2 0 01-2 2z" />
       </svg>
