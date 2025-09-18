@@ -17,7 +17,7 @@ const categories = ["Education", "Academic", "Teaching", "Technology", "Lifestyl
 const BlogPage = () => {
   return (
     <section className="py-12 bg-background">
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-20">
         
         <div className="mb-8 text-center">
           <span className="text-primary font-semibold text-sm uppercase">BLOGS & ARTICLES</span>

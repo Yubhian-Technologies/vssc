@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
-
+// === Images ===
 import FindingNemo1 from "@/assets/FindingNemo1.jpg";
 import FindingNemo2 from "@/assets/FindingNemo2.jpg";
 import FindingNemo3 from "@/assets/FindingNemo3.jpg";
@@ -57,7 +57,6 @@ const CoursesSection = () => {
     "HIDDEN FIGURES",
   ];
 
-  
   const categoryColors: Record<string, string> = {
     "FINDING NEMO": "hover:bg-pink-600 hover:text-white",
     "THE INCREDIBLES": "hover:bg-green-700 hover:text-white",
@@ -67,7 +66,6 @@ const CoursesSection = () => {
     "HIDDEN FIGURES": "hover:bg-green-400 hover:text-black",
   };
 
-  
   const activeColors: Record<string, string> = {
     "FINDING NEMO": "bg-pink-600 text-white",
     "THE INCREDIBLES": "bg-green-700 text-white",
@@ -77,7 +75,6 @@ const CoursesSection = () => {
     "HIDDEN FIGURES": "bg-green-400 text-black",
   };
 
- 
   const courses = {
     "FINDING NEMO": [
       { focus: "Ice-breaker activities for Interpersonal Exchange", desc: "Discover Networks and Opportunities", image: FindingNemo1 },
@@ -131,33 +128,32 @@ const CoursesSection = () => {
 
   return (
     <section className="py-20 bg-background">
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-20">
         <div className="text-center mb-16">
           <h2 className="text-3xl lg:text-4xl font-bold text-foreground mt-2 mb-8">
             Explore Our Courses by Category
           </h2>
 
-         
+          {/* Category Buttons */}
           <div className="flex flex-wrap justify-center gap-2 sm:gap-3 md:gap-4 mb-12">
-  {categories.map((category) => (
-    <Button
-      key={category}
-      variant="ghost"
-      className={`px-2 sm:px-4 md:px-6 py-1 sm:py-2 rounded-full transition-colors text-xs sm:text-sm md:text-base ${
-        activeCategory === category
-          ? activeColors[category] 
-          : `bg-muted text-muted-foreground ${categoryColors[category]}`
-      }`}
-      onClick={() => setActiveCategory(category)}
-    >
-      {category}
-    </Button>
-  ))}
-</div>
-
+            {categories.map((category) => (
+              <Button
+                key={category}
+                variant="ghost"
+                className={`px-2 sm:px-4 md:px-6 py-1 sm:py-2 rounded-full transition-colors text-xs sm:text-sm md:text-base ${
+                  activeCategory === category
+                    ? activeColors[category]
+                    : `bg-muted text-muted-foreground ${categoryColors[category]}`
+                }`}
+                onClick={() => setActiveCategory(category)}
+              >
+                {category}
+              </Button>
+            ))}
+          </div>
         </div>
 
-        
+        {/* Courses Slider */}
         <div className="overflow-hidden relative">
           <div className="flex animate-scroll gap-4">
             {[...courses[activeCategory], ...courses[activeCategory]].map(
@@ -169,7 +165,7 @@ const CoursesSection = () => {
                   <img
                     src={course.image}
                     alt={course.focus}
-                    className="w-full h-40 object-cover object-center"
+                    className="w-full h-auto max-h-40 object-contain bg-white"
                   />
                   <CardContent className="p-3 space-y-2">
                     <h3 className="font-semibold text-base text-foreground">
@@ -184,7 +180,7 @@ const CoursesSection = () => {
         </div>
       </div>
 
-    
+      {/* Scroll Animation */}
       <style>
         {`
           @keyframes scroll {

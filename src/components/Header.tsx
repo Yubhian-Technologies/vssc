@@ -22,26 +22,29 @@ const Header = () => {
           />
         </div>
 
-        
+        {/* Desktop Nav */}
         <nav className="hidden lg:flex items-center gap-8">
           {["Home", "About", "Services", "Tour", "Help"].map((link) => (
             <a
               key={link}
               href="#"
-              className="text-foreground hover:text-primary transition-colors"
+              className="relative text-foreground hover:text-primary transition-colors 
+                after:absolute after:left-1/2 after:bottom-[-4px] after:h-[2px] after:w-0 
+                after:bg-primary after:transition-all after:duration-300 after:origin-center 
+                hover:after:left-0 hover:after:w-full"
             >
               {link}
             </a>
           ))}
         </nav>
 
-        
+        {/* Desktop Buttons */}
         <div className="hidden lg:flex items-center gap-4 relative z-20">
           {!isLoggedIn ? (
             <Button
               variant="outline"
               size="sm"
-              className="px-4 py-2 font-semibold rounded-full border border-primary text-black hover:bg-primary hover:text-white transition-all shadow-sm"
+              className="px-4 py-2 font-semibold rounded-full border border-primary text-black hover:bg-primary hover:text-white border-white transition-all shadow-sm"
               onClick={handleLoginToggle}
             >
               Login/Register
@@ -55,7 +58,7 @@ const Header = () => {
                 Apply Now →
               </Button>
 
-             
+              {/* Profile Menu */}
               <div className="relative group">
                 <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center cursor-pointer shadow hover:shadow-md transition-shadow">
                   <User className="w-5 h-5 text-foreground" />
@@ -79,6 +82,7 @@ const Header = () => {
           )}
         </div>
 
+        {/* Mobile Menu Toggle */}
         <button
           className="lg:hidden flex items-center justify-center w-10 h-10 rounded-md border border-border text-foreground"
           onClick={toggleMenu}
@@ -87,7 +91,7 @@ const Header = () => {
         </button>
       </div>
 
-     
+      {/* Mobile Menu */}
       {isMenuOpen && (
         <div className="lg:hidden absolute top-full left-0 w-full bg-background border-t border-border shadow-md z-20">
           <nav className="flex flex-col items-start px-6 py-4 gap-4">
@@ -95,7 +99,10 @@ const Header = () => {
               <a
                 key={link}
                 href="#"
-                className="text-foreground hover:text-primary transition-colors"
+                className="relative text-foreground hover:text-primary transition-colors 
+                  after:absolute after:left-1/2 after:bottom-[-2px] after:h-[2px] after:w-0 
+                  after:bg-primary after:transition-all after:duration-300 after:origin-center 
+                  hover:after:left-0 hover:after:w-full"
               >
                 {link}
               </a>
@@ -136,7 +143,7 @@ const Header = () => {
         </div>
       )}
 
-      
+     
       <div className="absolute top-0 right-0 h-full w-1/4 bg-primary z-0 [clip-path:polygon(20%_0,100%_0,100%_100%,0%_100%)] hover:opacity-90 transition-opacity"></div>
     </header>
   );

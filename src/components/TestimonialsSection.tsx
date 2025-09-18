@@ -52,7 +52,7 @@ const TestimonialsSection = () => {
 
   return (
     <section className="py-20 bg-background relative overflow-hidden">
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-20">
        
         <div className="text-center mb-16">
           <span className="text-primary font-semibold text-sm tracking-wide uppercase">

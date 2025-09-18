@@ -6,7 +6,7 @@ const AboutUs = () => {
   return (
     
     <section className="py-16 bg-white">
-       <div className="text-center mb-12">
+       <div className="text-center mb-12 sm:px-6 md:px-8 lg:px-12 xl:px-20">
         <span className="text-primary font-semibold uppercase text-2xl mb-2 block">
           About Us
         </span>
@@ -19,7 +19,7 @@ const AboutUs = () => {
   <img
     src={heroStudent}
     alt="About Us"
-    className="w-[75%] rounded-lg shadow-lg"
+    className="w-[75%] rounded-lg shadow-lg "
   />
 
   
