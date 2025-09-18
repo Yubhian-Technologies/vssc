@@ -11,7 +11,7 @@ const Header = () => {
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
   return (
-    <header className="w-full relative bg-background border-b border-border">
+    <header data-aos="fade-down" className="w-full relative bg-background border-b border-border">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between relative z-10">
         {/* Logo */}
         <div className="flex items-center hover:scale-105 transition-transform">

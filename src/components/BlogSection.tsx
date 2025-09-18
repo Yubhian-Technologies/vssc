@@ -16,7 +16,7 @@ const categories = ["Education", "Academic", "Teaching", "Technology", "Lifestyl
 
 const BlogPage = () => {
   return (
-    <section className="py-12 bg-background">
+    <section data-aos="fade-down" className="py-12 bg-background">
       <div className="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-20">
         
         <div className="mb-8 text-center">
@@ -29,7 +29,7 @@ const BlogPage = () => {
        
         <div className="flex flex-col lg:flex-row gap-6 mb-12">
           
-          <div className="lg:w-2/3 flex flex-col gap-3 border border-gray-300 rounded-lg p-4 shadow-sm">
+          <div className="lg:w-2/3 flex flex-col gap-3 border [background-color:hsl(60,100%,95%)] border-gray-300 rounded-lg p-4 shadow-sm">
             <img
               src={blogPost.image}
               alt={blogPost.title}
@@ -45,7 +45,7 @@ const BlogPage = () => {
          
           <aside className="lg:w-1/3 flex flex-col gap-4">
            
-            <div className="border border-gray-300 rounded-lg p-3">
+            <div className="border [background-color:hsl(60,100%,95%)] border-gray-300 rounded-lg p-3">
               <h3 className="text-md font-semibold mb-2">Categories</h3>
               <ul className="flex flex-col gap-1">
                 {categories.map((cat) => (
@@ -57,7 +57,7 @@ const BlogPage = () => {
             </div>
 
           
-            <div className="border border-gray-300 rounded-lg p-3">
+            <div className="border [background-color:hsl(60,100%,95%)] border-gray-300 rounded-lg p-3">
               <h3 className="text-md font-semibold mb-2">Tags</h3>
               <div className="flex flex-wrap gap-1">
                 {blogPost.tags.map((tag) => (
@@ -75,7 +75,7 @@ const BlogPage = () => {
 
         
         <div className="text-center">
-          <button className="text-primary font-semibold border border-primary rounded px-4 py-2 hover:bg-primary/10 transition">
+          <button className="text-white bg-[#1a3791] font-semibold border border-primary rounded px-4 py-2 hover:bg-black transition">
             More Blogs →
           </button>
         </div>

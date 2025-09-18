@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
+import vssc from "@/assets/VSSC LOGO[1].png"
 
 const Footer = () => {
   const navigationLinks = [
@@ -22,7 +23,7 @@ const Footer = () => {
   ];
 
   return (
-    <footer className="bg-footer-gradient text-white text-[0.9rem]">
+    <footer data-aos="fade-down" className="bg-primary text-white text-[0.9rem]">
       <div className="container mx-auto px-6 py-12 sm:px-6 md:px-8 lg:px-12 xl:px-20">
         <div className="grid md:grid-cols-2 gap-6">
          
@@ -115,13 +116,13 @@ const Footer = () => {
         </div>
 
        
-        <div className="w-full overflow-hidden bg-primary text-white py-2 mt-10">
+        <div className="w-full overflow-hidden bg-primary text-[#809fff] py-2 mt-10">
           <div className="flex whitespace-nowrap animate-marquee">
             <p className="text-xl sm:text-2xl md:text-3xl lg:text-5xl font-bold mr-10">
-              VISHNU STUDENT SUCCESS CENTRE .
+              VISHNU STUDENT SUCCESS CENTRE 
             </p>
             <p className="text-xl sm:text-2xl md:text-3xl lg:text-5xl font-bold mr-10">
-              VISHNU STUDENT SUCCESS CENTRE .
+              VISHNU STUDENT SUCCESS CENTRE 
             </p>
           </div>
         </div>

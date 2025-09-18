@@ -5,7 +5,7 @@ import Instructorman from "@/assets/instructor-man.jpg";
 const AboutUs = () => {
   return (
     
-    <section className="py-16 bg-white">
+    <section data-aos="fade-down"  className="py-16 [background-color:hsl(36, 100%, 85%)] ">
        <div className="text-center mb-12 sm:px-6 md:px-8 lg:px-12 xl:px-20">
         <span className="text-primary font-semibold uppercase text-2xl mb-2 block">
           About Us

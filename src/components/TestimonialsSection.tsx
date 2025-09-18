@@ -1,86 +1,87 @@
-import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Star } from "lucide-react";
-import instructorWoman from "@/assets/instructor-woman.jpg";
-import instructorMan from "@/assets/instructor-man.jpg";
 
 const TestimonialsSection = () => {
   const testimonials = [
-    { id: 1, name: "Antoni Alex", role: "10th Batch Student", rating: 5, content: "Far far away, behind the mountains...", image: instructorMan },
-    { id: 2, name: "Revert Alexan", role: "12th Batch Student", rating: 5, content: "Far far away, behind the mountains...", image: instructorWoman },
-    { id: 3, name: "Anthonia Alex", role: "10th Batch Student", rating: 4, content: "Far far away, behind the mountains...", image: instructorMan },
-    { id: 4, name: "Emily Clark", role: "11th Batch Student", rating: 5, content: "Amazing experience! Learned a lot...", image: instructorWoman },
-    { id: 5, name: "Michael Scott", role: "12th Batch Student", rating: 4, content: "Great teaching style and practical knowledge...", image: instructorMan },
-    { id: 6, name: "Sophia Turner", role: "10th Batch Student", rating: 5, content: "The sessions are engaging and informative...", image: instructorWoman }
+    {
+      id: 1,
+      name: "Antoni Alex",
+      role: "10th Batch Students",
+      rating: 5,
+      content: "Far far away, behind the mountains, far from the Conson antia, there live the blind texts. Separated they marks word for a live new.",
+      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face"
+    },
+    {
+      id: 2,
+      name: "Revert Alexan",
+      role: "12th Batch Students",
+      rating: 5,
+      content: "Far far away, behind the mountains, far from the Conson antia, there live the blind texts. Separated they marks word for a live new.",
+      image: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face"
+    },
+    {
+      id: 3,
+      name: "Anthonia Alex",
+      role: "10th Batch Students",
+      rating: 4,
+      content: "Far far away, behind the mountains, far from the Conson antia, there live the blind texts. Separated they marks word for a live new.",
+      image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face"
+    },
+    {
+      id: 4,
+      name: "Maria Santos",
+      role: "11th Batch Students",
+      rating: 5,
+      content: "Excellent learning experience with amazing instructors. The course content was comprehensive and well-structured.",
+      image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face"
+    },
+    {
+      id: 5,
+      name: "John Smith",
+      role: "9th Batch Students",
+      rating: 5,
+      content: "Outstanding program that helped me develop practical skills. Highly recommend to anyone looking to advance their career.",
+      image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face"
+    },
+    {
+      id: 6,
+      name: "Sarah Johnson",
+      role: "12th Batch Students",
+      rating: 4,
+      content: "Great community of learners and supportive environment. The projects were challenging and rewarding.",
+      image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face"
+    }
   ];
 
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [visibleCount, setVisibleCount] = useState(3);
-
-  
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 640) setVisibleCount(1);
-      else if (window.innerWidth < 1024) setVisibleCount(2); 
-      else setVisibleCount(3); 
-    };
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      handleNext();
-    }, 4000);
-    return () => clearInterval(interval);
-  }, [currentIndex, visibleCount]);
-
-  const handlePrev = () => {
-    setCurrentIndex((prev) =>
-      prev === 0 ? testimonials.length - visibleCount : prev - 1
-    );
-  };
-
-  const handleNext = () => {
-    setCurrentIndex((prev) =>
-      prev >= testimonials.length - visibleCount ? 0 : prev + 1
-    );
-  };
+  // Duplicate testimonials for seamless loop
+  const duplicatedTestimonials = [...testimonials, ...testimonials];
 
   return (
-    <section className="py-20 bg-background relative overflow-hidden">
-      <div className="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-20">
-       
+    <section data-aos="fade-down" className="py-20 [background-color:hsl(60,100%,95%)] relative overflow-hidden">
+      <div className="container mx-auto px-4">
+        {/* Header */}
         <div className="text-center mb-16">
-          <span className="text-primary font-semibold text-sm tracking-wide uppercase">
+          <span className="text-blue-600 font-semibold text-2xl tracking-wide uppercase">
             TESTIMONIALS
           </span>
-          <h2 className="text-3xl lg:text-4xl font-bold text-foreground mt-2 mb-4">
+          <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mt-2 mb-4">
             What Our Students Say About<br />
             Our Services
           </h2>
         </div>
 
-        
-        <div className="relative overflow-hidden">
-          <div
-            className="flex transition-transform duration-700 ease-in-out"
-            style={{
-              transform: `translateX(-${(currentIndex * 100) / visibleCount}%)`,
-              width: `${(testimonials.length * 100) / visibleCount}%`,
-            }}
-          >
-            {testimonials.map((testimonial) => (
-              <div
-                key={testimonial.id}
-                className={`px-4`}
-                style={{ flex: `0 0 ${100 / visibleCount}%` }}
-              >
-                <Card className="bg-card shadow-card hover:shadow-hover transition-all duration-300 h-full">
-                  <CardContent className="p-6 space-y-4">
+        {/* Continuous Scrolling Marquee */}
+        <div className="relative mb-12">
+          <div className="overflow-hidden">
+            <div className="flex gap-8 animate-marquee hover:pause-marquee">
+              {duplicatedTestimonials.map((testimonial, index) => (
+                <Card
+                  key={`${testimonial.id}-${index}`}
+                  className="[background-color:hsl(60,100%,90%)] shadow-lg hover:shadow-xl transition-all duration-300 flex-shrink-0 w-80"
+                >
+                  <CardContent className="p-8 space-y-6">
+                    {/* Rating */}
                     <div className="flex">
                       {[...Array(5)].map((_, i) => (
                         <Star
@@ -93,55 +94,66 @@ const TestimonialsSection = () => {
                         />
                       ))}
                     </div>
-                    <p className="text-muted-foreground italic leading-relaxed text-sm">
+
+                    {/* Content */}
+                    <p className="text-gray-600 italic leading-relaxed">
                       {testimonial.content}
                     </p>
-                    <div className="flex items-center gap-4 pt-4 border-t border-border">
+
+                    {/* Author */}
+                    <div className="flex items-center gap-4 pt-4 border-t border-gray-200">
                       <img
                         src={testimonial.image}
                         alt={testimonial.name}
                         className="w-12 h-12 rounded-full object-cover"
                       />
                       <div>
-                        <h4 className="font-semibold text-foreground">
+                        <h4 className="font-semibold text-gray-900">
                           {testimonial.name}
                         </h4>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm text-gray-500">
                           {testimonial.role}
                         </p>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
+
+          {/* Gradient overlays for fade effect */}
+          <div className="absolute top-0 left-0 w-20 h-full bg-gradient-to-r  to-transparent z-10 pointer-events-none"></div>
+          <div className="absolute top-0 right-0 w-20 h-full bg-gradient-to-l  to-transparent z-10 pointer-events-none"></div>
         </div>
 
-       
-        <div className="flex justify-center gap-4 mt-8">
-          <Button
-            variant="outline"
-            size="icon"
-            className="w-12 h-12 rounded-full border-primary/20 hover:bg-primary hover:text-primary-foreground"
-            onClick={handlePrev}
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className="w-12 h-12 rounded-full border-primary/20 hover:bg-primary hover:text-primary-foreground"
-            onClick={handleNext}
-          >
-            <ChevronRight className="w-5 h-5" />
-          </Button>
-        </div>
+        
+        
 
-        <div className="absolute top-8 right-8 text-6xl text-primary/20 font-bold">
-          "
-        </div>
+ 
       </div>
+
+      
+      
+
+      <style >{`
+        @keyframes marquee {
+          0% {
+            transform: translateX(0);
+          }
+          100% {
+            transform: translateX(-50%);
+          }
+        }
+
+        .animate-marquee {
+          animation: marquee 30s linear infinite;
+        }
+
+        .pause-marquee:hover {
+          animation-play-state: paused;
+        }
+      `}</style>
     </section>
   );
 };
