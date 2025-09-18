@@ -8,7 +8,15 @@ const blogPost = {
   date: "Jan 23, 2024",
   image: heroStudent,
   category: "Education",
-  tags: ["Student", "Tips", "Education"],
+  tags: [
+    "Student",
+    "Tips",
+    "Education",
+    "Career",
+    "Learning",
+    "Motivation",
+    "Success",
+  ],
   shortDescription: "Practical tips for students and recent graduates to achieve academic and professional success.",
 };
 
@@ -18,7 +26,7 @@ const BlogPage = () => {
   return (
     <section data-aos="fade-down" className="py-12 bg-background">
       <div className="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-20">
-        
+        {/* Header */}
         <div className="mb-8 text-center">
           <span className="text-primary font-semibold text-sm uppercase">BLOGS & ARTICLES</span>
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground mt-2">
@@ -26,14 +34,14 @@ const BlogPage = () => {
           </h1>
         </div>
 
-       
+        {/* Blog + Sidebar */}
         <div className="flex flex-col lg:flex-row gap-6 mb-12">
-          
-          <div className="lg:w-2/3 flex flex-col gap-3 border [background-color:hsl(60,100%,95%)] border-gray-300 rounded-lg p-4 shadow-sm">
+          {/* Main Blog */}
+          <div className="lg:w-2/3 flex flex-col gap-3 bg-yellow-50 border border-gray-300 rounded-lg p-4 shadow-sm">
             <img
               src={blogPost.image}
               alt={blogPost.title}
-              className="w-full h-48 sm:h-56 md:h-64 lg:h-72 object-cover rounded-md shadow-md"
+              className="w-full h-64 sm:h-72 md:h-80 lg:h-96 object-cover rounded-md shadow-md"
             />
             <h2 className="text-xl font-bold text-foreground mt-1">{blogPost.title}</h2>
             <p className="text-muted-foreground text-sm">{blogPost.shortDescription}</p>
@@ -42,24 +50,27 @@ const BlogPage = () => {
             </span>
           </div>
 
-         
+          {/* Sidebar */}
           <aside className="lg:w-1/3 flex flex-col gap-4">
-           
-            <div className="border [background-color:hsl(60,100%,95%)] border-gray-300 rounded-lg p-3">
+            {/* Categories */}
+            <div className="bg-yellow-50 border border-gray-300 rounded-lg p-3">
               <h3 className="text-md font-semibold mb-2">Categories</h3>
               <ul className="flex flex-col gap-1">
                 {categories.map((cat) => (
-                  <li key={cat} className="text-sm text-foreground cursor-pointer hover:text-primary">
+                  <li
+                    key={cat}
+                    className="text-sm text-foreground cursor-pointer hover:text-primary"
+                  >
                     {cat}
                   </li>
                 ))}
               </ul>
             </div>
 
-          
-            <div className="border [background-color:hsl(60,100%,95%)] border-gray-300 rounded-lg p-3">
+            {/* Tags */}
+            <div className="bg-yellow-50 border border-gray-300 rounded-lg p-3 justify-center items-center">
               <h3 className="text-md font-semibold mb-2">Tags</h3>
-              <div className="flex flex-wrap gap-1">
+              <div className="flex flex-col w-1/4  flex-wrap gap-2">
                 {blogPost.tags.map((tag) => (
                   <Badge
                     key={tag}
@@ -73,7 +84,7 @@ const BlogPage = () => {
           </aside>
         </div>
 
-        
+        {/* More Blogs Button */}
         <div className="text-center">
           <button className="text-white bg-[#1a3791] font-semibold border border-primary rounded px-4 py-2 hover:bg-black transition">
             More Blogs →

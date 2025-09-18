@@ -30,12 +30,13 @@ const Footer = () => {
           <div className="p-6 rounded-xl shadow-lg shadow-black/20">
            
             <div className="mb-6">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
-                  <span className="text-primary font-bold text-base">E</span>
-                </div>
-                <span className="text-xl font-bold">Educve</span>
-              </div>
+              <div className="flex items-center hover:scale-105 transition-transform">
+          <img
+            src={vssc}
+            alt="VSSC Logo"
+            className="w-8 h-8 sm:w-16 sm:h-16 object-contain"
+          />
+        </div>
               <p className="text-white/70 leading-relaxed text-sm max-w-sm mb-4">
                 Lorem ipsum dolor sit amet consectetur adipisicing elit. Vero,
                 esse. Far far away, behind the word mountains.
