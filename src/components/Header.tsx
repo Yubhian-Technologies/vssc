@@ -11,7 +11,10 @@ const Header = () => {
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
   return (
-    <header data-aos="fade-down" className="w-full relative bg-background border-b border-border">
+    <header className="relative w-full bg-background border-b border-border">
+      {/* Decorative background shape */}
+      <div className="absolute top-0 right-0 h-full w-1/4 bg-primary z-0 [clip-path:polygon(20%_0,100%_0,100%_100%,0%_100%)] opacity-90 pointer-events-none"></div>
+
       <div className="container mx-auto px-4 py-4 flex items-center justify-between relative z-10">
         {/* Logo */}
         <div className="flex items-center hover:scale-105 transition-transform">
@@ -44,7 +47,7 @@ const Header = () => {
             <Button
               variant="outline"
               size="sm"
-              className="px-4 py-2 font-semibold rounded-full border border-primary text-black hover:bg-primary hover:text-white border-white transition-all shadow-sm"
+              className="px-4 py-2 font-semibold rounded-full border border-primary text-black hover:bg-primary hover:text-white transition-all shadow-sm"
               onClick={handleLoginToggle}
             >
               Login/Register
@@ -93,12 +96,13 @@ const Header = () => {
 
       {/* Mobile Menu */}
       {isMenuOpen && (
-        <div className="lg:hidden absolute top-full left-0 w-full bg-background border-t border-border shadow-md z-20">
+        <div className="lg:hidden absolute top-full left-0 w-full bg-background border-t border-border shadow-md z-[999]">
           <nav className="flex flex-col items-start px-6 py-4 gap-4">
             {["Home", "About", "Services", "Tour", "Help"].map((link) => (
               <a
                 key={link}
                 href="#"
+                onClick={() => setIsMenuOpen(false)}
                 className="relative text-foreground hover:text-primary transition-colors 
                   after:absolute after:left-1/2 after:bottom-[-2px] after:h-[2px] after:w-0 
                   after:bg-primary after:transition-all after:duration-300 after:origin-center 
@@ -127,12 +131,14 @@ const Header = () => {
                 </Button>
                 <a
                   href="#"
+                  onClick={() => setIsMenuOpen(false)}
                   className="text-foreground hover:text-primary transition-colors"
                 >
                   Your Reservations
                 </a>
                 <a
                   href="#"
+                  onClick={() => setIsMenuOpen(false)}
                   className="text-foreground hover:text-primary transition-colors"
                 >
                   Account
@@ -142,9 +148,6 @@ const Header = () => {
           </nav>
         </div>
       )}
-
-     
-      <div className="absolute top-0 right-0 h-full w-1/4 bg-primary z-0 [clip-path:polygon(20%_0,100%_0,100%_100%,0%_100%)] hover:opacity-90 transition-opacity"></div>
     </header>
   );
 };
