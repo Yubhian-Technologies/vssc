@@ -31,7 +31,7 @@ const Header = () => {
             <a
               key={link}
               href="#"
-              className="relative text-foreground hover:text-primary transition-colors 
+              className="relative text-foreground hover:text-primary transition-colors font-semibold
                 after:absolute after:left-1/2 after:bottom-[-4px] after:h-[2px] after:w-0 
                 after:bg-primary after:transition-all after:duration-300 after:origin-center 
                 hover:after:left-0 hover:after:w-full"
@@ -96,14 +96,14 @@ const Header = () => {
 
       {/* Mobile Menu */}
       {isMenuOpen && (
-        <div className="lg:hidden absolute top-full left-0 w-full bg-background border-t border-border shadow-md z-[999] ">
-          <nav className="flex flex-col  px-6 py-4 gap-4 justify-end items-center">
+        <div className="lg:hidden absolute top-full left-0 w-full bg-background border-t border-border shadow-md z-[999]">
+          <nav className="flex flex-col px-6 py-4 gap-4 justify-end items-center">
             {["Home", "About", "Services", "Tour", "Help"].map((link) => (
               <a
                 key={link}
                 href="#"
                 onClick={() => setIsMenuOpen(false)}
-                className="relative text-foreground hover:text-primary transition-colors 
+                className="relative text-foreground hover:text-primary transition-colors font-semibold
                   after:absolute after:left-1/2 after:bottom-[-2px] after:h-[2px] after:w-0 
                   after:bg-primary after:transition-all after:duration-300 after:origin-center 
                   hover:after:left-0 hover:after:w-full"
@@ -132,14 +132,14 @@ const Header = () => {
                 <a
                   href="#"
                   onClick={() => setIsMenuOpen(false)}
-                  className="text-foreground hover:text-primary transition-colors"
+                  className="text-foreground hover:text-primary transition-colors font-semibold"
                 >
                   Your Reservations
                 </a>
                 <a
                   href="#"
                   onClick={() => setIsMenuOpen(false)}
-                  className="text-foreground hover:text-primary transition-colors"
+                  className="text-foreground hover:text-primary transition-colors font-semibold"
                 >
                   Account
                 </a>
