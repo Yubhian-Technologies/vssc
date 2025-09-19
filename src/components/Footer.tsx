@@ -24,13 +24,13 @@ const Footer = () => {
 
   return (
     <footer data-aos="fade-down" className="bg-primary text-white text-[0.9rem]">
-      <div className="container mx-auto px-6 py-12 sm:px-6 md:px-8 lg:px-12 xl:px-20">
+      <div className="container mx-auto px-3 py-4 sm:px-4 sm:py-8 md:py-10">
         <div className="grid md:grid-cols-2 gap-6">
          
           <div className="p-6 rounded-xl shadow-lg shadow-black/20">
            
             <div className="mb-6">
-              <div className="flex items-center hover:scale-105 transition-transform">
+              <div className="flex items-center  transition-transform">
           <img
             src={vssc}
             alt="VSSC Logo"
