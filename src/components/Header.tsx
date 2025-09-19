@@ -87,7 +87,7 @@ const Header = () => {
 
         {/* Mobile Menu Toggle */}
         <button
-          className="lg:hidden flex items-center justify-center w-10 h-10 rounded-md border border-border text-foreground"
+          className="lg:hidden flex items-center justify-center w-10 h-10 rounded-md border border-border text-white"
           onClick={toggleMenu}
         >
           {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -96,8 +96,8 @@ const Header = () => {
 
       {/* Mobile Menu */}
       {isMenuOpen && (
-        <div className="lg:hidden absolute top-full left-0 w-full bg-background border-t border-border shadow-md z-[999]">
-          <nav className="flex flex-col items-start px-6 py-4 gap-4">
+        <div className="lg:hidden absolute top-full left-0 w-full bg-background border-t border-border shadow-md z-[999] ">
+          <nav className="flex flex-col  px-6 py-4 gap-4 justify-end items-center">
             {["Home", "About", "Services", "Tour", "Help"].map((link) => (
               <a
                 key={link}
