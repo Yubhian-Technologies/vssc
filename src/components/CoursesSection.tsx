@@ -3,42 +3,43 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-
+// --- Image imports (as you already have) ---
+// FINDING NEMO
 import FindingNemo1 from "@/assets/FindingNemo1.jpg";
 import FindingNemo2 from "@/assets/FindingNemo2.jpg";
 import FindingNemo3 from "@/assets/FindingNemo3.jpg";
 import FindingNemo4 from "@/assets/FindingNemo4.jpg";
 import FindingNemo5 from "@/assets/FindingNemo5.jpg";
 import FindingNemo6 from "@/assets/FindingNemo6.jpg";
-
+// THE INCREDIBLES
 import filter21 from "@/assets/filter21.jpg";
 import filter22 from "@/assets/filter22.jpg";
 import filter23 from "@/assets/filter23.jpg";
 import filter24 from "@/assets/filter24.jpg";
 import filter25 from "@/assets/filter25.jpg";
 import filter26 from "@/assets/filter26.jpg";
-
+// INSIDE OUT
 import insideout1 from "@/assets/insideout1.jpg";
 import insideout2 from "@/assets/insideout2.jpg";
 import insideout3 from "@/assets/insideout3.jpg";
 import insideout4 from "@/assets/insideout4.jpg";
 import insideout5 from "@/assets/insideout5.jpg";
 import insideout6 from "@/assets/insideout6.jpg";
-
+// THE PURSUIT OF HAPPINESS
 import pursuit1 from "@/assets/pursuit1.jpg";
 import pursuit2 from "@/assets/pursuit2.jpg";
 import pursuit3 from "@/assets/pursuit3.jpg";
 import pursuit4 from "@/assets/pursuit4.jpg";
 import pursuit5 from "@/assets/pursuit5.jpg";
 import pursuit6 from "@/assets/pursuit6.jpg";
-
+// HAPPY FEET
 import happy1 from "@/assets/happy1.jpg";
 import happy2 from "@/assets/happy2.jpg";
 import happy3 from "@/assets/happy3.jpg";
 import happy4 from "@/assets/happy4.jpg";
 import happy5 from "@/assets/happy5.jpg";
 import happy6 from "@/assets/happy6.jpg";
-
+// HIDDEN FIGURES
 import hidden1 from "@/assets/hidden1.jpg";
 import hidden2 from "@/assets/hidden2.jpg";
 import hidden3 from "@/assets/hidden3.jpg";
@@ -129,13 +130,13 @@ const CoursesSection = () => {
   };
 
 
-  const cardGap = 16; 
+  const cardGap = 16; // Tailwind gap-4
   const cardMinWidth = 220;
 
   
 
 
- 
+  // Slower continuous scroll
   useEffect(() => {
     const interval = setInterval(() => {
       if (!scrollRef.current) return;
