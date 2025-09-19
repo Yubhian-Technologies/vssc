@@ -26,9 +26,9 @@ const BlogPage = () => {
           </h1>
         </div>
 
-        
+        {/* Blog + Sidebar */}
         <div className="flex flex-col lg:flex-row gap-4 mb-8">
-         
+          {/* Main Blog */}
           <div className="lg:w-2/3 flex flex-col gap-2 bg-yellow-50 border border-gray-300 rounded-lg p-3 shadow-sm">
             <img
               src={blogPost.image}
@@ -42,9 +42,9 @@ const BlogPage = () => {
             </span>
           </div>
 
-          
+          {/* Sidebar */}
           <aside className="lg:w-1/3 flex flex-col gap-3">
-            
+            {/* Categories */}
             <div className="bg-yellow-50 border border-gray-300 rounded-lg p-2">
               <h3 className="text-sm font-semibold mb-1">Categories</h3>
               <ul className="flex flex-col gap-1">
@@ -59,7 +59,7 @@ const BlogPage = () => {
               </ul>
             </div>
 
-          
+            {/* Tags */}
             <div className="bg-yellow-50 border border-gray-300 rounded-lg p-2">
               <h3 className="text-sm font-semibold mb-1">Tags</h3>
               <div className="flex flex-wrap gap-1">
@@ -76,6 +76,7 @@ const BlogPage = () => {
           </aside>
         </div>
 
+        {/* More Blogs Button */}
         <div className="text-center">
           <button className="text-white bg-[#1a3791] font-semibold border border-primary rounded px-3 py-1 text-sm hover:bg-black transition">
             More Blogs →
