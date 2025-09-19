@@ -26,7 +26,7 @@ const BlogPage = () => {
   return (
     <section data-aos="fade-down" className="py-12 bg-background">
       <div className="container mx-auto px-3 py-4 sm:px-4 sm:py-8 md:py-10">
-        
+       
         <div className="mb-8 text-center">
           <span className="text-primary font-semibold text-sm uppercase">BLOGS & ARTICLES</span>
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground mt-2">
@@ -34,9 +34,9 @@ const BlogPage = () => {
           </h1>
         </div>
 
-       
+        
         <div className="flex flex-col lg:flex-row gap-6 mb-12">
-         
+          
           <div className="lg:w-2/3 flex flex-col gap-3 bg-yellow-50 border border-gray-300 rounded-lg p-4 shadow-sm">
             <img
               src={blogPost.image}
@@ -50,9 +50,9 @@ const BlogPage = () => {
             </span>
           </div>
 
-         
+        
           <aside className="lg:w-1/3 flex flex-col gap-4">
-            
+           
             <div className="bg-yellow-50 border border-gray-300 rounded-lg p-3">
               <h3 className="text-md font-semibold mb-2">Categories</h3>
               <ul className="flex flex-col gap-1">
@@ -84,7 +84,7 @@ const BlogPage = () => {
           </aside>
         </div>
 
-       
+        
         <div className="text-center">
           <button className="text-white bg-[#1a3791] font-semibold border border-primary rounded px-4 py-2 hover:bg-black transition">
             More Blogs →
