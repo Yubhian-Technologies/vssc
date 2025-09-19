@@ -1,43 +1,45 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
-// === Images ===
+// --- Image imports (as you already have) ---
+// FINDING NEMO
 import FindingNemo1 from "@/assets/FindingNemo1.jpg";
 import FindingNemo2 from "@/assets/FindingNemo2.jpg";
 import FindingNemo3 from "@/assets/FindingNemo3.jpg";
 import FindingNemo4 from "@/assets/FindingNemo4.jpg";
 import FindingNemo5 from "@/assets/FindingNemo5.jpg";
 import FindingNemo6 from "@/assets/FindingNemo6.jpg";
-
+// THE INCREDIBLES
 import filter21 from "@/assets/filter21.jpg";
 import filter22 from "@/assets/filter22.jpg";
 import filter23 from "@/assets/filter23.jpg";
 import filter24 from "@/assets/filter24.jpg";
 import filter25 from "@/assets/filter25.jpg";
 import filter26 from "@/assets/filter26.jpg";
-
+// INSIDE OUT
 import insideout1 from "@/assets/insideout1.jpg";
 import insideout2 from "@/assets/insideout2.jpg";
 import insideout3 from "@/assets/insideout3.jpg";
 import insideout4 from "@/assets/insideout4.jpg";
 import insideout5 from "@/assets/insideout5.jpg";
 import insideout6 from "@/assets/insideout6.jpg";
-
+// THE PURSUIT OF HAPPINESS
 import pursuit1 from "@/assets/pursuit1.jpg";
 import pursuit2 from "@/assets/pursuit2.jpg";
 import pursuit3 from "@/assets/pursuit3.jpg";
 import pursuit4 from "@/assets/pursuit4.jpg";
 import pursuit5 from "@/assets/pursuit5.jpg";
 import pursuit6 from "@/assets/pursuit6.jpg";
-
+// HAPPY FEET
 import happy1 from "@/assets/happy1.jpg";
 import happy2 from "@/assets/happy2.jpg";
 import happy3 from "@/assets/happy3.jpg";
 import happy4 from "@/assets/happy4.jpg";
 import happy5 from "@/assets/happy5.jpg";
 import happy6 from "@/assets/happy6.jpg";
-
+// HIDDEN FIGURES
 import hidden1 from "@/assets/hidden1.jpg";
 import hidden2 from "@/assets/hidden2.jpg";
 import hidden3 from "@/assets/hidden3.jpg";
@@ -47,6 +49,7 @@ import hidden6 from "@/assets/hidden6.jpg";
 
 const CoursesSection = () => {
   const [activeCategory, setActiveCategory] = useState("FINDING NEMO");
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const categories = [
     "FINDING NEMO",
@@ -60,19 +63,19 @@ const CoursesSection = () => {
   const categoryColors: Record<string, string> = {
     "FINDING NEMO": "hover:bg-pink-600 hover:text-white",
     "THE INCREDIBLES": "hover:bg-green-700 hover:text-white",
-    "INSIDE OUT": "hover:bg-red-500 hover:text-black",
+    "INSIDE OUT": "hover:bg-red-500 hover:text-white",
     "THE PURSUIT OF HAPPINESS": "hover:bg-sky-600 hover:text-white",
     "HAPPY FEET": "hover:bg-pink-800 hover:text-white",
-    "HIDDEN FIGURES": "hover:bg-green-400 hover:text-black",
+    "HIDDEN FIGURES": "hover:bg-green-400 hover:text-white",
   };
 
   const activeColors: Record<string, string> = {
     "FINDING NEMO": "bg-pink-600 text-white",
     "THE INCREDIBLES": "bg-green-700 text-white",
-    "INSIDE OUT": "bg-red-500 text-black",
+    "INSIDE OUT": "bg-red-500 text-white",
     "THE PURSUIT OF HAPPINESS": "bg-sky-600 text-white",
     "HAPPY FEET": "bg-pink-800 text-white",
-    "HIDDEN FIGURES": "bg-green-400 text-black",
+    "HIDDEN FIGURES": "bg-green-400 text-white",
   };
 
   const courses = {
@@ -126,75 +129,71 @@ const CoursesSection = () => {
     ],
   };
 
+
+  const cardGap = 16; // Tailwind gap-4
+  const cardMinWidth = 220;
+
+  
+
+
+  // Slower continuous scroll
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!scrollRef.current) return;
+      const container = scrollRef.current;
+      if (container.scrollLeft >= container.scrollWidth / 2) container.scrollLeft = 0;
+      container.scrollBy({ left: 0.5, behavior: "auto" }); // slower
+    }, 20);
+    return () => clearInterval(interval);
+  }, [activeCategory]);
+
   return (
-    <section data-aos="fade-down" className="py-20 [background-color:hsl(60,100%,90%)]">
-  <div className="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-20">
-    <div className="text-center mb-16">
-      <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mt-2 mb-8">
-        Explore Our Courses by Category
-      </h2>
+    <section data-aos="fade-down" className="py-15 [background-color:hsl(60,100%,90%)]">
+      <div className="container mx-auto px-3 py-4 sm:px-4 sm:py-8 md:py-10">
+        <div className="text-center mb-10">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mt-2 mb-6">
+            Explore Our Courses by Category
+          </h2>
+          <div className="flex flex-wrap justify-center gap-2 sm:gap-3 md:gap-4 mb-8">
+            {categories.map((category) => (
+              <Button
+                key={category}
+                variant="ghost"
+                className={`px-3 sm:px-4 md:px-5 py-1 sm:py-1.5 rounded-full transition-colors 
+                text-xs sm:text-sm md:text-sm font-medium text-black
+                ${activeCategory === category ? activeColors[category] : `bg-muted ${categoryColors[category]}`}`}
+                onClick={() => setActiveCategory(category)}
+              >
+                {category}
+              </Button>
+            ))}
+          </div>
+        </div>
 
-      {/* Category Buttons */}
-      <div className="flex flex-wrap justify-center gap-2 sm:gap-3 md:gap-4 mb-12">
-        {categories.map((category) => (
-          <Button
-            key={category}
-            variant="ghost"
-            className={`px-3 sm:px-5 md:px-6 py-2 rounded-full transition-colors text-sm sm:text-base md:text-base font-medium ${
-              activeCategory === category
-                ? activeColors[category]
-                : `bg-muted text-muted-foreground ${categoryColors[category]}`
-            }`}
-            onClick={() => setActiveCategory(category)}
-          >
-            {category}
-          </Button>
-        ))}
+        <div className="relative">
+          
+
+          <div ref={scrollRef} className="overflow-hidden relative">
+            <div className="flex gap-4">
+              {[...courses[activeCategory], ...courses[activeCategory]].map((course, i) => (
+                <Card
+                  key={i}
+                  className="course-card [background-color:hsl(60,100%,95%)] shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden min-w-[200px] max-w-[220px]"
+                >
+                  <img src={course.image} alt={course.focus} className="w-full h-auto max-h-36 object-contain rounded-t-md" />
+                  <CardContent className="p-3 space-y-1">
+                    <h3 className="font-semibold text-gray-900 text-sm sm:text-base">{course.focus}</h3>
+                    <p className="text-gray-700 text-xs sm:text-sm">{course.desc}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+
+          
+        </div>
       </div>
-    </div>
-
-    {/* Courses Slider */}
-    <div className="overflow-hidden relative">
-      <div className="flex animate-scroll gap-4">
-        {[...courses[activeCategory], ...courses[activeCategory]].map(
-          (course, i) => (
-            <Card
-              key={i}
-              className="[background-color:hsl(60,100%,95%)] shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden min-w-[240px] max-w-[260px]"
-            >
-              <img
-                src={course.image}
-                alt={course.focus}
-                className="w-full h-auto max-h-40 object-contain rounded-t-md"
-              />
-              <CardContent className="p-4 space-y-2">
-                <h3 className="font-semibold text-gray-900 text-base">
-                  {course.focus}
-                </h3>
-                <p className="text-gray-700 text-sm">{course.desc}</p>
-              </CardContent>
-            </Card>
-          )
-        )}
-      </div>
-    </div>
-  </div>
-
-  {/* Scroll Animation */}
-  <style>
-    {`
-      @keyframes scroll {
-        0% { transform: translateX(0); }
-        100% { transform: translateX(-50%); }
-      }
-      .animate-scroll {
-        animation: scroll 120s linear infinite;
-        width: max-content;
-      }
-    `}
-  </style>
-</section>
-
+    </section>
   );
 };
 
