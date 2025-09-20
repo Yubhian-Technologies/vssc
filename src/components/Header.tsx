@@ -4,7 +4,7 @@ import { User, Menu, X } from "lucide-react";
 import VSSCLogo from "@/assets/VSSC LOGO[1].png";
 import ButtonGradient from "./ui/ButtonGradient";
 
-const Header = ({props}) => {
+const Header = ({ props }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -45,17 +45,14 @@ const Header = ({props}) => {
         {/* Desktop Buttons */}
         <div className="hidden lg:flex items-center gap-4 relative z-20">
           {!isLoggedIn ? (
-            <div className="pr-3">
-              <ButtonGradient name={"Login/Register"}></ButtonGradient>
+            <div className="pr-3" onClick={handleLoginToggle}>
+              <ButtonGradient name={"Login/Register"} />
             </div>
           ) : (
             <>
-              <Button
-                size="sm"
-                className="px-5 py-2 bg-white text-black border border-white font-semibold rounded-full hover:bg-primary hover:text-white transition-all"
-              >
-                Apply Now →
-              </Button>
+              <div className="pr-3">
+                <ButtonGradient name={"Apply Now →"} />
+              </div>
 
               {/* Profile Menu */}
               <div className="relative group">
@@ -91,59 +88,53 @@ const Header = ({props}) => {
       </div>
 
       {/* Mobile Menu */}
-      {isMenuOpen && (
-        <div className="lg:hidden absolute top-full left-0 w-full bg-background border-t border-border shadow-md z-[999]">
-          <nav className="flex flex-col px-6 py-4 gap-4 justify-end items-center">
-            {["Home", "About", "Services", "Tour", "Help"].map((link) => (
-              <a
-                key={link}
-                href="#"
-                onClick={() => setIsMenuOpen(false)}
-                className="relative text-foreground hover:text-primary transition-colors font-semibold
-                  after:absolute after:left-1/2 after:bottom-[-2px] after:h-[2px] after:w-0 
-                  after:bg-primary after:transition-all after:duration-300 after:origin-center 
-                  hover:after:left-0 hover:after:w-full"
-              >
-                {link}
-              </a>
-            ))}
+      {/* Mobile Menu */}
+{isMenuOpen && (
+  <div className="lg:hidden absolute top-full left-0 w-full bg-background border-t border-border shadow-md z-[999]">
+    <nav className="flex flex-col px-6 py-4 gap-4 justify-end items-center">
+      {["Home", "About", "Services", "Tour", "Help"].map((link) => (
+        <a
+          key={link}
+          href="#"
+          onClick={() => setIsMenuOpen(false)}
+          className="relative text-foreground hover:text-primary transition-colors font-semibold
+            after:absolute after:left-1/2 after:bottom-[-2px] after:h-[2px] after:w-0 
+            after:bg-primary after:transition-all after:duration-300 after:origin-center 
+            hover:after:left-0 hover:after:w-full"
+        >
+          {link}
+        </a>
+      ))}
 
-            {!isLoggedIn ? (
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full px-4 py-2 font-semibold rounded-full border border-primary text-black hover:bg-primary hover:text-white transition-all"
-                onClick={handleLoginToggle}
-              >
-                Login/Register
-              </Button>
-            ) : (
-              <>
-                <Button
-                  size="sm"
-                  className="w-full px-5 py-2 bg-primary text-white font-semibold rounded-full hover:bg-primary/90 transition-all"
-                >
-                  Apply Now →
-                </Button>
-                <a
-                  href="#"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="text-foreground hover:text-primary transition-colors font-semibold"
-                >
-                  Your Reservations
-                </a>
-                <a
-                  href="#"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="text-foreground hover:text-primary transition-colors font-semibold"
-                >
-                  Account
-                </a>
-              </>
-            )}
-          </nav>
+      {!isLoggedIn ? (
+        <div className="flex justify-center w-full" onClick={handleLoginToggle}>
+          <ButtonGradient name={"Login/Register"} />
         </div>
+      ) : (
+        <>
+          <div className="flex justify-center w-full">
+            <ButtonGradient name={"Apply Now →"} />
+          </div>
+          <a
+            href="#"
+            onClick={() => setIsMenuOpen(false)}
+            className="text-foreground hover:text-primary transition-colors font-semibold"
+          >
+            Your Reservations
+          </a>
+          <a
+            href="#"
+            onClick={() => setIsMenuOpen(false)}
+            className="text-foreground hover:text-primary transition-colors font-semibold"
+          >
+            Account
+          </a>
+        </>
       )}
+    </nav>
+  </div>
+)}
+
     </header>
   );
 };
