@@ -12,8 +12,8 @@ const HeroSection = () => {
     { icon: "📚", title: "HIDDEN FIGURES" },
   ];
 
-  const firstPart = "Build The Skills You Need To Be";
-  const secondPart = " Successful";
+  const firstPart = "Learn. Grow.";
+  const secondPart = " Prosper.";
 
   const duplicatedstats = [...stats, ...stats,...stats,...stats,...stats];
 
@@ -69,8 +69,7 @@ const HeroSection = () => {
               </motion.h1>
 
               <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-xs sm:max-w-md md:max-w-lg">
-                Far far away, behind the word mountains, far from the countries Vokalia and
-                Consonantia, there live the blind texts.
+                The Vishnu Student Success Centre is dedicated to supporting and empowering students on their academic and personal journeys.
               </p>
             </div>
 
