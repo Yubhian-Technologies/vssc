@@ -20,7 +20,7 @@ const BlogPage = () => {
       <div className="container mx-auto px-3 py-4 sm:px-4 sm:py-6 md:py-8">
         {/* Header */}
         <div className="mb-6 text-center">
-          <span className="text-primary font-semibold text-xs uppercase">BLOGS & ARTICLES</span>
+          <span className="text-primary font-semibold text-2xl uppercase">BLOGS & ARTICLES</span>
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground mt-1">
             Explore Latest Articles
           </h1>

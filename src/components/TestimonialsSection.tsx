@@ -54,13 +54,13 @@ const TestimonialsSection = () => {
     }
   ];
 
-  // Duplicate testimonials for seamless loop
+  
   const duplicatedTestimonials = [...testimonials, ...testimonials];
 
   return (
     <section data-aos="fade-down" className="py-20 [background-color:hsl(60,100%,95%)] relative overflow-hidden">
       <div className="container mx-auto px-4">
-        {/* Header */}
+       
         <div className="text-center mb-16">
           <span className="text-blue-600 font-semibold text-2xl tracking-wide uppercase">
             TESTIMONIALS
@@ -71,7 +71,7 @@ const TestimonialsSection = () => {
           </h2>
         </div>
 
-        {/* Continuous Scrolling Marquee */}
+        
         <div className="relative mb-12">
           <div className="overflow-hidden">
             <div className="flex gap-8 animate-marquee hover:pause-marquee">
@@ -81,7 +81,7 @@ const TestimonialsSection = () => {
                   className="[background-color:hsl(60,100%,90%)] shadow-lg hover:shadow-xl transition-all duration-300 flex-shrink-0 w-80"
                 >
                   <CardContent className="p-8 space-y-6">
-                    {/* Rating */}
+                    
                     <div className="flex">
                       {[...Array(5)].map((_, i) => (
                         <Star
@@ -95,12 +95,12 @@ const TestimonialsSection = () => {
                       ))}
                     </div>
 
-                    {/* Content */}
+                 
                     <p className="text-gray-600 italic leading-relaxed">
                       {testimonial.content}
                     </p>
 
-                    {/* Author */}
+                   
                     <div className="flex items-center gap-4 pt-4 border-t border-gray-200">
                       <img
                         src={testimonial.image}
@@ -122,7 +122,6 @@ const TestimonialsSection = () => {
             </div>
           </div>
 
-          {/* Gradient overlays for fade effect */}
           <div className="absolute top-0 left-0 w-20 h-full bg-gradient-to-r  to-transparent z-10 pointer-events-none"></div>
           <div className="absolute top-0 right-0 w-20 h-full bg-gradient-to-l  to-transparent z-10 pointer-events-none"></div>
         </div>

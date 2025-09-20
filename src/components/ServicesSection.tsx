@@ -35,7 +35,6 @@ const ServicesSection = () => {
       className="py-16 [background-color:hsl(60,100%,95%)]"
     >
       <div className="container mx-auto px-3 sm:px-6 md:px-10">
-        {/* Heading */}
         <div className="text-center mb-10">
           <span className="font-semibold text-lg sm:text-xl uppercase text-primary">
             SERVICES
@@ -45,9 +44,8 @@ const ServicesSection = () => {
           </h2>
         </div>
 
-        {/* Scrollable Row with Buttons */}
+        
         <div className="relative flex items-center">
-          {/* Left Button */}
           <button
             onClick={scrollLeft}
             className="absolute left-2 z-20 bg-primary text-white text-primary p-3 rounded-full shadow-lg hover:bg-black hover:text-white transition"
@@ -55,7 +53,6 @@ const ServicesSection = () => {
             <ChevronLeft className="w-5 h-5" />
           </button>
 
-          {/* Scrollable Container */}
           <div
             ref={scrollRef}
             className="flex overflow-x-auto no-scrollbar gap-6 scroll-smooth px-8"
@@ -75,7 +72,7 @@ const ServicesSection = () => {
             ))}
           </div>
 
-          {/* Right Button */}
+
           <button
             onClick={scrollRight}
             className="absolute right-2 z-20 bg-primary text-white text-primary p-3 rounded-full shadow-lg hover:bg-black hover:text-white transition"
@@ -85,7 +82,6 @@ const ServicesSection = () => {
         </div>
       </div>
 
-      {/* Hide scrollbars */}
       <style>{`
         .no-scrollbar::-webkit-scrollbar {
           display: none;
