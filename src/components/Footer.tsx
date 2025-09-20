@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
+import { Facebook, Twitter, Instagram, Linkedin, Underline } from "lucide-react";
 import vssc from "@/assets/VSSC LOGO[1].png";
 
 const Footer = () => {
@@ -114,10 +114,10 @@ const Footer = () => {
         </div>
         <div className="w-full overflow-hidden bg-primary py-2 mt-10">
            <div className="flex whitespace-nowrap animate-marquee">
-          <p className="text-xl sm:text-4xl md:text-7xl lg:text-10xl font-bold mr-20 opacity-5">
+          <p className="text-xl sm:text-20xl md:text-7xl lg:text-10xl font-bold mr-20 opacity-5">
              VISHNU STUDENT SUCCESS CENTRE
           </p>
-          <p className="text-xl sm:text-4xl md:text-7xl lg:text-10xl font-bold mr-20 opacity-5">
+          <p className="text-xl sm:text-20xl md:text-7xl lg:text-10xl font-bold mr-20 opacity-5">
              VISHNU STUDENT SUCCESS CENTRE
         </p>
    </div>
@@ -140,7 +140,7 @@ const Footer = () => {
           .animate-marquee {
             display: flex;
             width: max-content;
-            animation: marquee 15s linear infinite;
+            animation: marquee 10s linear infinite;
           }
         `}
       </style>

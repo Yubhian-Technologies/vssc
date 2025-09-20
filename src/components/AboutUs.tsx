@@ -19,7 +19,7 @@ const AboutUs = () => {
   <img
     src={heroStudent}
     alt="About Us"
-    className="w-[75%] rounded-lg shadow-lg "
+    className="w-[80%] rounded-lg shadow-lg "
   />
 
   
@@ -28,8 +28,8 @@ const AboutUs = () => {
     alt="Instructor"
     className="w-2/4 rounded-lg shadow-lg absolute"
     style={{
-      top: "25%",
-      left: "25%",
+      top: "20%",
+      left: "32%",
       transform: "translate(33%, 33%)",
     }}
   />
@@ -57,23 +57,12 @@ const AboutUs = () => {
       
     </div>
     <div>
-      <h4 className="font-semibold text-gray-900 mb-1">Our Services</h4>
-      <p className="text-gray-600 text-sm"> 🎓 Academic Advice – Guidance to help you excel in your studies.</p>
-      <p className="text-gray-600 text-sm"> 🤝 Peer Tutoring & Mentoring – Learn from and collaborate with fellow students.</p>
-      <p className="text-gray-600 text-sm"> 💼 Career Counselling – Prepare for future opportunities with personalised guidance.</p>
-      <p className="text-gray-600 text-sm"> 🗣️ Communication Skills – Build confidence in public speaking and interpersonal skills.</p>
-      <p className="text-gray-600 text-sm"> 🌱 Personality Development – Improve self-awareness and leadership qualities.</p>
-      <p className="text-gray-600 text-sm"> 🏢 Corporate-readiness Workshops – Gain essential workplace skills. </p>
-      <p className="text-gray-600 text-sm"> 💆 Self-care Strategies & Wellness Practices – Focus on balance and well-being. </p>
-
-
-
-
-
-
-
-    </div>
-  </div>
+      <h4 className="font-semibold text-gray-900 mb-1">🌟 Our Services</h4>
+      <p className="text-gray-600 text-sm">Academic guidance, peer tutoring & mentoring, and career 
+        counselling. Build communication, 
+        leadership, and corporate-ready skills while focusing on wellness and self-care.</p>
+        </div>
+     </div>
 
   
   <div className="flex items-start gap-4">
@@ -84,9 +73,9 @@ const AboutUs = () => {
     <div>
       <h6 className="font-semibold text-gray-900 mb-1">🎯 Our Mission</h6>
       <p className="text-gray-600 text-sm"><h3>To foster a nurturing and inclusive environment that promotes:</h3></p>
-      <b><h1>Academic Excellence</h1>
+      <h1>Academic Excellence</h1>
       <h1>Personal Growth</h1>
-      <h1>Career Readiness</h1></b>
+      <h1>Career Readiness</h1>
       
     </div>
   </div>
