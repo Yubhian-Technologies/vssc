@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-
 // FINDING NEMO
 import FindingNemo1 from "@/assets/FindingNemo1.jpg";
 import FindingNemo2 from "@/assets/FindingNemo2.jpg";

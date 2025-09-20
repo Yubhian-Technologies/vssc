@@ -2,8 +2,9 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { User, Menu, X } from "lucide-react";
 import VSSCLogo from "@/assets/VSSC LOGO[1].png";
+import ButtonGradient from "./ui/ButtonGradient";
 
-const Header = () => {
+const Header = ({props}) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -44,14 +45,9 @@ const Header = () => {
         {/* Desktop Buttons */}
         <div className="hidden lg:flex items-center gap-4 relative z-20">
           {!isLoggedIn ? (
-            <Button
-              variant="outline"
-              size="sm"
-              className="px-4 py-2 font-semibold rounded-full border border-primary text-black hover:bg-primary hover:text-white transition-all shadow-sm"
-              onClick={handleLoginToggle}
-            >
-              Login/Register
-            </Button>
+            <div className="pr-3">
+              <ButtonGradient name={"Login/Register"}></ButtonGradient>
+            </div>
           ) : (
             <>
               <Button

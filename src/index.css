@@ -2,9 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+
 
 @layer base {
   :root {
@@ -137,4 +135,45 @@ All colors MUST be HSL.
 
 html {
   scroll-behavior: smooth;
+}
+
+@property --animate-duration {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes rotate {
+  0% { --animate-duration: 0deg; }
+  100% { --animate-duration: 360deg; }
+}
+
+.btn:after,
+.btn:before {
+  content: '';
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: calc(100px + 1.5px);
+  background-size: 100% 100%;
+  background-position: 0 0;
+  background-image: conic-gradient(
+    from var(--animate-duration) at 50% 50%,
+    red,
+    orange,
+    yellow,
+    green,
+    blue,
+    indigo,
+    violet,
+    red
+  );
+  animation: rotate 3s infinite linear;
+}
+
+.btn:before {
+  filter: blur(20px);
 }
