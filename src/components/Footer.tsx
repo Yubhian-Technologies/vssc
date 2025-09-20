@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
-import vssc from "@/assets/VSSC LOGO[1].png"
+import vssc from "@/assets/VSSC LOGO[1].png";
 
 const Footer = () => {
   const navigationLinks = [
@@ -23,27 +23,28 @@ const Footer = () => {
   ];
 
   return (
-    <footer data-aos="fade-down" className="bg-primary text-white text-[0.9rem]">
+    <footer
+      data-aos="fade-down"
+      className="bg-primary text-white text-[0.9rem]"
+    >
       <div className="container mx-auto px-3 py-4 sm:px-4 sm:py-8 md:py-10">
         <div className="grid md:grid-cols-2 gap-6">
-         
           <div className="p-6 rounded-xl shadow-lg shadow-black/20">
-           
             <div className="mb-6">
               <div className="flex items-center  transition-transform">
-          <img
-            src={vssc}
-            alt="VSSC Logo"
-            className="w-8 h-8 sm:w-16 sm:h-16 object-contain"
-          />
-        </div>
+                <img
+                  src={vssc}
+                  alt="VSSC Logo"
+                  className="w-8 h-8 sm:w-16 sm:h-16 object-contain"
+                />
+              </div>
               <p className="text-white/70 leading-relaxed text-sm max-w-sm mb-4">
-                Lorem ipsum dolor sit amet consectetur adipisicing elit. Vero,
-                esse. Far far away, behind the word mountains.
+                Falling Water, BVRIT Hyderabad Campus, Bachupally, 8-5/4,
+                Nizampet Rd, Opposite Rajiv Gandhi Nagar Colony, Hyderabad,
+                Telangana 500090
               </p>
             </div>
 
-         
             <div className="flex gap-3">
               {[Facebook, Twitter, Instagram, Linkedin].map((Icon, idx) => (
                 <Button
@@ -58,10 +59,8 @@ const Footer = () => {
             </div>
           </div>
 
-       
           <div className="p-6 rounded-xl shadow-lg shadow-black/20">
             <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
-             
               <div>
                 <h3 className="text-base font-semibold mb-3">Navigate</h3>
                 <ul className="space-y-1">
@@ -78,7 +77,6 @@ const Footer = () => {
                 </ul>
               </div>
 
-             
               <div>
                 <h3 className="text-base font-semibold mb-3">Courses</h3>
                 <ul className="space-y-1">
@@ -95,7 +93,6 @@ const Footer = () => {
                 </ul>
               </div>
 
-              
               <div>
                 <h3 className="text-base font-semibold mb-3">Subscribe Now</h3>
                 <p className="text-white/70 mb-3 text-sm">
@@ -116,26 +113,23 @@ const Footer = () => {
           </div>
         </div>
 
-       
         <div className="w-full overflow-hidden bg-primary text-[#809fff] py-2 mt-10">
           <div className="flex whitespace-nowrap animate-marquee">
             <p className="text-xl sm:text-2xl md:text-3xl lg:text-5xl font-bold mr-10">
-              VISHNU STUDENT SUCCESS CENTRE 
+              VISHNU STUDENT SUCCESS CENTRE
             </p>
             <p className="text-xl sm:text-2xl md:text-3xl lg:text-5xl font-bold mr-10">
-              VISHNU STUDENT SUCCESS CENTRE 
+              VISHNU STUDENT SUCCESS CENTRE
             </p>
           </div>
         </div>
 
-       
         <div className="mt-6 text-center text-white/70 text-sm">
           @ {new Date().getFullYear()} Vishnu Student Success Centre. All rights
           reserved.
         </div>
       </div>
 
-    
       <style>
         {`
           @keyframes marquee {

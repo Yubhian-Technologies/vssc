@@ -2,8 +2,9 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { User, Menu, X } from "lucide-react";
 import VSSCLogo from "@/assets/VSSC LOGO[1].png";
+import ButtonGradient from "./ui/ButtonGradient";
 
-const Header = () => {
+const Header = ({props}) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -15,13 +16,13 @@ const Header = () => {
       {/* Decorative background shape */}
       <div className="absolute top-0 right-0 h-full w-1/4 bg-primary z-0 [clip-path:polygon(20%_0,100%_0,100%_100%,0%_100%)] opacity-90 pointer-events-none"></div>
 
-      <div className="container mx-auto px-4 py-4 flex items-center justify-between relative z-10">
+      <div className="container mx-auto px-0 py-0 flex items-center justify-between relative z-10">
         {/* Logo */}
-        <div className="flex items-center hover:scale-105 transition-transform">
+        <div className="flex items-center hover:scale-105 transition-transform px-2 py-2">
           <img
             src={VSSCLogo}
             alt="VSSC Logo"
-            className="w-12 h-12 sm:w-16 sm:h-16 object-contain"
+            className="w-8 h-8 sm:w-12 sm:h-12 object-contain"
           />
         </div>
 
@@ -44,14 +45,9 @@ const Header = () => {
         {/* Desktop Buttons */}
         <div className="hidden lg:flex items-center gap-4 relative z-20">
           {!isLoggedIn ? (
-            <Button
-              variant="outline"
-              size="sm"
-              className="px-4 py-2 font-semibold rounded-full border border-primary text-black hover:bg-primary hover:text-white transition-all shadow-sm"
-              onClick={handleLoginToggle}
-            >
-              Login/Register
-            </Button>
+            <div className="pr-3">
+              <ButtonGradient name={"Login/Register"}></ButtonGradient>
+            </div>
           ) : (
             <>
               <Button
