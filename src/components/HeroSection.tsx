@@ -4,14 +4,18 @@ import { motion } from "framer-motion";
 
 const HeroSection = () => {
   const stats = [
-    { icon: "👨‍🏫", title: "Expert Instructor", subtitle: "Professional Expertise" },
-    { icon: "🏆", title: "Lifetime Access", subtitle: "Behind the word mountains" },
-    { icon: "🎓", title: "Get Certificate", subtitle: "Behind the word mountains" },
-    { icon: "📚", title: "30K+ Online Courses", subtitle: "Solid Question Solving & Fresh Topics" },
+    { icon: "👨‍🏫", title: "FINDING NEMO" },
+    { icon: "🏆", title: "THE INCREDIBLES" },
+    { icon: "🎓", title: "INSIDE OUT" },
+    { icon: "📚", title: "THE PURSUIT OF HAPPINESS" },
+    { icon: "📚", title: "HAPPY FEET" },
+    { icon: "📚", title: "HIDDEN FIGURES" },
   ];
 
   const firstPart = "Build The Skills You Need To Be";
   const secondPart = " Successful";
+
+  const duplicatedstats = [...stats, ...stats,...stats,...stats,...stats];
 
   return (
     <section
@@ -94,18 +98,18 @@ const HeroSection = () => {
         </div>
 
         {/* Stats Marquee */}
-        <div className="relative mt-12 sm:mt-16 md:mt-20"> {/* Increased margin-top */}
-          <div className="absolute inset-x-0 bottom-0 bg-black origin-bottom-left rotate-[-3deg] z-20 overflow-hidden translate-y-6 sm:translate-y-10 md:translate-y-12"> {/* Slightly moved down */}
+        <div className="relative mt-12 sm:mt-16 md:mt-20"> 
+          <div className="absolute inset-x-0 bottom-0 bg-black origin-bottom-left rotate-[-3deg] z-20 overflow-hidden translate-y-6 sm:translate-y-10 md:translate-y-12"> 
             <div className="marquee flex gap-2 sm:gap-3 p-2 sm:p-3 md:p-4">
-              {stats.concat(stats).map((stat, idx) => (
+              {duplicatedstats.concat(stats).map((stat, idx) => (
                 <div
                   key={idx}
                   className="text-center bg-gray-800 text-white rounded-lg shadow-none 
                              min-w-[80px] sm:min-w-[100px] md:min-w-[120px] flex-shrink-0 
-                             p-2 sm:p-2.5 md:p-3"
+                             p-1 sm:p-1.5 md:p-1.5"
                 >
-                  <div className="font-semibold text-xs sm:text-sm md:text-base">{stat.title}</div>
-                  <div className="text-[10px] sm:text-xs md:text-sm text-gray-300">{stat.subtitle}</div>
+                  <div className="font-semibold text-xs sm:text-sm ">{stat.title}</div>
+                  {/* <div className="text-[10px] sm:text-xs md:text-sm text-gray-300">{stat.subtitle}</div> */}
                 </div>
               ))}
             </div>
@@ -117,7 +121,7 @@ const HeroSection = () => {
         .marquee {
           display: flex;
           width: fit-content;
-          animation: marqueeAnim 20s linear infinite;
+          animation: marqueeAnim 50s linear infinite;
         }
 
         @keyframes marqueeAnim {
