@@ -41,12 +41,12 @@ const AboutUs = () => {
  
 
   <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
-    We are Always the Best Course <br /> For Your Learning
+     What Does VSSC Offer?   <br /> For Your Learning
   </h2>
 
   <p className="text-gray-600 mb-8">
-    Far far away, behind the word mountains, far from the Consonantia, there live the blind texts.
-    Separated they mark grove right at the coast of the Semantics, a large language ocean.
+    The Vishnu Student Success Centre (VSSC) provides a comprehensive range of resources designed 
+    to support and enhance every aspect of student development.
   </p>
 
   
@@ -54,14 +54,24 @@ const AboutUs = () => {
     <div className="flex items-start gap-4">
     <div className="text-primary text-3xl flex items-center">
       {/* Courses Icon */}
-      <svg xmlns="http://www.w3.org/2000/svg" className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" />
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422A12.083 12.083 0 0112 21.002 12.083 12.083 0 015.84 10.578L12 14z" />
-      </svg>
+      
     </div>
     <div>
-      <h4 className="font-semibold text-gray-900 mb-1">Expert Courses</h4>
-      <p className="text-gray-600 text-sm">High-quality courses taught by experienced instructors to boost your learning and skills.</p>
+      <h4 className="font-semibold text-gray-900 mb-1">Our Services</h4>
+      <p className="text-gray-600 text-sm"> 🎓 Academic Advice – Guidance to help you excel in your studies.</p>
+      <p className="text-gray-600 text-sm"> 🤝 Peer Tutoring & Mentoring – Learn from and collaborate with fellow students.</p>
+      <p className="text-gray-600 text-sm"> 💼 Career Counselling – Prepare for future opportunities with personalised guidance.</p>
+      <p className="text-gray-600 text-sm"> 🗣️ Communication Skills – Build confidence in public speaking and interpersonal skills.</p>
+      <p className="text-gray-600 text-sm"> 🌱 Personality Development – Improve self-awareness and leadership qualities.</p>
+      <p className="text-gray-600 text-sm"> 🏢 Corporate-readiness Workshops – Gain essential workplace skills. </p>
+      <p className="text-gray-600 text-sm"> 💆 Self-care Strategies & Wellness Practices – Focus on balance and well-being. </p>
+
+
+
+
+
+
+
     </div>
   </div>
 
@@ -69,13 +79,15 @@ const AboutUs = () => {
   <div className="flex items-start gap-4">
     <div className="text-primary text-3xl flex items-center">
    
-      <svg xmlns="http://www.w3.org/2000/svg" className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-6h6v6m2 0H7a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v8a2 2 0 01-2 2z" />
-      </svg>
+     
     </div>
     <div>
-      <h4 className="font-semibold text-gray-900 mb-1">Event Management</h4>
-      <p className="text-gray-600 text-sm">Organize and track college events, workshops, and competitions efficiently with ease.</p>
+      <h6 className="font-semibold text-gray-900 mb-1">🎯 Our Mission</h6>
+      <p className="text-gray-600 text-sm"><h3>To foster a nurturing and inclusive environment that promotes:</h3></p>
+      <b><h1>Academic Excellence</h1>
+      <h1>Personal Growth</h1>
+      <h1>Career Readiness</h1></b>
+      
     </div>
   </div>
   </div>
