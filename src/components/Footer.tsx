@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
+import { Facebook, Twitter, Instagram, Linkedin, Underline } from "lucide-react";
 import vssc from "@/assets/VSSC LOGO[1].png";
 
 const Footer = () => {
@@ -112,17 +112,18 @@ const Footer = () => {
             </div>
           </div>
         </div>
+        <div className="w-full overflow-hidden bg-primary py-2 mt-10">
+           <div className="flex whitespace-nowrap animate-marquee">
+          <p className="text-xl sm:text-20xl md:text-7xl lg:text-10xl font-bold mr-20 opacity-5">
+             VISHNU STUDENT SUCCESS CENTRE
+          </p>
+          <p className="text-xl sm:text-20xl md:text-7xl lg:text-10xl font-bold mr-20 opacity-5">
+             VISHNU STUDENT SUCCESS CENTRE
+        </p>
+   </div>
+</div>
 
-        <div className="w-full overflow-hidden bg-primary text-[#809fff] py-2 mt-10">
-          <div className="flex whitespace-nowrap animate-marquee">
-            <p className="text-xl sm:text-2xl md:text-3xl lg:text-5xl font-bold mr-10">
-              VISHNU STUDENT SUCCESS CENTRE
-            </p>
-            <p className="text-xl sm:text-2xl md:text-3xl lg:text-5xl font-bold mr-10">
-              VISHNU STUDENT SUCCESS CENTRE
-            </p>
-          </div>
-        </div>
+        
 
         <div className="mt-6 text-center text-white/70 text-sm">
           @ {new Date().getFullYear()} Vishnu Student Success Centre. All rights
@@ -139,7 +140,7 @@ const Footer = () => {
           .animate-marquee {
             display: flex;
             width: max-content;
-            animation: marquee 60s linear infinite;
+            animation: marquee 10s linear infinite;
           }
         `}
       </style>

@@ -1,15 +1,25 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { User, Menu, X } from "lucide-react";
 import VSSCLogo from "@/assets/VSSC LOGO[1].png";
 import ButtonGradient from "./ui/ButtonGradient";
 
-const Header = ({ props }) => {
+const Header = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleLoginToggle = () => setIsLoggedIn(!isLoggedIn);
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+
+  // Define your routes
+  const navLinks = [
+    { name: "Home", path: "/" },
+    { name: "About", path: "/about" },
+    { name: "Services", path: "/services" },
+    { name: "Tour", path: "/tour" },
+    { name: "Help", path: "/help" },
+  ];
 
   return (
     <header className="relative w-full bg-background border-b border-border">
@@ -19,26 +29,28 @@ const Header = ({ props }) => {
       <div className="container mx-auto px-0 py-0 flex items-center justify-between relative z-10">
         {/* Logo */}
         <div className="flex items-center hover:scale-105 transition-transform px-2 py-2">
-          <img
-            src={VSSCLogo}
-            alt="VSSC Logo"
-            className="w-8 h-8 sm:w-12 sm:h-12 object-contain"
-          />
+          <Link to="/">
+            <img
+              src={VSSCLogo}
+              alt="VSSC Logo"
+              className="w-8 h-8 sm:w-12 sm:h-12 object-contain"
+            />
+          </Link>
         </div>
 
         {/* Desktop Nav */}
         <nav className="hidden lg:flex items-center gap-8">
-          {["Home", "About", "Services", "Tour", "Help"].map((link) => (
-            <a
-              key={link}
-              href="#"
+          {navLinks.map((link) => (
+            <Link
+              key={link.name}
+              to={link.path}
               className="relative text-foreground hover:text-primary transition-colors font-semibold
                 after:absolute after:left-1/2 after:bottom-[-4px] after:h-[2px] after:w-0 
                 after:bg-primary after:transition-all after:duration-300 after:origin-center 
                 hover:after:left-0 hover:after:w-full"
             >
-              {link}
-            </a>
+              {link.name}
+            </Link>
           ))}
         </nav>
 
@@ -60,18 +72,18 @@ const Header = ({ props }) => {
                   <User className="w-5 h-5 text-foreground" />
                 </div>
                 <div className="absolute right-0 mt-2 w-44 bg-white border border-border rounded-md shadow-lg opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all duration-200">
-                  <a
-                    href="#"
+                  <Link
+                    to="/reservations"
                     className="block px-4 py-2 text-sm text-foreground hover:bg-gray-100"
                   >
                     Your Reservations
-                  </a>
-                  <a
-                    href="#"
+                  </Link>
+                  <Link
+                    to="/account"
                     className="block px-4 py-2 text-sm text-foreground hover:bg-gray-100"
                   >
                     Account
-                  </a>
+                  </Link>
                 </div>
               </div>
             </>
@@ -88,53 +100,51 @@ const Header = ({ props }) => {
       </div>
 
       {/* Mobile Menu */}
-      {/* Mobile Menu */}
-{isMenuOpen && (
-  <div className="lg:hidden absolute top-full left-0 w-full bg-background border-t border-border shadow-md z-[999]">
-    <nav className="flex flex-col px-6 py-4 gap-4 justify-end items-center">
-      {["Home", "About", "Services", "Tour", "Help"].map((link) => (
-        <a
-          key={link}
-          href="#"
-          onClick={() => setIsMenuOpen(false)}
-          className="relative text-foreground hover:text-primary transition-colors font-semibold
-            after:absolute after:left-1/2 after:bottom-[-2px] after:h-[2px] after:w-0 
-            after:bg-primary after:transition-all after:duration-300 after:origin-center 
-            hover:after:left-0 hover:after:w-full"
-        >
-          {link}
-        </a>
-      ))}
+      {isMenuOpen && (
+        <div className="lg:hidden absolute top-full left-0 w-full bg-background border-t border-border shadow-md z-[999]">
+          <nav className="flex flex-col px-6 py-4 gap-4 justify-end items-center">
+            {navLinks.map((link) => (
+              <Link
+                key={link.name}
+                to={link.path}
+                onClick={() => setIsMenuOpen(false)}
+                className="relative text-foreground hover:text-primary transition-colors font-semibold
+                  after:absolute after:left-1/2 after:bottom-[-2px] after:h-[2px] after:w-0 
+                  after:bg-primary after:transition-all after:duration-300 after:origin-center 
+                  hover:after:left-0 hover:after:w-full"
+              >
+                {link.name}
+              </Link>
+            ))}
 
-      {!isLoggedIn ? (
-        <div className="flex justify-center w-full" onClick={handleLoginToggle}>
-          <ButtonGradient name={"Login/Register"} />
+            {!isLoggedIn ? (
+              <div className="flex justify-center w-full" onClick={handleLoginToggle}>
+                <ButtonGradient name={"Login/Register"} />
+              </div>
+            ) : (
+              <>
+                <div className="flex justify-center w-full">
+                  <ButtonGradient name={"Apply Now →"} />
+                </div>
+                <Link
+                  to="/reservations"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="text-foreground hover:text-primary transition-colors font-semibold"
+                >
+                  Your Reservations
+                </Link>
+                <Link
+                  to="/account"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="text-foreground hover:text-primary transition-colors font-semibold"
+                >
+                  Account
+                </Link>
+              </>
+            )}
+          </nav>
         </div>
-      ) : (
-        <>
-          <div className="flex justify-center w-full">
-            <ButtonGradient name={"Apply Now →"} />
-          </div>
-          <a
-            href="#"
-            onClick={() => setIsMenuOpen(false)}
-            className="text-foreground hover:text-primary transition-colors font-semibold"
-          >
-            Your Reservations
-          </a>
-          <a
-            href="#"
-            onClick={() => setIsMenuOpen(false)}
-            className="text-foreground hover:text-primary transition-colors font-semibold"
-          >
-            Account
-          </a>
-        </>
       )}
-    </nav>
-  </div>
-)}
-
     </header>
   );
 };

@@ -15,7 +15,7 @@ const HeroSection = () => {
   const firstPart = "Learn. Grow.";
   const secondPart = " Prosper.";
 
-  const duplicatedstats = [...stats, ...stats,...stats,...stats,...stats];
+  const duplicatedstats = [...stats, ...stats];
 
   return (
     <section
