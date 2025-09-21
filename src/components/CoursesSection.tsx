@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 
 // FINDING NEMO
 import FindingNemo1 from "@/assets/FindingNemo1.jpg";
@@ -58,15 +57,6 @@ const CoursesSection = () => {
     "HAPPY FEET",
     "HIDDEN FIGURES",
   ];
-
-  const categoryColors: Record<string, string> = {
-    "FINDING NEMO": "hover:bg-pink-600 hover:text-white",
-    "THE INCREDIBLES": "hover:bg-green-700 hover:text-white",
-    "INSIDE OUT": "hover:bg-red-500 hover:text-white",
-    "THE PURSUIT OF HAPPINESS": "hover:bg-sky-600 hover:text-white",
-    "HAPPY FEET": "hover:bg-pink-800 hover:text-white",
-    "HIDDEN FIGURES": "hover:bg-green-400 hover:text-white",
-  };
 
   const activeColors: Record<string, string> = {
     "FINDING NEMO": "bg-pink-600 text-white",
@@ -128,20 +118,13 @@ const CoursesSection = () => {
     ],
   };
 
-
-  const cardGap = 16; // Tailwind gap-4
-  const cardMinWidth = 220;
-
-  
-
-
-  // Slower continuous scroll
+  // Continuous scroll
   useEffect(() => {
     const interval = setInterval(() => {
       if (!scrollRef.current) return;
       const container = scrollRef.current;
       if (container.scrollLeft >= container.scrollWidth / 2) container.scrollLeft = 0;
-      container.scrollBy({ left: 0.5, behavior: "auto" }); // slower
+      container.scrollBy({ left: 0.5, behavior: "auto" });
     }, 20);
     return () => clearInterval(interval);
   }, [activeCategory]);
@@ -153,25 +136,31 @@ const CoursesSection = () => {
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mt-2 mb-6">
             Explore Our Courses by Category
           </h2>
-          <div className="flex flex-wrap justify-center gap-2 sm:gap-3 md:gap-4 mb-8">
-            {categories.map((category) => (
-              <Button
-                key={category}
-                variant="ghost"
-                className={`px-3 sm:px-4 md:px-5 py-1 sm:py-1.5 rounded-full transition-colors 
-                text-xs sm:text-sm md:text-sm font-medium text-black
-                ${activeCategory === category ? activeColors[category] : `bg-muted ${categoryColors[category]}`}`}
-                onClick={() => setActiveCategory(category)}
-              >
-                {category}
-              </Button>
-            ))}
-          </div>
+
+         
+<div className="flex flex-wrap justify-center gap-2 sm:gap-3 md:gap-4 mb-8">
+  {categories.map((category) => (
+    <Button
+      key={category}
+     
+      className={`px-3 sm:px-4 md:px-5 py-1 sm:py-1.5 rounded-full
+                 text-xs sm:text-sm md:text-sm font-medium
+                 ${
+                   activeCategory === category
+                     ? `${activeColors[category]} !hover:bg-[inherit] !hover:text-[inherit]`
+                     : "bg-white text-black !hover:bg-white !hover:text-black"
+                 }`}
+      onClick={() => setActiveCategory(category)}
+    >
+      {category}
+    </Button>
+  ))}
+</div>
+
         </div>
 
+        {/* Courses */}
         <div className="relative">
-          
-
           <div ref={scrollRef} className="overflow-hidden relative">
             <div className="flex gap-4">
               {[...courses[activeCategory], ...courses[activeCategory]].map((course, i) => (
@@ -179,7 +168,11 @@ const CoursesSection = () => {
                   key={i}
                   className="course-card [background-color:hsl(60,100%,95%)] shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden min-w-[200px] max-w-[220px]"
                 >
-                  <img src={course.image} alt={course.focus} className="w-full h-auto max-h-36 object-contain rounded-t-md" />
+                  <img
+                    src={course.image}
+                    alt={course.focus}
+                    className="w-full h-auto max-h-36 object-contain rounded-t-md"
+                  />
                   <CardContent className="p-3 space-y-1">
                     <h3 className="font-semibold text-gray-900 text-sm sm:text-base">{course.focus}</h3>
                     <p className="text-gray-700 text-xs sm:text-sm">{course.desc}</p>
@@ -188,8 +181,6 @@ const CoursesSection = () => {
               ))}
             </div>
           </div>
-
-          
         </div>
       </div>
     </section>

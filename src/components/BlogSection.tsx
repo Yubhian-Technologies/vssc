@@ -81,6 +81,7 @@ const BlogPage = () => {
           <button className="text-white bg-[#1a3791] font-semibold border border-primary rounded px-3 py-1 text-sm hover:bg-black transition">
             More Blogs →
           </button>
+          
         </div>
       </div>
     </section>
