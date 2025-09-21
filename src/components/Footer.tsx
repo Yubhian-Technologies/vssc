@@ -140,7 +140,7 @@ const Footer = () => {
           .animate-marquee {
             display: flex;
             width: max-content;
-            animation: marquee 10s linear infinite;
+            animation: marquee 50s linear infinite;
           }
         `}
       </style>

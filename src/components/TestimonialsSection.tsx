@@ -146,7 +146,7 @@ const TestimonialsSection = () => {
         }
 
         .animate-marquee {
-          animation: marquee 30s linear infinite;
+          animation: marquee 50s linear infinite;
         }
 
         .pause-marquee:hover {
