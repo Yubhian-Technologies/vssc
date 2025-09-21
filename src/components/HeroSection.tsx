@@ -20,9 +20,9 @@ const HeroSection = () => {
   return (
     <section
       data-aos="fade-down"
-      className="relative min-h-[500px] sm:min-h-[600px] md:min-h-[700px] [background-color:hsl(60,100%,95%)]"
+      className="relative h-auto py-10 sm:py-14 [background-color:hsl(60,100%,95%)]"
     >
-      <div className="container mx-auto px-3 py-3 sm:px-3 sm:py-6 md:py-6">
+      <div className="container mx-auto px-2 py- sm:px-4 sm:py-10 md:py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-10 items-center">
           {/* Left Content */}
           <div className="space-y-4 sm:space-y-6 pl-2 sm:pl-6 md:pl-8">
@@ -96,37 +96,51 @@ const HeroSection = () => {
           </motion.div>
         </div>
 
-        {/* Stats Marquee */}
-        <div className="relative mt-12 sm:mt-16 md:mt-20"> 
-          <div className="absolute inset-x-0 bottom-0 bg-black origin-bottom-left rotate-[-3deg] z-20 overflow-hidden translate-y-6 sm:translate-y-10 md:translate-y-12"> 
-            <div className="marquee flex gap-2 sm:gap-3 p-2 sm:p-3 md:p-4">
-              {duplicatedstats.concat(stats).map((stat, idx) => (
-                <div
-                  key={idx}
-                  className="text-center bg-gray-800 text-white rounded-lg shadow-none 
-                             min-w-[80px] sm:min-w-[100px] md:min-w-[120px] flex-shrink-0 
-                             p-1 sm:p-1.5 md:p-1.5"
-                >
-                  <div className="font-semibold text-xs sm:text-sm ">{stat.title}</div>
-                  {/* <div className="text-[10px] sm:text-xs md:text-sm text-gray-300">{stat.subtitle}</div> */}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        
       </div>
+      {/* Stats Marquee */}
+        <div className="relative mt-6 sm:mt-13 md:mt-13">
+  <div className="absolute inset-x-0 bottom-0 bg-black origin-bottom-left rotate-[-3deg] z-20 translate-y-6 sm:translate-y-10 md:translate-y-12">
+    <div className="marquee p-2 sm:p-3 md:p-4">
+      <div className="marquee-content flex gap-2 sm:gap-3">
+        {[...stats, ...stats, ...stats].map((stat, idx) => (
+          <div
+            key={idx}
+            className="text-center bg-gray-800 text-white rounded-lg shadow-none 
+                       min-w-[80px] sm:min-w-[100px] md:min-w-[120px] flex-shrink-0
+                       p-1 sm:p-1.5 md:p-1.5"
+          >
+            <div className="font-semibold text-xs sm:text-sm">{stat.title}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</div>
+
 
       <style>{`
         .marquee {
-          display: flex;
-          width: fit-content;
-          animation: marqueeAnim 50s linear infinite;
-        }
+  width: 100%;       /* full width of parent */
+  overflow: hidden;  /* hide overflowing items */
+  position: relative;
+}
 
-        @keyframes marqueeAnim {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
-        }
+.marquee-content {
+  display: flex;
+  flex-shrink: 0;
+  animation: marqueeAnim 30s linear infinite;
+}
+
+.marquee:hover .marquee-content {
+  animation-play-state: paused;  /* pause on hover */
+}
+
+
+@keyframes marqueeAnim {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-33.333%); }
+}
       `}</style>
     </section>
   );
