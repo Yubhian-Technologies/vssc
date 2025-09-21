@@ -15,14 +15,14 @@ const HeroSection = () => {
   const firstPart = "Learn. Grow.";
   const secondPart = " Prosper.";
 
-  const duplicatedstats = [...stats, ...stats,...stats,...stats,...stats];
+  const duplicatedstats = [...stats, ...stats];
 
   return (
     <section
       data-aos="fade-down"
       className="relative min-h-[500px] sm:min-h-[600px] md:min-h-[700px] [background-color:hsl(60,100%,95%)]"
     >
-      <div className="container mx-auto px-3 py-6 sm:px-4 sm:py-10 md:py-12">
+      <div className="container mx-auto px-3 py-3 sm:px-3 sm:py-6 md:py-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-10 items-center">
           {/* Left Content */}
           <div className="space-y-4 sm:space-y-6 pl-2 sm:pl-6 md:pl-8">
