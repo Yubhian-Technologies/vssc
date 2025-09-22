@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { User, Menu, X, LogOut } from "lucide-react"; // added LogOut icon
-import { auth,db} from "../firebase";
+import { Menu, X, LogOut } from "lucide-react"; 
+import { auth, db } from "../firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import ButtonGradient from "./ui/ButtonGradient";
 import VSSCLogo from "@/assets/VSSC LOGO[1].png";
 import { doc, getDoc } from "firebase/firestore";
-
 
 const Header = () => {
   const navigate = useNavigate();
@@ -14,12 +13,10 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [profileUrl, setProfileUrl] = useState<string | null>(null);
 
-
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setIsLoggedIn(true);
-        // Fetch profileUrl from Firebase Firestore
         const docRef = doc(db, "users", user.uid);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
@@ -35,26 +32,18 @@ const Header = () => {
     return () => unsubscribe();
   }, []);
 
-  // Monitor Firebase auth state for persistent login
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setIsLoggedIn(!!user);
-    });
-    return () => unsubscribe();
-  }, []);
-
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
   const handleLoginClick = () => {
     if (!isLoggedIn) navigate("/auth");
-    else navigate("/hero"); // Redirect to hero/dashboard if logged in
+    else navigate("/hero");
   };
 
   const handleSignOut = async () => {
     try {
       await signOut(auth);
       setIsMenuOpen(false);
-      navigate("/"); // redirect to home after logout
+      navigate("/");
     } catch (err) {
       console.error("Sign out error:", err);
     }
@@ -63,7 +52,7 @@ const Header = () => {
   const navLinks = [
     { name: "Home", path: "/" },
     { name: "About", path: "/about" },
-    { name: "Services", path: "/services" },
+    { name: "Services", path: "/services" }, // dropdown handled below
     { name: "Tour", path: "/tour" },
     { name: "Help", path: "/help" },
   ];
@@ -77,17 +66,66 @@ const Header = () => {
         {/* Logo */}
         <div className="flex items-center hover:scale-105 transition-transform px-2 py-2">
           <Link to="/">
-            <img src={VSSCLogo} alt="VSSC Logo" className="w-8 h-8 sm:w-12 sm:h-12 object-contain" />
+            <img
+              src={VSSCLogo}
+              alt="VSSC Logo"
+              className="w-8 h-8 sm:w-12 sm:h-12 object-contain"
+            />
           </Link>
         </div>
 
         {/* Desktop Nav */}
         <nav className="hidden lg:flex items-center gap-8">
-          {navLinks.map((link) => (
-            <Link key={link.name} to={link.path} className="relative text-foreground hover:text-primary font-semibold">
-              {link.name}
-            </Link>
-          ))}
+          {navLinks.map((link) =>
+            link.name === "Services" ? (
+              <div key={link.name} className="relative group">
+                <span className="relative text-foreground hover:text-primary font-semibold cursor-pointer">
+                  {link.name}
+                </span>
+                {/* Dropdown */}
+                <div className="absolute left-0 mt-2 w-64 bg-white border border-border rounded-md shadow-lg opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all duration-200 z-50">
+                  <Link
+                    to="/services/tutoring"
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-gray-100"
+                  >
+                    Tutoring Services
+                  </Link>
+                  <Link
+                    to="/services/advising"
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-gray-100"
+                  >
+                    Academic Advising
+                  </Link>
+                  <Link
+                    to="/services/workshops"
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-gray-100"
+                  >
+                    Study Skills Workshops
+                  </Link>
+                  <Link
+                    to="/services/counseling"
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-gray-100"
+                  >
+                    Counseling Sessions
+                  </Link>
+                  <Link
+                    to="/services/psychology"
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-gray-100"
+                  >
+                    Psychology Counseling Service
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <Link
+                key={link.name}
+                to={link.path}
+                className="relative text-foreground hover:text-primary font-semibold"
+              >
+                {link.name}
+              </Link>
+            )
+          )}
         </nav>
 
         {/* Desktop Buttons */}
@@ -96,25 +134,35 @@ const Header = () => {
             name={isLoggedIn ? "Apply Now →" : "Login/Register"}
             onClick={handleLoginClick}
           />
-          
+
           {isLoggedIn && (
             <>
               {/* Profile icon */}
               <div className="relative group">
                 <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-primary cursor-pointer">
-                {profileUrl ? (
-                  <img src={profileUrl} alt="Profile" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full bg-gray-300 flex items-center justify-center">
-                    <span className="text-white">U</span>
-                  </div>
-                )}
-              </div>
+                  {profileUrl ? (
+                    <img
+                      src={profileUrl}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gray-300 flex items-center justify-center">
+                      <span className="text-white">U</span>
+                    </div>
+                  )}
+                </div>
                 <div className="absolute right-0 mt-2 w-44 bg-white border border-border rounded-md shadow-lg opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all duration-200">
-                  <Link to="/reservations" className="block px-4 py-2 text-sm text-foreground hover:bg-gray-100">
+                  <Link
+                    to="/reservations"
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-gray-100"
+                  >
                     Your Reservations
                   </Link>
-                  <Link to="/account" className="block px-4 py-2 text-sm text-foreground hover:bg-gray-100">
+                  <Link
+                    to="/account"
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-gray-100"
+                  >
                     Account
                   </Link>
                 </div>
@@ -133,7 +181,10 @@ const Header = () => {
         </div>
 
         {/* Mobile Menu Toggle */}
-        <button className="lg:hidden flex items-center justify-center w-10 h-10 rounded-md border border-border text-white" onClick={toggleMenu}>
+        <button
+          className="lg:hidden flex items-center justify-center w-10 h-10 rounded-md border border-border text-white"
+          onClick={toggleMenu}
+        >
           {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
       </div>
@@ -143,11 +194,19 @@ const Header = () => {
         <div className="lg:hidden absolute top-full left-0 w-full bg-background border-t border-border shadow-md z-[999]">
           <nav className="flex flex-col px-6 py-4 gap-4 justify-end items-center">
             {navLinks.map((link) => (
-              <Link key={link.name} to={link.path} onClick={() => setIsMenuOpen(false)} className="text-foreground hover:text-primary font-semibold">
+              <Link
+                key={link.name}
+                to={link.path}
+                onClick={() => setIsMenuOpen(false)}
+                className="text-foreground hover:text-primary font-semibold"
+              >
                 {link.name}
               </Link>
             ))}
-            <ButtonGradient name={isLoggedIn ? "Apply Now →" : "Login/Register"} onClick={handleLoginClick} />
+            <ButtonGradient
+              name={isLoggedIn ? "Apply Now →" : "Login/Register"}
+              onClick={handleLoginClick}
+            />
             {isLoggedIn && (
               <button
                 onClick={handleSignOut}

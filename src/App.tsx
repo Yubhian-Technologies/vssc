@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import AOS from "aos";
 import "aos/dist/aos.css";
+import { AuthProvider } from "./AuthContext";
 import AccountPage from "./pages/AccountPage"
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -13,10 +14,11 @@ import Auth from "./pages/AuthPage";
 import About from "./pages/About";
 import Services from "./pages/Services";
 import TourPage from "./pages/TourPage";
+import Tutoring from "./pages/TutoringPage";
 import Help from "./pages/Help";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-
+import ProtectedRoute from "./ProctectedRoute";
 import HeroSection from "./components/HeroSection";
 import { auth } from "./firebase"; // import Firebase auth
 import { onAuthStateChanged } from "firebase/auth";
@@ -54,6 +56,7 @@ const App = () => {
         <Toaster />
         <Sonner />
         <BrowserRouter>
+        <AuthProvider>
           <Header />
           <Routes>
             <Route path="/" element={<Index />} />
@@ -62,16 +65,25 @@ const App = () => {
             <Route path="/tour" element={<TourPage />} />
             <Route path="/help" element={<Help />} />
             <Route path = "/account" element={<AccountPage/>} />
+    
             
             {/* Auth route: redirect to hero if already logged in */}
             <Route path="/auth" element={!user ? <Auth /> : <Navigate to="/hero" replace />} />
 
             {/* Hero route: redirect to auth if not logged in */}
             <Route path="/hero" element={user ? <HeroSection /> : <Navigate to="/auth" replace />} />
-            
+            <Route
+            path="/services/tutoring"
+            element={
+              <ProtectedRoute>
+                <Tutoring />
+              </ProtectedRoute>
+              }
+              />
             <Route path="*" element={<NotFound />} />
           </Routes>
           <Footer />
+          </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
