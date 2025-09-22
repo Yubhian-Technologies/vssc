@@ -12,7 +12,7 @@ const HeroSection = () => {
     { icon: "📚", title: "HIDDEN FIGURES" },
   ];
 
-  const firstPart = "Learn. ";
+  const firstPart = "Learn. Grow.";
   const secondPart = " Prosper.";
 
   const duplicatedstats = [...stats, ...stats];
@@ -48,9 +48,7 @@ const HeroSection = () => {
                       visible: { opacity: 1, y: "0em" },
                     }}
                     transition={{ duration: 0.01 }}
-                    className={`text-yellow-500 ${
-                      char === " " ? "inline-block w-2" : ""
-                    }`}
+                    className={`text-yellow-500 ${char === " " ? "inline-block w-2" : ""}`}
                   >
                     {char}
                   </motion.span>
@@ -63,9 +61,7 @@ const HeroSection = () => {
                       visible: { opacity: 1, y: "0em" },
                     }}
                     transition={{ duration: 0.01 }}
-                    className={`text-primary ${
-                      char === " " ? "inline-block w-2" : ""
-                    }`}
+                    className={`text-primary ${char === " " ? "inline-block w-2" : ""}`}
                   >
                     {char}
                   </motion.span>
@@ -73,16 +69,12 @@ const HeroSection = () => {
               </motion.h1>
 
               <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-xs sm:max-w-md md:max-w-lg">
-                The Vishnu Student Success Centre is dedicated to supporting and
-                empowering students on their academic and personal journeys.
+                The Vishnu Student Success Centre is dedicated to supporting and empowering students on their academic and personal journeys.
               </p>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-              <Button
-                size="lg"
-                className="bg-primary hover:bg-black text-white px-6 sm:px-8"
-              >
+              <Button size="lg" className="bg-primary hover:bg-black text-white px-6 sm:px-8">
                 Explore All Courses →
               </Button>
             </div>
@@ -103,28 +95,29 @@ const HeroSection = () => {
             />
           </motion.div>
         </div>
+
+        
       </div>
       {/* Stats Marquee */}
-      <div className="relative mt-6 sm:mt-13 md:mt-13">
-        <div className="absolute inset-x-0 bottom-0 bg-black origin-bottom-left rotate-[-3deg] z-20 translate-y-6 sm:translate-y-10 md:translate-y-12">
-          <div className="marquee p-2 sm:p-3 md:p-4">
-            <div className="marquee-content flex gap-2 sm:gap-3">
-              {[...stats, ...stats, ...stats].map((stat, idx) => (
-                <div
-                  key={idx}
-                  className="text-center bg-gray-800 text-white rounded-lg shadow-none 
+        <div className="relative mt-6 sm:mt-13 md:mt-13">
+  <div className="absolute inset-x-0 bottom-0 bg-black origin-bottom-left rotate-[-3deg] z-20 translate-y-6 sm:translate-y-10 md:translate-y-12">
+    <div className="marquee p-2 sm:p-3 md:p-4">
+      <div className="marquee-content flex gap-2 sm:gap-3">
+        {[...stats, ...stats, ...stats].map((stat, idx) => (
+          <div
+            key={idx}
+            className="text-center bg-gray-800 text-white rounded-lg shadow-none 
                        min-w-[80px] sm:min-w-[100px] md:min-w-[120px] flex-shrink-0
                        p-1 sm:p-1.5 md:p-1.5"
-                >
-                  <div className="font-semibold text-xs sm:text-sm">
-                    {stat.title}
-                  </div>
-                </div>
-              ))}
-            </div>
+          >
+            <div className="font-semibold text-xs sm:text-sm">{stat.title}</div>
           </div>
-        </div>
+        ))}
       </div>
+    </div>
+  </div>
+</div>
+
 
       <style>{`
         .marquee {
