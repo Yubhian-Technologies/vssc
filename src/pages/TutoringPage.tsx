@@ -11,7 +11,7 @@ import {
 import { useAuth } from "../AuthContext";
 import { Users, Clock, BookOpen, User as UserIcon } from "lucide-react";
 import Calendar from "react-calendar";
-import 'react-calendar/dist/Calendar.css';
+import "react-calendar/dist/Calendar.css";
 
 interface TutoringSession {
   id: string;
@@ -25,8 +25,8 @@ interface TutoringSession {
   slotAvailable?: number;
   totalDuration?: number;
   slotDuration?: number;
-  date?: string;       // YYYY-MM-DD
-  startTime?: string;  // "10:00 PM"
+  date?: string; // YYYY-MM-DD
+  startTime?: string; // "10:00 PM"
   participants?: string[];
   bookedSlots?: {
     time: string;
@@ -67,13 +67,22 @@ export default function TutoringPage() {
           if (!session.bookedSlots || session.bookedSlots.length === 0) {
             const slotCount = Math.floor(session.totalDuration / session.slotDuration);
             const bookedSlots = Array.from({ length: slotCount }, (_, i) => {
-              const [hoursStr, minutesStr] = session.startTime!.split(":");
+              const [hoursStr, minutesStrWithSuffix] = session.startTime!.split(":");
               let hours = parseInt(hoursStr);
+              let minutesStr = minutesStrWithSuffix;
+              let suffix = "";
+              if (minutesStrWithSuffix.includes("AM") || minutesStrWithSuffix.includes("PM")) {
+                suffix = minutesStrWithSuffix.slice(-2);
+                minutesStr = minutesStrWithSuffix.slice(0, -2).trim();
+              }
               const minutes = parseInt(minutesStr);
-              if (session.startTime!.toLowerCase().includes("pm") && hours < 12) hours += 12;
+              if (suffix.toLowerCase() === "pm" && hours < 12) hours += 12;
               const slotDate = new Date(session.date!);
               slotDate.setHours(hours, minutes + i * session.slotDuration, 0, 0);
-              const timeStr = `${slotDate.getHours().toString().padStart(2,"0")}:${slotDate.getMinutes().toString().padStart(2,"0")}`;
+              const timeStr = `${slotDate.getHours().toString().padStart(2, "0")}:${slotDate
+                .getMinutes()
+                .toString()
+                .padStart(2, "0")}`;
               return { time: timeStr, booked: false, user: null };
             });
             return { ...session, bookedSlots, slotAvailable: slotCount };
@@ -96,20 +105,15 @@ export default function TutoringPage() {
 
   const normalizeDate = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
 
-  // Check if user already booked any 1-on-1 slot
-  const hasUserBookedAnySlot = (userId: string) => {
-    return sessions.some(session =>
-      !session.isGroup && session.bookedSlots?.some(bs => bs.user === userId)
-    );
-  };
-
   const tileClassName = ({ date }: any) => {
     return sessions.some(session => {
       if (!session.date || (session.isGroup && session.slots === 0) || (!session.isGroup && session.slotAvailable === 0)) return false;
       const sessionDate = normalizeDate(parseDate(session.date));
       const currentDate = normalizeDate(date);
       return sessionDate.getTime() === currentDate.getTime();
-    }) ? "bg-green-300 rounded-full" : "";
+    })
+      ? "bg-green-300 rounded-full"
+      : "";
   };
 
   const handleDateClick = (date: Date) => {
@@ -168,9 +172,10 @@ export default function TutoringPage() {
         );
         alert("You joined the group session!");
       } else {
-        // 1-on-1 restriction
-        if (hasUserBookedAnySlot(user.uid)) {
-          alert("You can only book one 1-on-1 slot across all sessions.");
+        // Block multiple bookings for the same user
+        const alreadyBooked = selectedSession.bookedSlots?.some(s => s.user === user.uid);
+        if (alreadyBooked) {
+          alert("You already booked a slot in this session.");
           return;
         }
 
@@ -185,7 +190,7 @@ export default function TutoringPage() {
           });
 
           setAvailableSlots(prev =>
-            prev.map(s => s.time === selectedSlot ? { ...s, booked: true, user: user.uid } : s)
+            prev.map(s => (s.time === selectedSlot ? { ...s, booked: true, user: user.uid } : s))
           );
 
           setSessions(prev =>
@@ -232,48 +237,70 @@ export default function TutoringPage() {
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {sessions.map(session => (
-            <div key={session.id} className="group relative bg-white border border-gray-200 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden p-6">
+            <div
+              key={session.id}
+              className="group relative bg-white border border-gray-200 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden p-6"
+            >
               <div className="absolute top-0 right-0 px-3 py-1 text-xs font-semibold bg-blue-600 text-white rounded-bl-lg">
                 {session.isGroup ? "Group" : "1-on-1"}
               </div>
-              <h2 className="text-xl font-bold text-gray-800 group-hover:text-blue-600 transition">{session.title}</h2>
+              <h2 className="text-xl font-bold text-gray-800 group-hover:text-blue-600 transition">
+                {session.title}
+              </h2>
               <p className="text-gray-600 mt-2 flex-1">{session.description}</p>
               <div className="mt-4 space-y-2 text-sm text-gray-700">
                 <p className="flex items-center gap-2">
-                  <UserIcon className="w-4 h-4 text-blue-600" /> 
-                  <span><strong>Tutor:</strong> {session.tutorName}</span>
+                  <UserIcon className="w-4 h-4 text-blue-600" />
+                  <span>
+                    <strong>Tutor:</strong> {session.tutorName}
+                  </span>
                 </p>
                 <p className="flex items-center gap-2">
-                  <BookOpen className="w-4 h-4 text-green-600" /> 
-                  <span><strong>Skills:</strong> {session.skills.join(", ")}</span>
+                  <BookOpen className="w-4 h-4 text-green-600" />
+                  <span>
+                    <strong>Skills:</strong> {session.skills.join(", ")}
+                  </span>
                 </p>
                 {session.isGroup ? (
                   <p className="flex items-center gap-2">
-                    <Users className="w-4 h-4 text-pink-600" /> 
-                    <span><strong>Slots Left:</strong> {session.slots}</span>
+                    <Users className="w-4 h-4 text-pink-600" />
+                    <span>
+                      <strong>Slots Left:</strong> {session.slots}
+                    </span>
                   </p>
                 ) : (
                   <p className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-purple-600" /> 
-                    <span><strong>One-to-One Slots:</strong> {session.slotAvailable}</span>
+                    <Clock className="w-4 h-4 text-purple-600" />
+                    <span>
+                      <strong>One-to-One Slots:</strong> {session.slotAvailable}
+                    </span>
                   </p>
                 )}
               </div>
               <button
                 className={`mt-5 w-full py-2 rounded-lg font-semibold text-white transition 
-                  ${session.isGroup 
-                    ? session.slots && session.slots > 0 
-                      ? "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-indigo-600 hover:to-blue-600" 
-                      : "bg-gray-400 cursor-not-allowed"
-                    : session.slotAvailable && session.slotAvailable > 0 && !hasUserBookedAnySlot(user.uid!)
+                  ${
+                    session.isGroup
+                      ? session.slots && session.slots > 0
+                        ? "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-indigo-600 hover:to-blue-600"
+                        : "bg-gray-400 cursor-not-allowed"
+                      : session.slotAvailable && session.slotAvailable > 0
                       ? "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-indigo-600 hover:to-blue-600"
-                      : "bg-gray-400 cursor-not-allowed"}`}
+                      : "bg-gray-400 cursor-not-allowed"
+                  }`}
                 onClick={() => handleBookSlot(session)}
-                disabled={(session.isGroup && (!session.slots || session.slots <= 0)) || (!session.isGroup && (!session.slotAvailable || session.slotAvailable <= 0 || hasUserBookedAnySlot(user.uid!)))}
+                disabled={
+                  (session.isGroup && (!session.slots || session.slots <= 0)) ||
+                  (!session.isGroup && (!session.slotAvailable || session.slotAvailable <= 0))
+                }
               >
-                {session.isGroup 
-                  ? (session.slots && session.slots > 0 ? "Join Session" : "Full") 
-                  : (!hasUserBookedAnySlot(user.uid!) && session.slotAvailable && session.slotAvailable > 0 ? "Book a Slot" : "Already Booked")}
+                {session.isGroup
+                  ? session.slots && session.slots > 0
+                    ? "Join Session"
+                    : "Full"
+                  : session.slotAvailable && session.slotAvailable > 0
+                  ? "Book a Slot"
+                  : "Full"}
               </button>
             </div>
           ))}
@@ -285,28 +312,45 @@ export default function TutoringPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
           <div className="bg-white rounded-xl p-6 w-full max-w-md">
             <h2 className="text-xl font-bold mb-4">{selectedSession.title} - Select Date</h2>
-            <Calendar
-              onClickDay={handleDateClick}
-              tileClassName={tileClassName}
-            />
+            <Calendar onClickDay={handleDateClick} tileClassName={tileClassName} />
 
             {selectedDate && availableSlots.length > 0 && (
               <div className="mt-4">
-                <p className="mb-2 font-semibold">Available Slots on {selectedDate.toDateString()}:</p>
+                <p className="mb-2 font-semibold">
+                  Available Slots on {selectedDate.toDateString()}:
+                </p>
                 <div className="grid grid-cols-2 gap-2 mb-4">
-                  {availableSlots.map(slot => (
-                    <button
-                      key={slot.time}
-                      className={`py-2 rounded-lg text-sm font-semibold text-white transition
-                        ${slot.booked 
-                          ? "bg-gray-400 cursor-not-allowed" 
-                          : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-indigo-600 hover:to-blue-600"}`}
-                      onClick={() => handleSlotSelect(slot.time)}
-                      disabled={slot.booked || hasUserBookedAnySlot(user.uid!)}
-                    >
-                      {slot.time} {slot.booked ? "(Booked)" : ""}
-                    </button>
-                  ))}
+                  {availableSlots.map(slot => {
+                    const userAlreadyBooked = selectedSession.bookedSlots?.some(
+                      s => s.user === user?.uid
+                    );
+                    const isUserSlot = slot.user === user?.uid;
+
+                    return (
+                      <button
+                        key={slot.time}
+                        className={`py-2 rounded-lg text-sm font-semibold text-white transition
+                          ${
+                            slot.booked
+                              ? isUserSlot
+                                ? "bg-green-600 cursor-not-allowed"
+                                : "bg-gray-400 cursor-not-allowed"
+                              : userAlreadyBooked
+                              ? "bg-gray-400 cursor-not-allowed"
+                              : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-indigo-600 hover:to-blue-600"
+                          }`}
+                        onClick={() => handleSlotSelect(slot.time)}
+                        disabled={slot.booked || userAlreadyBooked}
+                      >
+                        {slot.time}{" "}
+                        {slot.booked
+                          ? isUserSlot
+                            ? "(Your Booking)"
+                            : "(Booked)"
+                          : ""}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -327,7 +371,9 @@ export default function TutoringPage() {
           <div className="bg-white rounded-xl p-6 w-96">
             <h2 className="text-xl font-bold mb-4">Confirm Booking</h2>
             <p className="mb-4">
-              Are you sure you want to {selectedSession.isGroup ? "join" : "book"} <strong>{selectedSession.title}</strong>{!selectedSession.isGroup && selectedSlot ? ` at ${selectedSlot}` : ""}?
+              Are you sure you want to {selectedSession.isGroup ? "join" : "book"}{" "}
+              <strong>{selectedSession.title}</strong>
+              {!selectedSession.isGroup && selectedSlot ? ` at ${selectedSlot}` : ""}?
             </p>
             <div className="flex justify-end gap-4">
               <button
