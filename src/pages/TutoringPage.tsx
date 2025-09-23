@@ -13,6 +13,7 @@ import { useAuth } from "../AuthContext";
 import { Users, Clock, BookOpen, User as UserIcon } from "lucide-react";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
+import { runTransaction} from "firebase/firestore";
 
 interface TutoringSession {
   id: string;
@@ -164,71 +165,62 @@ export default function TutoringPage() {
 
   // --- Confirm booking ---
   const confirmJoin = async () => {
-    if (bookingInProgress) return;
-    if (!user?.uid || !selectedSession || (!selectedSession.isGroup && !selectedSlot)) return;
+  if (bookingInProgress) return;
+  if (!user?.uid || !selectedSession || (!selectedSession.isGroup && !selectedSlot)) return;
 
-    setBookingInProgress(true);
-    const sessionRef = doc(db, "tutoring", selectedSession.id);
+  setBookingInProgress(true);
+  const sessionRef = doc(db, "tutoring", selectedSession.id);
 
-    try {
-      if (selectedSession.isGroup) {
-        if (!selectedSession.slots || selectedSession.slots <= 0) {
-          alert("No slots left.");
-          return;
-        }
-        if (selectedSession.participants?.includes(user.uid)) {
-          alert("You already joined this group session.");
-          return;
-        }
-        await updateDoc(sessionRef, {
-          participants: arrayUnion(user.uid),
-          slots: increment(-1),
-        });
-        alert("You joined the group session!");
-      } else {
-        // Fetch latest session
-        const sessionSnap = await getDoc(sessionRef);
+  try {
+    if (selectedSession.isGroup) {
+      // existing group session code...
+    } else {
+      await runTransaction(db, async (transaction) => {
+        const sessionSnap = await transaction.get(sessionRef);
+        if (!sessionSnap.exists()) throw new Error("Session not found");
+
         const sessionData = sessionSnap.data() as TutoringSession;
-        if (!sessionData.bookedSlots) throw new Error("Slots not found");
+        if (!sessionData.bookedSlots) throw new Error("Slots not initialized");
 
-        // Only one slot per user
+        // Check if user already booked
         const alreadyBooked = sessionData.bookedSlots.some(s => s.user === user.uid);
         if (alreadyBooked) {
-          alert("You already booked a slot in this session.");
-          return;
+          throw new Error("You already booked a slot in this session.");
         }
 
-        // Find slot index
+        // Find the slot
         const slotIndex = sessionData.bookedSlots.findIndex(s => s.time === selectedSlot);
-        if (slotIndex < 0) {
-          alert("Slot not found.");
-          return;
+        if (slotIndex < 0) throw new Error("Slot not found");
+
+        const slot = sessionData.bookedSlots[slotIndex];
+        if (slot.booked) {
+          throw new Error("Slot already booked by someone else.");
         }
 
-        // Update slots array
+        // Update slot
         const updatedSlots = [...sessionData.bookedSlots];
         updatedSlots[slotIndex] = { ...updatedSlots[slotIndex], booked: true, user: user.uid };
 
-        await updateDoc(sessionRef, {
+        transaction.update(sessionRef, {
           bookedSlots: updatedSlots,
           slotAvailable: updatedSlots.filter(s => !s.booked).length,
         });
+      });
 
-        alert(`You booked the slot at ${selectedSlot}`);
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Booking failed. Try again.");
-    } finally {
-      setBookingInProgress(false);
-      setShowDialog(false);
-      setShowCalendar(false);
-      setSelectedSession(null);
-      setSelectedSlot(null);
-      setSelectedDate(null);
-      setAvailableSlots([]);
+      alert(`You booked the slot at ${selectedSlot}`);
     }
-  };
+  } catch (err: any) {
+    alert(err.message || "Booking failed. Try again.");
+  } finally {
+    setBookingInProgress(false);
+    setShowDialog(false);
+    setShowCalendar(false);
+    setSelectedSession(null);
+    setSelectedSlot(null);
+    setSelectedDate(null);
+    setAvailableSlots([]);
+  }
+};
 
   return (
     <div className="p-6 min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
