@@ -2,11 +2,12 @@ import { useEffect, useState } from "react";
 import { db } from "../firebase";
 import {
   collection,
-  getDocs,
   doc,
   updateDoc,
   arrayUnion,
   increment,
+  onSnapshot,
+  getDoc,
 } from "firebase/firestore";
 import { useAuth } from "../AuthContext";
 import { Users, Clock, BookOpen, User as UserIcon } from "lucide-react";
@@ -48,56 +49,74 @@ export default function TutoringPage() {
   const [showDialog, setShowDialog] = useState(false);
   const [bookingInProgress, setBookingInProgress] = useState(false);
 
-  // Fetch sessions
+  // --- Fetch sessions in real-time ---
   useEffect(() => {
-    const fetchSessions = async () => {
-      const querySnapshot = await getDocs(collection(db, "tutoring"));
-      const allSessions: TutoringSession[] = querySnapshot.docs.map(doc => ({
+    if (!userCollege) return;
+    const q = collection(db, "tutoring");
+
+    const unsubscribe = onSnapshot(q, async snapshot => {
+      const allSessions: TutoringSession[] = snapshot.docs.map(doc => ({
         id: doc.id,
         ...(doc.data() as TutoringSession),
       }));
 
-      const filtered = allSessions.filter(session =>
-        session.colleges.includes(userCollege)
+      const filtered = allSessions.filter(session => session.colleges.includes(userCollege));
+
+      const updatedSessions = await Promise.all(
+        filtered.map(async session => {
+          if (!session.isGroup && session.slotDuration && session.totalDuration && session.date) {
+            const slotCount = Math.floor(session.totalDuration / session.slotDuration);
+
+            // If bookedSlots doesn't exist, generate and save
+            if (!Array.isArray(session.bookedSlots)) {
+              const generatedSlots = Array.from({ length: slotCount }, (_, i) => {
+                const [hoursStr, minutesStrWithSuffix] = session.startTime!.split(":");
+                let hours = parseInt(hoursStr);
+                let minutesStr = minutesStrWithSuffix;
+                let suffix = "";
+                if (minutesStrWithSuffix.includes("AM") || minutesStrWithSuffix.includes("PM")) {
+                  suffix = minutesStrWithSuffix.slice(-2);
+                  minutesStr = minutesStrWithSuffix.slice(0, -2).trim();
+                }
+                const minutes = parseInt(minutesStr);
+                if (suffix.toLowerCase() === "pm" && hours < 12) hours += 12;
+
+                const slotDate = new Date(session.date!);
+                slotDate.setHours(hours, minutes + i * session.slotDuration, 0, 0);
+
+                const timeStr = `${slotDate.getHours().toString().padStart(2, "0")}:${slotDate
+                  .getMinutes()
+                  .toString()
+                  .padStart(2, "0")}`;
+
+                return { time: timeStr, booked: false, user: null };
+              });
+
+              // Update Firestore with generated slots
+              const sessionRef = doc(db, "tutoring", session.id);
+              await updateDoc(sessionRef, {
+                bookedSlots: generatedSlots,
+                slotAvailable: generatedSlots.length,
+              });
+
+              return { ...session, bookedSlots: generatedSlots, slotAvailable: generatedSlots.length };
+            }
+
+            // Calculate available slots
+            const slotAvailable = session.bookedSlots.filter(s => !s.booked).length;
+            return { ...session, slotAvailable };
+          }
+          return session;
+        })
       );
 
-      // Prepare bookedSlots for 1-on-1 sessions
-      const updatedSessions = filtered.map(session => {
-        if (!session.isGroup && session.slotDuration && session.totalDuration && session.date) {
-          if (!session.bookedSlots || session.bookedSlots.length === 0) {
-            const slotCount = Math.floor(session.totalDuration / session.slotDuration);
-            const bookedSlots = Array.from({ length: slotCount }, (_, i) => {
-              const [hoursStr, minutesStrWithSuffix] = session.startTime!.split(":");
-              let hours = parseInt(hoursStr);
-              let minutesStr = minutesStrWithSuffix;
-              let suffix = "";
-              if (minutesStrWithSuffix.includes("AM") || minutesStrWithSuffix.includes("PM")) {
-                suffix = minutesStrWithSuffix.slice(-2);
-                minutesStr = minutesStrWithSuffix.slice(0, -2).trim();
-              }
-              const minutes = parseInt(minutesStr);
-              if (suffix.toLowerCase() === "pm" && hours < 12) hours += 12;
-              const slotDate = new Date(session.date!);
-              slotDate.setHours(hours, minutes + i * session.slotDuration, 0, 0);
-              const timeStr = `${slotDate.getHours().toString().padStart(2, "0")}:${slotDate
-                .getMinutes()
-                .toString()
-                .padStart(2, "0")}`;
-              return { time: timeStr, booked: false, user: null };
-            });
-            return { ...session, bookedSlots, slotAvailable: slotCount };
-          }
-        }
-        return session;
-      });
-
       setSessions(updatedSessions);
-    };
+    });
 
-    if (userCollege) fetchSessions();
+    return () => unsubscribe();
   }, [userCollege]);
 
-  // Helpers
+  // --- Helpers ---
   const parseDate = (dateStr: string) => {
     const [year, month, day] = dateStr.split("-").map(Number);
     return new Date(year, month - 1, day);
@@ -107,10 +126,11 @@ export default function TutoringPage() {
 
   const tileClassName = ({ date }: any) => {
     return sessions.some(session => {
-      if (!session.date || (session.isGroup && session.slots === 0) || (!session.isGroup && session.slotAvailable === 0)) return false;
+      if (!session.date) return false;
       const sessionDate = normalizeDate(parseDate(session.date));
       const currentDate = normalizeDate(date);
-      return sessionDate.getTime() === currentDate.getTime();
+      const hasAvailableSlot = session.bookedSlots?.some(s => !s.booked);
+      return sessionDate.getTime() === currentDate.getTime() && hasAvailableSlot;
     })
       ? "bg-green-300 rounded-full"
       : "";
@@ -142,6 +162,7 @@ export default function TutoringPage() {
     setShowDialog(true);
   };
 
+  // --- Confirm booking ---
   const confirmJoin = async () => {
     if (bookingInProgress) return;
     if (!user?.uid || !selectedSession || (!selectedSession.isGroup && !selectedSlot)) return;
@@ -163,54 +184,37 @@ export default function TutoringPage() {
           participants: arrayUnion(user.uid),
           slots: increment(-1),
         });
-        setSessions(prev =>
-          prev.map(s =>
-            s.id === selectedSession.id
-              ? { ...s, slots: s.slots ? s.slots - 1 : 0, participants: [...(s.participants || []), user.uid] }
-              : s
-          )
-        );
         alert("You joined the group session!");
       } else {
-        // Block multiple bookings for the same user
-        const alreadyBooked = selectedSession.bookedSlots?.some(s => s.user === user.uid);
+        // Fetch latest session
+        const sessionSnap = await getDoc(sessionRef);
+        const sessionData = sessionSnap.data() as TutoringSession;
+        if (!sessionData.bookedSlots) throw new Error("Slots not found");
+
+        // Only one slot per user
+        const alreadyBooked = sessionData.bookedSlots.some(s => s.user === user.uid);
         if (alreadyBooked) {
           alert("You already booked a slot in this session.");
           return;
         }
 
-        const slotIndex = selectedSession.bookedSlots?.findIndex(s => s.time === selectedSlot);
-        if (slotIndex === undefined || slotIndex < 0) return;
-
-        if (!selectedSession.bookedSlots![slotIndex].booked) {
-          await updateDoc(sessionRef, {
-            [`bookedSlots.${slotIndex}.booked`]: true,
-            [`bookedSlots.${slotIndex}.user`]: user.uid,
-            slotAvailable: increment(-1),
-          });
-
-          setAvailableSlots(prev =>
-            prev.map(s => (s.time === selectedSlot ? { ...s, booked: true, user: user.uid } : s))
-          );
-
-          setSessions(prev =>
-            prev.map(s =>
-              s.id === selectedSession.id
-                ? {
-                    ...s,
-                    bookedSlots: s.bookedSlots?.map(bs =>
-                      bs.time === selectedSlot ? { ...bs, booked: true, user: user.uid } : bs
-                    ),
-                    slotAvailable: s.slotAvailable ? s.slotAvailable - 1 : 0,
-                  }
-                : s
-            )
-          );
-
-          alert(`You booked the slot at ${selectedSlot}`);
-        } else {
-          alert("This slot is already booked.");
+        // Find slot index
+        const slotIndex = sessionData.bookedSlots.findIndex(s => s.time === selectedSlot);
+        if (slotIndex < 0) {
+          alert("Slot not found.");
+          return;
         }
+
+        // Update slots array
+        const updatedSlots = [...sessionData.bookedSlots];
+        updatedSlots[slotIndex] = { ...updatedSlots[slotIndex], booked: true, user: user.uid };
+
+        await updateDoc(sessionRef, {
+          bookedSlots: updatedSlots,
+          slotAvailable: updatedSlots.filter(s => !s.booked).length,
+        });
+
+        alert(`You booked the slot at ${selectedSlot}`);
       }
     } catch (err) {
       console.error(err);
@@ -321,33 +325,17 @@ export default function TutoringPage() {
                 </p>
                 <div className="grid grid-cols-2 gap-2 mb-4">
                   {availableSlots.map(slot => {
-                    const userAlreadyBooked = selectedSession.bookedSlots?.some(
-                      s => s.user === user?.uid
-                    );
                     const isUserSlot = slot.user === user?.uid;
 
                     return (
                       <button
                         key={slot.time}
                         className={`py-2 rounded-lg text-sm font-semibold text-white transition
-                          ${
-                            slot.booked
-                              ? isUserSlot
-                                ? "bg-green-600 cursor-not-allowed"
-                                : "bg-gray-400 cursor-not-allowed"
-                              : userAlreadyBooked
-                              ? "bg-gray-400 cursor-not-allowed"
-                              : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-indigo-600 hover:to-blue-600"
-                          }`}
+                          ${slot.booked ? (isUserSlot ? "bg-green-600" : "bg-gray-400") : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-indigo-600 hover:to-blue-600"}`}
                         onClick={() => handleSlotSelect(slot.time)}
-                        disabled={slot.booked || userAlreadyBooked}
+                        disabled={slot.booked}
                       >
-                        {slot.time}{" "}
-                        {slot.booked
-                          ? isUserSlot
-                            ? "(Your Booking)"
-                            : "(Booked)"
-                          : ""}
+                        {slot.time} {slot.booked ? (isUserSlot ? "(Your Booking)" : "(Booked)") : ""}
                       </button>
                     );
                   })}
