@@ -3,15 +3,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const services = [
-  { title: "Academic Advice", icon: "📚" },
-  { title: "Peer Tutoring", icon: "👨‍🏫" },
-  { title: "Career Counselling", icon: "🏆" },
-  { title: "Peer Mentoring", icon: "🤝" },
-  { title: "Communication Skills", icon: "🗣️" },
-  { title: "Personality Development", icon: "🌟" },
-  { title: "Corporate-Readiness Workshops", icon: "💼" },
-  { title: "Self-Care Strategies", icon: "🧘‍♀️" },
-  { title: "Wellness Practices", icon: "🌿" },
+  { title: "Academic Advice", icon: "" },
+  { title: "Peer Tutoring", icon: "" },
+  { title: "Career Counselling", icon: "" },
+  { title: "Peer Mentoring", icon: "" },
+  { title: "Communication Skills", icon: "" },
+  { title: "Personality Development", icon: "" },
+  { title: "Corporate-Readiness Workshops", icon: "" },
+  { title: "Self-Care Strategies", icon: "" },
+  { title: "Wellness Practices", icon: "" },
 ];
 
 const ServicesSection = () => {
