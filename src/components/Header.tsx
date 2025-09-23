@@ -79,9 +79,12 @@ const Header = () => {
           {navLinks.map((link) =>
             link.name === "Services" ? (
               <div key={link.name} className="relative group">
-                <span className="relative text-foreground hover:text-primary font-semibold cursor-pointer">
-                  {link.name}
-                </span>
+                <Link
+        to="/services"
+        className="relative text-foreground hover:text-primary font-semibold cursor-pointer"
+      >
+        {link.name}
+      </Link>
                 {/* Dropdown */}
                 <div className="absolute left-0 mt-2 w-64 bg-white border border-border rounded-md shadow-lg opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all duration-200 z-50">
                   <Link
