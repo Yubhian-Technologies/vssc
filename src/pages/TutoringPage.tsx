@@ -223,8 +223,8 @@ export default function TutoringPage() {
 };
 
   return (
-    <div className="p-6 min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
-      <h1 className="text-3xl font-extrabold text-center mb-10 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+    <div className="p-6 min-h-screen [background-color:hsl(60,100%,95%)]">
+      <h1 className="text-3xl font-extrabold text-center mb-10 bg-gradient-to-r from-primary to-indigo-700 bg-clip-text text-transparent">
         Available Tutoring Sessions
       </h1>
 
@@ -235,18 +235,18 @@ export default function TutoringPage() {
           {sessions.map(session => (
             <div
               key={session.id}
-              className="group relative bg-white border border-gray-200 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden p-6"
+              className="group relative [background-color:hsl(60,100%,90%)] border border-gray-200 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden p-6"
             >
-              <div className="absolute top-0 right-0 px-3 py-1 text-xs font-semibold bg-blue-600 text-white rounded-bl-lg">
+              <div className="absolute top-0 right-0 px-3 py-1 text-xs font-semibold bg-primary text-white rounded-bl-lg">
                 {session.isGroup ? "Group" : "1-on-1"}
               </div>
-              <h2 className="text-xl font-bold text-gray-800 group-hover:text-blue-600 transition">
+              <h2 className="text-xl font-bold text-gray-800 group-hover:text-primary transition">
                 {session.title}
               </h2>
               <p className="text-gray-600 mt-2 flex-1">{session.description}</p>
               <div className="mt-4 space-y-2 text-sm text-gray-700">
                 <p className="flex items-center gap-2">
-                  <UserIcon className="w-4 h-4 text-blue-600" />
+                  <UserIcon className="w-4 h-4 text-primary" />
                   <span>
                     <strong>Tutor:</strong> {session.tutorName}
                   </span>
@@ -278,10 +278,10 @@ export default function TutoringPage() {
                   ${
                     session.isGroup
                       ? session.slots && session.slots > 0
-                        ? "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-indigo-600 hover:to-blue-600"
+                        ? "bg-gradient-to-r from-primary to-indigo-800 hover:from-indigo-800 hover:to-blue-600"
                         : "bg-gray-400 cursor-not-allowed"
                       : session.slotAvailable && session.slotAvailable > 0
-                      ? "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-indigo-600 hover:to-blue-600"
+                      ? "bg-gradient-to-r from-primary to-indigo-800 hover:from-indigo-800 hover:to-blue-600"
                       : "bg-gray-400 cursor-not-allowed"
                   }`}
                 onClick={() => handleBookSlot(session)}
