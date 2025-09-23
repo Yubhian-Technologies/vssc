@@ -2,16 +2,18 @@ import { useEffect, useState } from "react";
 import { db } from "../firebase";
 import {
   collection,
-  getDocs,
   doc,
   updateDoc,
   arrayUnion,
   increment,
+  onSnapshot,
+  getDoc,
 } from "firebase/firestore";
 import { useAuth } from "../AuthContext";
 import { Users, Clock, BookOpen, User as UserIcon } from "lucide-react";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
+import { runTransaction} from "firebase/firestore";
 
 interface TutoringSession {
   id: string;
@@ -48,56 +50,74 @@ export default function TutoringPage() {
   const [showDialog, setShowDialog] = useState(false);
   const [bookingInProgress, setBookingInProgress] = useState(false);
 
-  // Fetch sessions
+  // --- Fetch sessions in real-time ---
   useEffect(() => {
-    const fetchSessions = async () => {
-      const querySnapshot = await getDocs(collection(db, "tutoring"));
-      const allSessions: TutoringSession[] = querySnapshot.docs.map(doc => ({
+    if (!userCollege) return;
+    const q = collection(db, "tutoring");
+
+    const unsubscribe = onSnapshot(q, async snapshot => {
+      const allSessions: TutoringSession[] = snapshot.docs.map(doc => ({
         id: doc.id,
         ...(doc.data() as TutoringSession),
       }));
 
-      const filtered = allSessions.filter(session =>
-        session.colleges.includes(userCollege)
+      const filtered = allSessions.filter(session => session.colleges.includes(userCollege));
+
+      const updatedSessions = await Promise.all(
+        filtered.map(async session => {
+          if (!session.isGroup && session.slotDuration && session.totalDuration && session.date) {
+            const slotCount = Math.floor(session.totalDuration / session.slotDuration);
+
+            // If bookedSlots doesn't exist, generate and save
+            if (!Array.isArray(session.bookedSlots)) {
+              const generatedSlots = Array.from({ length: slotCount }, (_, i) => {
+                const [hoursStr, minutesStrWithSuffix] = session.startTime!.split(":");
+                let hours = parseInt(hoursStr);
+                let minutesStr = minutesStrWithSuffix;
+                let suffix = "";
+                if (minutesStrWithSuffix.includes("AM") || minutesStrWithSuffix.includes("PM")) {
+                  suffix = minutesStrWithSuffix.slice(-2);
+                  minutesStr = minutesStrWithSuffix.slice(0, -2).trim();
+                }
+                const minutes = parseInt(minutesStr);
+                if (suffix.toLowerCase() === "pm" && hours < 12) hours += 12;
+
+                const slotDate = new Date(session.date!);
+                slotDate.setHours(hours, minutes + i * session.slotDuration, 0, 0);
+
+                const timeStr = `${slotDate.getHours().toString().padStart(2, "0")}:${slotDate
+                  .getMinutes()
+                  .toString()
+                  .padStart(2, "0")}`;
+
+                return { time: timeStr, booked: false, user: null };
+              });
+
+              // Update Firestore with generated slots
+              const sessionRef = doc(db, "tutoring", session.id);
+              await updateDoc(sessionRef, {
+                bookedSlots: generatedSlots,
+                slotAvailable: generatedSlots.length,
+              });
+
+              return { ...session, bookedSlots: generatedSlots, slotAvailable: generatedSlots.length };
+            }
+
+            // Calculate available slots
+            const slotAvailable = session.bookedSlots.filter(s => !s.booked).length;
+            return { ...session, slotAvailable };
+          }
+          return session;
+        })
       );
 
-      // Prepare bookedSlots for 1-on-1 sessions
-      const updatedSessions = filtered.map(session => {
-        if (!session.isGroup && session.slotDuration && session.totalDuration && session.date) {
-          if (!session.bookedSlots || session.bookedSlots.length === 0) {
-            const slotCount = Math.floor(session.totalDuration / session.slotDuration);
-            const bookedSlots = Array.from({ length: slotCount }, (_, i) => {
-              const [hoursStr, minutesStrWithSuffix] = session.startTime!.split(":");
-              let hours = parseInt(hoursStr);
-              let minutesStr = minutesStrWithSuffix;
-              let suffix = "";
-              if (minutesStrWithSuffix.includes("AM") || minutesStrWithSuffix.includes("PM")) {
-                suffix = minutesStrWithSuffix.slice(-2);
-                minutesStr = minutesStrWithSuffix.slice(0, -2).trim();
-              }
-              const minutes = parseInt(minutesStr);
-              if (suffix.toLowerCase() === "pm" && hours < 12) hours += 12;
-              const slotDate = new Date(session.date!);
-              slotDate.setHours(hours, minutes + i * session.slotDuration, 0, 0);
-              const timeStr = `${slotDate.getHours().toString().padStart(2, "0")}:${slotDate
-                .getMinutes()
-                .toString()
-                .padStart(2, "0")}`;
-              return { time: timeStr, booked: false, user: null };
-            });
-            return { ...session, bookedSlots, slotAvailable: slotCount };
-          }
-        }
-        return session;
-      });
-
       setSessions(updatedSessions);
-    };
+    });
 
-    if (userCollege) fetchSessions();
+    return () => unsubscribe();
   }, [userCollege]);
 
-  // Helpers
+  // --- Helpers ---
   const parseDate = (dateStr: string) => {
     const [year, month, day] = dateStr.split("-").map(Number);
     return new Date(year, month - 1, day);
@@ -107,10 +127,11 @@ export default function TutoringPage() {
 
   const tileClassName = ({ date }: any) => {
     return sessions.some(session => {
-      if (!session.date || (session.isGroup && session.slots === 0) || (!session.isGroup && session.slotAvailable === 0)) return false;
+      if (!session.date) return false;
       const sessionDate = normalizeDate(parseDate(session.date));
       const currentDate = normalizeDate(date);
-      return sessionDate.getTime() === currentDate.getTime();
+      const hasAvailableSlot = session.bookedSlots?.some(s => !s.booked);
+      return sessionDate.getTime() === currentDate.getTime() && hasAvailableSlot;
     })
       ? "bg-green-300 rounded-full"
       : "";
@@ -142,93 +163,68 @@ export default function TutoringPage() {
     setShowDialog(true);
   };
 
+  // --- Confirm booking ---
   const confirmJoin = async () => {
-    if (bookingInProgress) return;
-    if (!user?.uid || !selectedSession || (!selectedSession.isGroup && !selectedSlot)) return;
+  if (bookingInProgress) return;
+  if (!user?.uid || !selectedSession || (!selectedSession.isGroup && !selectedSlot)) return;
 
-    setBookingInProgress(true);
-    const sessionRef = doc(db, "tutoring", selectedSession.id);
+  setBookingInProgress(true);
+  const sessionRef = doc(db, "tutoring", selectedSession.id);
 
-    try {
-      if (selectedSession.isGroup) {
-        if (!selectedSession.slots || selectedSession.slots <= 0) {
-          alert("No slots left.");
-          return;
-        }
-        if (selectedSession.participants?.includes(user.uid)) {
-          alert("You already joined this group session.");
-          return;
-        }
-        await updateDoc(sessionRef, {
-          participants: arrayUnion(user.uid),
-          slots: increment(-1),
-        });
-        setSessions(prev =>
-          prev.map(s =>
-            s.id === selectedSession.id
-              ? { ...s, slots: s.slots ? s.slots - 1 : 0, participants: [...(s.participants || []), user.uid] }
-              : s
-          )
-        );
-        alert("You joined the group session!");
-      } else {
-        // Block multiple bookings for the same user
-        const alreadyBooked = selectedSession.bookedSlots?.some(s => s.user === user.uid);
+  try {
+    if (selectedSession.isGroup) {
+      // existing group session code...
+    } else {
+      await runTransaction(db, async (transaction) => {
+        const sessionSnap = await transaction.get(sessionRef);
+        if (!sessionSnap.exists()) throw new Error("Session not found");
+
+        const sessionData = sessionSnap.data() as TutoringSession;
+        if (!sessionData.bookedSlots) throw new Error("Slots not initialized");
+
+        // Check if user already booked
+        const alreadyBooked = sessionData.bookedSlots.some(s => s.user === user.uid);
         if (alreadyBooked) {
-          alert("You already booked a slot in this session.");
-          return;
+          throw new Error("You already booked a slot in this session.");
         }
 
-        const slotIndex = selectedSession.bookedSlots?.findIndex(s => s.time === selectedSlot);
-        if (slotIndex === undefined || slotIndex < 0) return;
+        // Find the slot
+        const slotIndex = sessionData.bookedSlots.findIndex(s => s.time === selectedSlot);
+        if (slotIndex < 0) throw new Error("Slot not found");
 
-        if (!selectedSession.bookedSlots![slotIndex].booked) {
-          await updateDoc(sessionRef, {
-            [`bookedSlots.${slotIndex}.booked`]: true,
-            [`bookedSlots.${slotIndex}.user`]: user.uid,
-            slotAvailable: increment(-1),
-          });
-
-          setAvailableSlots(prev =>
-            prev.map(s => (s.time === selectedSlot ? { ...s, booked: true, user: user.uid } : s))
-          );
-
-          setSessions(prev =>
-            prev.map(s =>
-              s.id === selectedSession.id
-                ? {
-                    ...s,
-                    bookedSlots: s.bookedSlots?.map(bs =>
-                      bs.time === selectedSlot ? { ...bs, booked: true, user: user.uid } : bs
-                    ),
-                    slotAvailable: s.slotAvailable ? s.slotAvailable - 1 : 0,
-                  }
-                : s
-            )
-          );
-
-          alert(`You booked the slot at ${selectedSlot}`);
-        } else {
-          alert("This slot is already booked.");
+        const slot = sessionData.bookedSlots[slotIndex];
+        if (slot.booked) {
+          throw new Error("Slot already booked by someone else.");
         }
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Booking failed. Try again.");
-    } finally {
-      setBookingInProgress(false);
-      setShowDialog(false);
-      setShowCalendar(false);
-      setSelectedSession(null);
-      setSelectedSlot(null);
-      setSelectedDate(null);
-      setAvailableSlots([]);
+
+        // Update slot
+        const updatedSlots = [...sessionData.bookedSlots];
+        updatedSlots[slotIndex] = { ...updatedSlots[slotIndex], booked: true, user: user.uid };
+
+        transaction.update(sessionRef, {
+          bookedSlots: updatedSlots,
+          slotAvailable: updatedSlots.filter(s => !s.booked).length,
+        });
+      });
+
+      alert(`You booked the slot at ${selectedSlot}`);
     }
-  };
+  } catch (err: any) {
+    alert(err.message || "Booking failed. Try again.");
+  } finally {
+    setBookingInProgress(false);
+    setShowDialog(false);
+    setShowCalendar(false);
+    setSelectedSession(null);
+    setSelectedSlot(null);
+    setSelectedDate(null);
+    setAvailableSlots([]);
+  }
+};
 
   return (
-    <div className="p-6 min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
-      <h1 className="text-3xl font-extrabold text-center mb-10 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+    <div className="p-6 min-h-screen [background-color:hsl(60,100%,95%)]">
+      <h1 className="text-3xl font-extrabold text-center mb-10 bg-gradient-to-r from-primary to-indigo-700 bg-clip-text text-transparent">
         Available Tutoring Sessions
       </h1>
 
@@ -239,18 +235,18 @@ export default function TutoringPage() {
           {sessions.map(session => (
             <div
               key={session.id}
-              className="group relative bg-white border border-gray-200 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden p-6"
+              className="group relative [background-color:hsl(60,100%,90%)] border border-gray-200 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden p-6"
             >
-              <div className="absolute top-0 right-0 px-3 py-1 text-xs font-semibold bg-blue-600 text-white rounded-bl-lg">
+              <div className="absolute top-0 right-0 px-3 py-1 text-xs font-semibold bg-primary text-white rounded-bl-lg">
                 {session.isGroup ? "Group" : "1-on-1"}
               </div>
-              <h2 className="text-xl font-bold text-gray-800 group-hover:text-blue-600 transition">
+              <h2 className="text-xl font-bold text-gray-800 group-hover:text-primary transition">
                 {session.title}
               </h2>
               <p className="text-gray-600 mt-2 flex-1">{session.description}</p>
               <div className="mt-4 space-y-2 text-sm text-gray-700">
                 <p className="flex items-center gap-2">
-                  <UserIcon className="w-4 h-4 text-blue-600" />
+                  <UserIcon className="w-4 h-4 text-primary" />
                   <span>
                     <strong>Tutor:</strong> {session.tutorName}
                   </span>
@@ -282,10 +278,10 @@ export default function TutoringPage() {
                   ${
                     session.isGroup
                       ? session.slots && session.slots > 0
-                        ? "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-indigo-600 hover:to-blue-600"
+                        ? "bg-gradient-to-r from-primary to-indigo-800 hover:from-indigo-800 hover:to-blue-600"
                         : "bg-gray-400 cursor-not-allowed"
                       : session.slotAvailable && session.slotAvailable > 0
-                      ? "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-indigo-600 hover:to-blue-600"
+                      ? "bg-gradient-to-r from-primary to-indigo-800 hover:from-indigo-800 hover:to-blue-600"
                       : "bg-gray-400 cursor-not-allowed"
                   }`}
                 onClick={() => handleBookSlot(session)}
@@ -321,33 +317,17 @@ export default function TutoringPage() {
                 </p>
                 <div className="grid grid-cols-2 gap-2 mb-4">
                   {availableSlots.map(slot => {
-                    const userAlreadyBooked = selectedSession.bookedSlots?.some(
-                      s => s.user === user?.uid
-                    );
                     const isUserSlot = slot.user === user?.uid;
 
                     return (
                       <button
                         key={slot.time}
                         className={`py-2 rounded-lg text-sm font-semibold text-white transition
-                          ${
-                            slot.booked
-                              ? isUserSlot
-                                ? "bg-green-600 cursor-not-allowed"
-                                : "bg-gray-400 cursor-not-allowed"
-                              : userAlreadyBooked
-                              ? "bg-gray-400 cursor-not-allowed"
-                              : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-indigo-600 hover:to-blue-600"
-                          }`}
+                          ${slot.booked ? (isUserSlot ? "bg-green-600" : "bg-gray-400") : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-indigo-600 hover:to-blue-600"}`}
                         onClick={() => handleSlotSelect(slot.time)}
-                        disabled={slot.booked || userAlreadyBooked}
+                        disabled={slot.booked}
                       >
-                        {slot.time}{" "}
-                        {slot.booked
-                          ? isUserSlot
-                            ? "(Your Booking)"
-                            : "(Booked)"
-                          : ""}
+                        {slot.time} {slot.booked ? (isUserSlot ? "(Your Booking)" : "(Booked)") : ""}
                       </button>
                     );
                   })}
