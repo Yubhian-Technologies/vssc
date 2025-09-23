@@ -4,12 +4,12 @@ import { motion } from "framer-motion";
 
 const HeroSection = () => {
   const stats = [
-    { icon: "👨‍🏫", title: "FINDING NEMO" },
-    { icon: "🏆", title: "THE INCREDIBLES" },
-    { icon: "🎓", title: "INSIDE OUT" },
-    { icon: "📚", title: "THE PURSUIT OF HAPPINESS" },
-    { icon: "📚", title: "HAPPY FEET" },
-    { icon: "📚", title: "HIDDEN FIGURES" },
+    { icon: "", title: "FINDING NEMO" },
+    { icon: "", title: "THE INCREDIBLES" },
+    { icon: "", title: "INSIDE OUT" },
+    { icon: "", title: "THE PURSUIT OF HAPPINESS" },
+    { icon: "", title: "HAPPY FEET" },
+    { icon: "", title: "HIDDEN FIGURES" },
   ];
 
   const firstPart = "Learn. Grow.";
