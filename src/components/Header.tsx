@@ -37,7 +37,7 @@ const Header = () => {
 
   const handleLoginClick = () => {
     if (!isLoggedIn) navigate("/auth");
-    else navigate("/hero");
+    else navigate("/appointment");
   };
 
   const handleSignOut = async () => {
@@ -136,7 +136,7 @@ const Header = () => {
         {/* Desktop Buttons */}
         <div className="hidden lg:flex items-center gap-4 relative z-20">
           <ButtonGradient
-            name={isLoggedIn ? "Apply Now →" : "Login/Register"}
+            name={isLoggedIn ? "Book an Appointment →" : "Login/Register"}
             onClick={handleLoginClick}
           />
 
