@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, X, LogOut } from "lucide-react"; 
+import { Menu, X, LogOut } from "lucide-react";
 import { auth, db } from "../firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import ButtonGradient from "./ui/ButtonGradient";
@@ -12,6 +12,7 @@ const Header = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [profileUrl, setProfileUrl] = useState<string | null>(null);
+  const [isServicesOpen, setIsServicesOpen] = useState(false); // for mobile dropdown
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -52,7 +53,7 @@ const Header = () => {
   const navLinks = [
     { name: "Home", path: "/" },
     { name: "About", path: "/about" },
-    { name: "Services", path: "/services" }, // dropdown handled below
+    { name: "Services", path: "/services" }, // dropdown handled separately
     { name: "Tour", path: "/tour" },
     { name: "Help", path: "/help" },
   ];
@@ -80,40 +81,41 @@ const Header = () => {
             link.name === "Services" ? (
               <div key={link.name} className="relative group">
                 <Link
-        to="/services"
-        className="relative text-foreground hover:text-primary font-semibold cursor-pointer"
-      >
-        {link.name}
-      </Link>
-                {/* Dropdown */}
-                <div className="absolute left-0 mt-2 w-64 bg-white border border-border rounded-md shadow-lg opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all duration-200 z-50">
+                  to="/services"
+                  className="relative text-foreground hover:text-primary font-semibold cursor-pointer flex items-center gap-1"
+                >
+                  {link.name} <span>▾</span>
+                </Link>
+
+                {/* Desktop Dropdown */}
+                <div className="absolute left-0 mt-2 w-64 [background-color:hsl(60,100%,95%)] border border-border rounded-md shadow-lg opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all duration-200 z-50">
                   <Link
                     to="/services/tutoring"
-                    className="block px-4 py-2 text-sm text-foreground hover:bg-gray-100"
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-muted rounded-t-md"
                   >
                     Tutoring Services
                   </Link>
                   <Link
                     to="/services/advising"
-                    className="block px-4 py-2 text-sm text-foreground hover:bg-gray-100"
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-muted"
                   >
                     Academic Advising
                   </Link>
                   <Link
                     to="/services/workshops"
-                    className="block px-4 py-2 text-sm text-foreground hover:bg-gray-100"
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-muted"
                   >
                     Study Skills Workshops
                   </Link>
                   <Link
                     to="/services/counseling"
-                    className="block px-4 py-2 text-sm text-foreground hover:bg-gray-100"
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-muted"
                   >
                     Counseling Sessions
                   </Link>
                   <Link
                     to="/services/psychology"
-                    className="block px-4 py-2 text-sm text-foreground hover:bg-gray-100"
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-muted rounded-b-md"
                   >
                     Psychology Counseling Service
                   </Link>
@@ -155,16 +157,16 @@ const Header = () => {
                     </div>
                   )}
                 </div>
-                <div className="absolute right-0 mt-2 w-44 bg-white border border-border rounded-md shadow-lg opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all duration-200">
+                <div className="absolute right-0 mt-2 w-44 bg-background border border-border rounded-md shadow-lg opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all duration-200">
                   <Link
                     to="/reservations"
-                    className="block px-4 py-2 text-sm text-foreground hover:bg-gray-100"
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-muted"
                   >
                     Your Reservations
                   </Link>
                   <Link
                     to="/account"
-                    className="block px-4 py-2 text-sm text-foreground hover:bg-gray-100"
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-muted"
                   >
                     Account
                   </Link>
@@ -188,24 +190,94 @@ const Header = () => {
           className="lg:hidden flex items-center justify-center w-10 h-10 rounded-md border border-border text-white"
           onClick={toggleMenu}
         >
-          {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          {isMenuOpen ? (
+            <X className="w-6 h-6" />
+          ) : (
+            <Menu className="w-6 h-6" />
+          )}
         </button>
       </div>
 
       {/* Mobile Menu */}
       {isMenuOpen && (
-        <div className="lg:hidden absolute top-full left-0 w-full bg-background border-t border-border shadow-md z-[999]">
-          <nav className="flex flex-col px-6 py-4 gap-4 justify-end items-center">
-            {navLinks.map((link) => (
-              <Link
-                key={link.name}
-                to={link.path}
-                onClick={() => setIsMenuOpen(false)}
-                className="text-foreground hover:text-primary font-semibold"
-              >
-                {link.name}
-              </Link>
-            ))}
+        <div className="lg:hidden absolute top-full left-0 w-full bg-background border-t border-border shadow-md z-[999] justify-center items-center">
+          <nav className="flex flex-col px-6 py-4 gap-4 justify-center items-center">
+            {navLinks.map((link) =>
+              link.name === "Services" ? (
+                <div key="Services" className="w-full flex flex-col items-center">
+                  {/* Services + Triangle aligned side by side */}
+                  <div className="flex items-center justify-center gap-1">
+                    <Link
+                      to="/services"
+                      className="text-foreground font-semibold hover:text-primary"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Services
+                    </Link>
+
+                    {/* Toggle Dropdown */}
+                    <button
+                      onClick={() => setIsServicesOpen(!isServicesOpen)}
+                      className="text-foreground hover:text-primary"
+                    >
+                      {isServicesOpen ? "▴" : "▾"}
+                    </button>
+                  </div>
+
+                  {/* Mobile Dropdown */}
+                  {isServicesOpen && (
+                    <div className="mt-2 flex flex-col justify-center items-center bg-background rounded-md shadow-md border border-border w-full">
+                      <Link
+                        to="/services/tutoring"
+                        className="px-4 py-2 text-sm text-foreground hover:bg-muted rounded-t-md"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        Tutoring Services
+                      </Link>
+                      <Link
+                        to="/services/advising"
+                        className="px-4 py-2 text-sm text-foreground hover:bg-muted"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        Academic Advising
+                      </Link>
+                      <Link
+                        to="/services/workshops"
+                        className="px-4 py-2 text-sm text-foreground hover:bg-muted"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        Study Skills Workshops
+                      </Link>
+                      <Link
+                        to="/services/counseling"
+                        className="px-4 py-2 text-sm text-foreground hover:bg-muted"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        Counseling Sessions
+                      </Link>
+                      <Link
+                        to="/services/psychology"
+                        className="px-4 py-2 text-sm text-foreground hover:bg-muted rounded-b-md"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        Psychology Counseling Service
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Link
+                  key={link.name}
+                  to={link.path}
+                  onClick={() => setIsMenuOpen(false)}
+                  className="text-foreground hover:text-primary font-semibold"
+                >
+                  {link.name}
+                </Link>
+              )
+            )}
+
+            {/* Buttons below menu */}
             <ButtonGradient
               name={isLoggedIn ? "Apply Now →" : "Login/Register"}
               onClick={handleLoginClick}

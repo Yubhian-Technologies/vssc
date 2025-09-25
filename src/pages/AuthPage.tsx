@@ -13,15 +13,17 @@ const colleges = [
   { name: "Vishnu Dental College", domain: "@vdc.edu.in" },
   { name: "Shri Vishnu College of Pharmacy ", domain: "@svcp.edu.in" },
   { name: "BV Raju Institute of Technology", domain: "@bvrit.ac.in" },
-  { name: "BVRIT Hyderabad College of Engineering" , domain: "@bvrithyderabad.ac.in" },
-  { name: "Shri Vishnu Engineering College for Women" , domain: "@svecw.edu.in" }
+  { name: "BVRIT Hyderabad College of Engineering", domain: "@bvrithyderabad.ac.in" },
+  { name: "Shri Vishnu Engineering College for Women", domain: "@svecw.edu.in" },
 ];
 
 export default function AuthPage() {
   const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [college, setCollege] = useState(colleges[0].name);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -34,14 +36,21 @@ export default function AuthPage() {
     try {
       let userCredential;
 
+      if (!isLogin && password !== confirmPassword) {
+        setError("Passwords do not match");
+        setLoading(false);
+        return;
+      }
+
       if (isLogin) {
         // 🔹 Firebase login
         userCredential = await signInWithEmailAndPassword(auth, email, password);
       } else {
         // 🔹 Registration validation
         const selectedCollege = colleges.find((c) => c.name === college);
-        if (!email.endsWith(selectedCollege.domain)) {
-          setError(`Email must end with ${selectedCollege.domain}`);
+
+        if (!email.endsWith(selectedCollege!.domain)) {
+          setError(`Email must end with ${selectedCollege!.domain}`);
           setLoading(false);
           return;
         }
@@ -51,9 +60,10 @@ export default function AuthPage() {
 
         // 🔹 Store user info in Firestore
         await setDoc(doc(db, "users", userCredential.user.uid), {
+          uid: userCredential.user.uid,
+          name: name,
           email: email,
           college: college,
-          uid: userCredential.user.uid,
         });
       }
 
@@ -92,22 +102,39 @@ export default function AuthPage() {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           {!isLogin && (
-            <div>
-              <label className="block text-sm font-medium mb-1">Select College</label>
-              <select
-                value={college}
-                onChange={(e) => setCollege(e.target.value)}
-                className="w-full border [background-color:hsl(60,100%,95%)] rounded p-2"
-              >
-                {colleges.map((c, idx) => (
-                  <option key={idx} value={c.name}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Name</label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  className="w-full border rounded p-2 [background-color:hsl(60,100%,95%)]"
+                  placeholder="Enter your name"
+                />
+              </div>
+
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Select College</label>
+                <select
+                  value={college}
+                  onChange={(e) => setCollege(e.target.value)}
+                  className="w-full border [background-color:hsl(60,100%,95%)] rounded p-2"
+                >
+                  {colleges.map((c, idx) => (
+                    <option key={idx} value={c.name}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </>
           )}
 
+          
           <div>
             <label className="block text-sm font-medium mb-1">Email</label>
             <input
@@ -120,8 +147,9 @@ export default function AuthPage() {
             />
           </div>
 
+         
           <div>
-            <label className="block  text-sm font-medium mb-1">Password</label>
+            <label className="block text-sm font-medium mb-1">Password</label>
             <input
               type="password"
               value={password}
@@ -131,6 +159,21 @@ export default function AuthPage() {
               placeholder="Enter your password"
             />
           </div>
+
+          
+          {!isLogin && (
+            <div>
+              <label className="block text-sm font-medium mb-1">Re-enter Password</label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                className="w-full border rounded p-2 [background-color:hsl(60,100%,95%)]"
+                placeholder="Re-enter your password"
+              />
+            </div>
+          )}
 
           {error && <p className="text-red-500 text-sm">{error}</p>}
 
