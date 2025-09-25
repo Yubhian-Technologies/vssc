@@ -65,6 +65,10 @@ const App = () => {
             <Route path="/tour" element={<TourPage />} />
             <Route path="/help" element={<Help />} />
             <Route path = "/account" element={<AccountPage/>} />
+            <Route path="/services/counseling" element={<div>Cousenling Advising Page</div>} />
+          <Route path="/services/academic-advising" element={<div>Academic Advising Page</div>} />
+          <Route path="/services/study-workshops" element={<div>Study Workshops Page</div>} />
+          <Route path="/services/psychology-counseling" element={<div>Psychology Counseling Page</div>} />
     
             
             {/* Auth route: redirect to hero if already logged in */}
