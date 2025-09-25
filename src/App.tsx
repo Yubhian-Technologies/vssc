@@ -14,6 +14,7 @@ import Auth from "./pages/AuthPage";
 import About from "./pages/About";
 import Services from "./pages/Services";
 import TourPage from "./pages/TourPage";
+import CampusPage from "./pages/CampusPage";
 import Tutoring from "./pages/TutoringPage";
 import Help from "./pages/Help";
 import Header from "@/components/Header";
@@ -63,6 +64,7 @@ const App = () => {
             <Route path="/about" element={<About />} />
             <Route path="/services" element={<Services />} />
             <Route path="/tour" element={<TourPage />} />
+            <Route path="/campus/:id" element={<CampusPage />} />
             <Route path="/help" element={<Help />} />
             <Route path = "/account" element={<AccountPage/>} />
             <Route path="/services/counseling" element={<div>Cousenling Advising Page</div>} />
