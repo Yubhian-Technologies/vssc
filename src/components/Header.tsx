@@ -13,6 +13,7 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [profileUrl, setProfileUrl] = useState<string | null>(null);
   const [isServicesOpen, setIsServicesOpen] = useState(false); // for mobile dropdown
+  const [role, setRole] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -23,10 +24,12 @@ const Header = () => {
         if (docSnap.exists()) {
           const data = docSnap.data();
           setProfileUrl(data.profileUrl || null);
+          setRole(data.role || null); // get user role
         }
       } else {
         setIsLoggedIn(false);
         setProfileUrl(null);
+        setRole(null);
       }
     });
 
@@ -37,7 +40,10 @@ const Header = () => {
 
   const handleLoginClick = () => {
     if (!isLoggedIn) navigate("/auth");
-    else navigate("/appointment");
+    else {
+      if (role === "admin") navigate("/appointment");
+      else navigate("/appointment");
+    }
   };
 
   const handleSignOut = async () => {
@@ -67,11 +73,7 @@ const Header = () => {
         {/* Logo */}
         <div className="flex items-center hover:scale-105 transition-transform px-2 py-2">
           <Link to="/">
-            <img
-              src={VSSCLogo}
-              alt="VSSC Logo"
-              className="w-8 h-8 sm:w-12 sm:h-12 object-contain"
-            />
+            <img src={VSSCLogo} alt="VSSC Logo" className="w-8 h-8 sm:w-12 sm:h-12 object-contain" />
           </Link>
         </div>
 
@@ -89,44 +91,25 @@ const Header = () => {
 
                 {/* Desktop Dropdown */}
                 <div className="absolute left-0 mt-2 w-64 [background-color:hsl(60,100%,95%)] border border-border rounded-md shadow-lg opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all duration-200 z-50">
-                  <Link
-                    to="/services/tutoring"
-                    className="block px-4 py-2 text-sm text-foreground hover:bg-muted rounded-t-md"
-                  >
+                  <Link to="/services/tutoring" className="block px-4 py-2 text-sm text-foreground hover:bg-muted rounded-t-md">
                     Tutoring Services
                   </Link>
-                  <Link
-                    to="/services/advising"
-                    className="block px-4 py-2 text-sm text-foreground hover:bg-muted"
-                  >
+                  <Link to="/services/advising" className="block px-4 py-2 text-sm text-foreground hover:bg-muted">
                     Academic Advising
                   </Link>
-                  <Link
-                    to="/services/workshops"
-                    className="block px-4 py-2 text-sm text-foreground hover:bg-muted"
-                  >
+                  <Link to="/services/workshops" className="block px-4 py-2 text-sm text-foreground hover:bg-muted">
                     Study Skills Workshops
                   </Link>
-                  <Link
-                    to="/services/counseling"
-                    className="block px-4 py-2 text-sm text-foreground hover:bg-muted"
-                  >
+                  <Link to="/services/counseling" className="block px-4 py-2 text-sm text-foreground hover:bg-muted">
                     Counseling Sessions
                   </Link>
-                  <Link
-                    to="/services/psychology"
-                    className="block px-4 py-2 text-sm text-foreground hover:bg-muted rounded-b-md"
-                  >
+                  <Link to="/services/psychology" className="block px-4 py-2 text-sm text-foreground hover:bg-muted rounded-b-md">
                     Psychology Counseling Service
                   </Link>
                 </div>
               </div>
             ) : (
-              <Link
-                key={link.name}
-                to={link.path}
-                className="relative text-foreground hover:text-primary font-semibold"
-              >
+              <Link key={link.name} to={link.path} className="relative text-foreground hover:text-primary font-semibold">
                 {link.name}
               </Link>
             )
@@ -135,10 +118,19 @@ const Header = () => {
 
         {/* Desktop Buttons */}
         <div className="hidden lg:flex items-center gap-4 relative z-20">
-          <ButtonGradient
-            name={isLoggedIn ? "Book an Appointment →" : "Login/Register"}
-            onClick={handleLoginClick}
-          />
+          {isLoggedIn && role === "admin" ? (
+            <div className="relative group">
+              <ButtonGradient name="Appointments →" onClick={handleLoginClick} />
+              <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 bg-gray-700 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                See the list of requested appointments
+              </div>
+            </div>
+          ) : (
+            <ButtonGradient
+              name={isLoggedIn ? "Book an Appointment →" : "Login/Register"}
+              onClick={handleLoginClick}
+            />
+          )}
 
           {isLoggedIn && (
             <>
@@ -146,11 +138,7 @@ const Header = () => {
               <div className="relative group">
                 <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-primary cursor-pointer">
                   {profileUrl ? (
-                    <img
-                      src={profileUrl}
-                      alt="Profile"
-                      className="w-full h-full object-cover"
-                    />
+                    <img src={profileUrl} alt="Profile" className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full bg-gray-300 flex items-center justify-center">
                       <span className="text-white">U</span>
@@ -158,16 +146,10 @@ const Header = () => {
                   )}
                 </div>
                 <div className="absolute right-0 mt-2 w-44 bg-background border border-border rounded-md shadow-lg opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all duration-200">
-                  <Link
-                    to="/reservations"
-                    className="block px-4 py-2 text-sm text-foreground hover:bg-muted"
-                  >
+                  <Link to="/reservations" className="block px-4 py-2 text-sm text-foreground hover:bg-muted">
                     Your Reservations
                   </Link>
-                  <Link
-                    to="/account"
-                    className="block px-4 py-2 text-sm text-foreground hover:bg-muted"
-                  >
+                  <Link to="/account" className="block px-4 py-2 text-sm text-foreground hover:bg-muted">
                     Account
                   </Link>
                 </div>
@@ -190,11 +172,7 @@ const Header = () => {
           className="lg:hidden flex items-center justify-center w-10 h-10 rounded-md border border-border text-white"
           onClick={toggleMenu}
         >
-          {isMenuOpen ? (
-            <X className="w-6 h-6" />
-          ) : (
-            <Menu className="w-6 h-6" />
-          )}
+          {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
       </div>
 
@@ -205,83 +183,48 @@ const Header = () => {
             {navLinks.map((link) =>
               link.name === "Services" ? (
                 <div key="Services" className="w-full flex flex-col items-center">
-                  {/* Services + Triangle aligned side by side */}
                   <div className="flex items-center justify-center gap-1">
-                    <Link
-                      to="/services"
-                      className="text-foreground font-semibold hover:text-primary"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
+                    <Link to="/services" className="text-foreground font-semibold hover:text-primary" onClick={() => setIsMenuOpen(false)}>
                       Services
                     </Link>
-
-                    {/* Toggle Dropdown */}
-                    <button
-                      onClick={() => setIsServicesOpen(!isServicesOpen)}
-                      className="text-foreground hover:text-primary"
-                    >
+                    <button onClick={() => setIsServicesOpen(!isServicesOpen)} className="text-foreground hover:text-primary">
                       {isServicesOpen ? "▴" : "▾"}
                     </button>
                   </div>
-
-                  {/* Mobile Dropdown */}
                   {isServicesOpen && (
                     <div className="mt-2 flex flex-col justify-center items-center bg-background rounded-md shadow-md border border-border w-full">
-                      <Link
-                        to="/services/tutoring"
-                        className="px-4 py-2 text-sm text-foreground hover:bg-muted rounded-t-md"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
+                      <Link to="/services/tutoring" className="px-4 py-2 text-sm text-foreground hover:bg-muted rounded-t-md" onClick={() => setIsMenuOpen(false)}>
                         Tutoring Services
                       </Link>
-                      <Link
-                        to="/services/advising"
-                        className="px-4 py-2 text-sm text-foreground hover:bg-muted"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
+                      <Link to="/services/advising" className="px-4 py-2 text-sm text-foreground hover:bg-muted" onClick={() => setIsMenuOpen(false)}>
                         Academic Advising
                       </Link>
-                      <Link
-                        to="/services/workshops"
-                        className="px-4 py-2 text-sm text-foreground hover:bg-muted"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
+                      <Link to="/services/workshops" className="px-4 py-2 text-sm text-foreground hover:bg-muted" onClick={() => setIsMenuOpen(false)}>
                         Study Skills Workshops
                       </Link>
-                      <Link
-                        to="/services/counseling"
-                        className="px-4 py-2 text-sm text-foreground hover:bg-muted"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
+                      <Link to="/services/counseling" className="px-4 py-2 text-sm text-foreground hover:bg-muted" onClick={() => setIsMenuOpen(false)}>
                         Counseling Sessions
                       </Link>
-                      <Link
-                        to="/services/psychology"
-                        className="px-4 py-2 text-sm text-foreground hover:bg-muted rounded-b-md"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
+                      <Link to="/services/psychology" className="px-4 py-2 text-sm text-foreground hover:bg-muted rounded-b-md" onClick={() => setIsMenuOpen(false)}>
                         Psychology Counseling Service
                       </Link>
                     </div>
                   )}
                 </div>
               ) : (
-                <Link
-                  key={link.name}
-                  to={link.path}
-                  onClick={() => setIsMenuOpen(false)}
-                  className="text-foreground hover:text-primary font-semibold"
-                >
+                <Link key={link.name} to={link.path} onClick={() => setIsMenuOpen(false)} className="text-foreground hover:text-primary font-semibold">
                   {link.name}
                 </Link>
               )
             )}
 
             {/* Buttons below menu */}
-            <ButtonGradient
-              name={isLoggedIn ? "Apply Now →" : "Login/Register"}
-              onClick={handleLoginClick}
-            />
+            {isLoggedIn && role === "admin" ? (
+              <ButtonGradient name="Appointments →" onClick={handleLoginClick} />
+            ) : (
+              <ButtonGradient name={isLoggedIn ? "Book an Appointment →" : "Login/Register"} onClick={handleLoginClick} />
+            )}
+
             {isLoggedIn && (
               <button
                 onClick={handleSignOut}

@@ -23,7 +23,8 @@ import ProtectedRoute from "./ProctectedRoute";
 import HeroSection from "./components/HeroSection";
 import { auth } from "./firebase"; // import Firebase auth
 import { onAuthStateChanged } from "firebase/auth";
-import Appointment from "./pages/AppointmentPage"
+import Appointment from "./pages/AppointmentPage";
+import Reservations from "./pages/RequestedAppointments "
 
 const queryClient = new QueryClient();
 
@@ -69,6 +70,7 @@ const App = () => {
             <Route path="/help" element={<Help />} />
             <Route path = "/account" element={<AccountPage/>} />
             <Route path = "/appointment" element={<Appointment/>} />
+            <Route path = "/reservations" element={<Reservations/>} />
             <Route path="/services/counseling" element={<div>Cousenling Advising Page</div>} />
           <Route path="/services/academic-advising" element={<div>Academic Advising Page</div>} />
           <Route path="/services/study-workshops" element={<div>Study Workshops Page</div>} />
