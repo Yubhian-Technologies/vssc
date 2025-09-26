@@ -8,6 +8,7 @@ import filter23 from "../assets/filter23.jpg";
 import filter24 from "../assets/filter24.jpg";
 import filter25 from "../assets/filter25.jpg";
 import filter26 from "../assets/filter26.jpg";
+import Land1 from "../assets/Land1.jpg";
 
 export const campuses = [
   {
@@ -48,11 +49,10 @@ const TourPage: React.FC = () => {
   // Inside your TourPage component
 
 const campusBgColors = [
-  "bg-[hsl(60,100%,95%)]",  // light yellow
-  "bg-[hsl(120,100%,95%)]", // light green
-  "bg-[hsl(200,100%,95%)]",
-  "bg-[hsl(340,100%,95%)]" // light blue
-
+  "bg-[hsl(220,100%,95%)]",
+  "bg-[hsl(210,100%,93%)]", // light green
+  "bg-[hsl(220,100%,90%)]",
+  "bg-[hsl(60,100%,95%)]"
 ];
 
 return (
@@ -60,7 +60,7 @@ return (
     {/* Banner */}
     <div className="relative w-full h-72 md:h-96 lg:h-[28rem]">
       <img
-        src={filter21}
+        src={Land1}
         alt="Tour Banner"
         className="w-full h-full object-cover"
       />
@@ -76,7 +76,7 @@ return (
     </div>
 
     {/* Flex Row Campuses */}
-    <section className="w-full bg-gray-50 py-12 px-6 md:px-12 lg:px-20 bg-[hsl(60,100%,95%)]">
+    <section className="w-full bg-gray-50 py-12 px-6 md:px-12 lg:px-20  [background-color:hsl(60,100%,95%)]">
   <div className="flex flex-col gap-16 px-6 lg:px-16 py-12">
     {campuses.map((campus, index) => (
       <div
