@@ -497,12 +497,14 @@ const handleAddSession = async () => {
         </div>
       )}
        {/* Floating Add Session Button */}
-      <button
-        onClick={() => setShowForm(true)}
-        className="fixed bottom-6 right-6 bg-blue-600 text-white rounded-full w-14 h-14 flex items-center justify-center text-3xl shadow-lg hover:bg-blue-700"
-      >
-        +
-      </button>
+      {userData?.role === "admin" && (
+  <button
+    onClick={() => setShowForm(true)}
+    className="fixed bottom-6 right-6 bg-blue-600 text-white rounded-full w-14 h-14 flex items-center justify-center text-3xl shadow-lg hover:bg-blue-700"
+  >
+    +
+  </button>
+)}
       
       {/* Add Session Modal */}
     {showForm && (
@@ -640,7 +642,36 @@ const handleAddSession = async () => {
 
       {/* Fields for Group */}
       {newSession.isGroup && (
+        
+        
         <div className="flex flex-col">
+            <div className="flex flex-col">
+            <label htmlFor="date" className="font-semibold mb-1">
+              Date
+            </label>
+            <input
+              type="date"
+              name="date"
+              id="date"
+              className="w-full p-2 border rounded-lg"
+              value={newSession.date || ""}
+              onChange={(e) => setNewSession({ ...newSession, date: e.target.value })}
+            />
+          </div>
+
+          <div className="flex flex-col">
+            <label htmlFor="startTime" className="font-semibold mb-1">
+              Start Time
+            </label>
+            <input
+              type="time"
+              name="startTime"
+              id="startTime"
+              className="w-full p-2 border rounded-lg"
+              value={newSession.startTime || ""}
+              onChange={(e) => setNewSession({ ...newSession, startTime: e.target.value })}
+            />
+          </div>
           <label htmlFor="slots" className="font-semibold mb-1">
             Number of Slots
           </label>
@@ -653,6 +684,7 @@ const handleAddSession = async () => {
             value={newSession.slots || ""}
             onChange={(e) => setNewSession({ ...newSession, slots: parseInt(e.target.value) })}
           />
+          
         </div>
       )}
 
