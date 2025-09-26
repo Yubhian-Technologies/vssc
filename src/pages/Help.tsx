@@ -115,33 +115,7 @@ export default function Help() {
         </div>
       </div>
 
-      <section className="w-full [background-color:hsl(60,100%,95%)] py-12 px-6 md:px-12 lg:px-20">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
-          <div className="relative w-full h-64 md:h-80 lg:h-96 overflow-hidden rounded-2xl shadow-lg">
-            <video
-              src="https://www.youtube.com/watch?v=peSUVGUpUdk"
-              autoPlay
-              muted
-              loop
-              playsInline
-              controls
-              className="w-full h-full object-cover"
-            />
-          </div>
-
-          <div className="flex flex-col justify-center space-y-6">
-            <h3 className="text-2xl md:text-3xl font-bold text-primary">
-              Discover the Student Success Center
-            </h3>
-            <p className="text-gray-700 leading-relaxed">
-              Our Student Success Center is dedicated to empowering every
-              student with the tools, guidance, and support they need to excel
-              academically and personally. From tutoring and career counseling
-              to wellness workshops, we’ve got you covered.
-            </p>
-          </div>
-        </div>
-      </section>
+     
 
       <div className="w-full max-w-5xl mx-auto p-6 divide-y divide-gray-300">
         {faqs.map((faq, index) => (

@@ -45,61 +45,72 @@ export const campuses = [
 const TourPage: React.FC = () => {
   const navigate = useNavigate();
 
-  return (
-    <div className="bg-gray-50">
-      {/* Banner */}
-      <div className="relative w-full h-72 md:h-96 lg:h-[28rem]">
-        <img
-          src={filter21}
-          alt="Tour Banner"
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-black bg-opacity-60"></div>
-        <div className="absolute inset-0 flex flex-col justify-center items-center text-center text-white px-4">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 text-[hsl(60,100%,95%)]">
+  // Inside your TourPage component
+
+const campusBgColors = [
+  "bg-[hsl(60,100%,95%)]",  // light yellow
+  "bg-[hsl(120,100%,95%)]", // light green
+  "bg-[hsl(200,100%,95%)]",
+  "bg-[hsl(340,100%,95%)]" // light blue
+
+];
+
+return (
+  <div className="bg-gray-50">
+    {/* Banner */}
+    <div className="relative w-full h-72 md:h-96 lg:h-[28rem]">
+      <img
+        src={filter21}
+        alt="Tour Banner"
+        className="w-full h-full object-cover"
+      />
+      <div className="absolute inset-0 bg-black bg-opacity-60"></div>
+      <div className="absolute inset-0 flex flex-col justify-center items-center text-center text-white px-4">
+        <h1 className="text-4xl md:text-5xl font-bold mb-4 text-[hsl(60,100%,95%)]">
           VISHNU GALLERY
-          </h1>
-
-          <p className="text-lg max-w-3xl text-[hsl(60,100%,95%)]">
-            Explore the beautiful campuses of the Vishnu Educational Society. Each campus offers world-class facilities, a vibrant student life, and a commitment to academic excellence.
-          </p>
-        </div>
-      </div>
-
-      {/* Flex Row Campuses */}
-      <div className="flex flex-col gap-16 px-6 lg:px-16 py-12">
-        {campuses.map((campus, index) => (
-          <div
-            key={campus.id}
-            className={`flex flex-col md:flex-row items-center gap-8 ${
-              index % 2 !== 0 ? "md:flex-row-reverse" : ""
-            }`}
-          >
-            {/* Image */}
-            <Tilt glareEnable glareMaxOpacity={0.3} scale={1.05} className="md:w-1/2 w-full rounded-xl overflow-hidden shadow-lg">
-              <img
-                src={campus.cover}
-                alt={campus.name}
-                className="w-full h-64 md:h-80 object-cover"
-              />
-            </Tilt>
-
-            {/* Description */}
-            <div className="md:w-1/2 w-full flex flex-col gap-4">
-              <h2 className="text-2xl font-bold">{campus.name}</h2>
-              <p className="text-gray-700">{campus.description}</p>
-              <button
-                onClick={() => navigate(`/campus/${campus.id}`)}
-                className="self-start px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-              >
-                Explore
-              </button>
-            </div>
-          </div>
-        ))}
+        </h1>
+        <p className="text-lg max-w-3xl text-[hsl(60,100%,95%)]">
+          Explore the beautiful campuses of the Vishnu Educational Society. Each campus offers world-class facilities, a vibrant student life, and a commitment to academic excellence.
+        </p>
       </div>
     </div>
-  );
-};
 
+    {/* Flex Row Campuses */}
+    <section className="w-full bg-gray-50 py-12 px-6 md:px-12 lg:px-20 bg-[hsl(60,100%,95%)]">
+  <div className="flex flex-col gap-16 px-6 lg:px-16 py-12">
+    {campuses.map((campus, index) => (
+      <div
+        key={campus.id}
+        className={`flex flex-col md:flex-row items-center gap-8 ${
+          index % 2 !== 0 ? "md:flex-row-reverse" : ""
+        } ${campusBgColors[index % campusBgColors.length]} rounded-xl p-8`}
+      >
+        {/* Image */}
+        <Tilt glareEnable glareMaxOpacity={0.3} scale={1.05} className="md:w-1/2 w-full rounded-xl overflow-hidden shadow-lg">
+          <img
+            src={campus.cover}
+            alt={campus.name}
+            className="w-full h-64 md:h-80 object-cover"
+          />
+        </Tilt>
+
+        {/* Description */}
+        <div className="md:w-1/2 w-full flex flex-col gap-4">
+          <h2 className="text-2xl font-bold">{campus.name}</h2>
+          <p className="text-gray-700">{campus.description}</p>
+          <button
+            onClick={() => navigate(`/campus/${campus.id}`)}
+            className="self-start px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+          >
+            Explore
+          </button>
+        </div>
+      </div>
+    ))}
+  </div>
+</section>
+
+  </div>
+);
+};
 export default TourPage;
