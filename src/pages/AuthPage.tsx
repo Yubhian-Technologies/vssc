@@ -19,6 +19,31 @@ const colleges = [
   { name: "Shri Vishnu Engineering College for Women", domain: "@svecw.edu.in" },
 ];
 
+// 🔹 Utility function to generate keywords
+const generateKeywords = (name: string, email: string) => {
+  const keywords: string[] = [];
+
+  // Full name + split parts
+  if (name) {
+    keywords.push(name.toLowerCase());
+    name.split(" ").forEach((part) => {
+      if (part.trim()) keywords.push(part.toLowerCase());
+    });
+  }
+
+  // Full email
+  if (email) {
+    keywords.push(email.toLowerCase());
+
+    // String before @
+    const localPart = email.split("@")[0];
+    if (localPart) keywords.push(localPart.toLowerCase());
+  }
+
+  // Remove duplicates
+  return [...new Set(keywords)];
+};
+
 export default function AuthPage() {
   const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
@@ -45,8 +70,10 @@ export default function AuthPage() {
       }
 
       if (isLogin) {
+        // 🔹 Login
         userCredential = await signInWithEmailAndPassword(auth, email, password);
       } else {
+        // 🔹 Register
         const selectedCollege = colleges.find((c) => c.name === college);
 
         if (!email.endsWith(selectedCollege!.domain)) {
@@ -62,6 +89,8 @@ export default function AuthPage() {
           name: name,
           email: email,
           college: college,
+          role: "user", // default role
+          keywords: generateKeywords(name, email), // 🔹 add keywords
         });
       }
 
