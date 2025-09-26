@@ -152,6 +152,14 @@ const Header = () => {
                   <Link to="/account" className="block px-4 py-2 text-sm text-foreground hover:bg-muted">
                     Account
                   </Link>
+                  {role === "admin+" && (
+        <Link
+          to="/addAdmin"
+          className="block px-4 py-2 text-sm text-foreground hover:bg-muted"
+        >
+          Add Admins
+        </Link>
+      )}
                 </div>
               </div>
 

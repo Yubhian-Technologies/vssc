@@ -25,6 +25,7 @@ import { auth } from "./firebase"; // import Firebase auth
 import { onAuthStateChanged } from "firebase/auth";
 import Appointment from "./pages/AppointmentPage";
 import Reservations from "./pages/RequestedAppointments "
+import AddAdmin from "./pages/addAdmin";
 
 const queryClient = new QueryClient();
 
@@ -75,6 +76,7 @@ const App = () => {
           <Route path="/services/academic-advising" element={<div>Academic Advising Page</div>} />
           <Route path="/services/study-workshops" element={<div>Study Workshops Page</div>} />
           <Route path="/services/psychology-counseling" element={<div>Psychology Counseling Page</div>} />
+          <Route path ="/addAdmin" element = {<AddAdmin/>} />
     
             
             {/* Auth route: redirect to hero if already logged in */}
