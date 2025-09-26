@@ -19,35 +19,39 @@ const AddAdminPage = () => {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Default users on page load (first 10)
-  useEffect(() => {
+  // Function to load default users
+  const loadDefaultUsers = () => {
     const q = query(collection(db, "users"), orderBy("email"), limit(10));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const results: any[] = [];
-      snapshot.forEach((doc) => results.push({ id: doc.id, ...doc.data() }));
-      setUsers(results);
-    });
-    return () => unsubscribe();
-  }, []);
-
-  // Search users
-  useEffect(() => {
-    if (!searchTerm.trim()) return;
-
-    setLoading(true);
-    const q = query(
-      collection(db, "users"),
-      where("keywords", "array-contains", searchTerm.toLowerCase())
-    );
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    return onSnapshot(q, (snapshot) => {
       const results: any[] = [];
       snapshot.forEach((doc) => results.push({ id: doc.id, ...doc.data() }));
       setUsers(results);
       setLoading(false);
     });
+  };
 
-    return () => unsubscribe();
+  // Main effect for search / default
+  useEffect(() => {
+    let unsubscribe: any;
+
+    if (searchTerm.trim()) {
+      setLoading(true);
+      const q = query(
+        collection(db, "users"),
+        where("keywords", "array-contains", searchTerm.toLowerCase())
+      );
+      unsubscribe = onSnapshot(q, (snapshot) => {
+        const results: any[] = [];
+        snapshot.forEach((doc) => results.push({ id: doc.id, ...doc.data() }));
+        setUsers(results);
+        setLoading(false);
+      });
+    } else {
+      // 🔹 When search is empty, load default users
+      unsubscribe = loadDefaultUsers();
+    }
+
+    return () => unsubscribe && unsubscribe();
   }, [searchTerm]);
 
   // Update role
@@ -62,7 +66,7 @@ const AddAdminPage = () => {
         ⚡ Manage Admin Access
       </h1>
 
-      {/* Unique Search Bar */}
+      {/* Search Bar */}
       <div className="relative mb-6 max-w-xl mx-auto">
         <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
         <input
@@ -86,7 +90,7 @@ const AddAdminPage = () => {
               key={user.id}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
+              transition={{ delay: index * 0.05 }}
               className="flex items-center justify-between p-5 border rounded-2xl shadow-md bg-white hover:shadow-lg transition"
             >
               {/* User Info */}
