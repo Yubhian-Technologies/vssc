@@ -13,8 +13,8 @@ const CampusPage: React.FC = () => {
   }
 
   return (
-    <section className="w-full bg-gray-50 py-12 px-6 md:px-12 lg:px-20  [background-color:hsl(60,100%,95%)]">
-    <div className="min-h-screen bg-gray-50 px-6 lg:px-16 py-10  [background-color:hsl(60,100%,95%)]">
+    <section className="w-full bg-gray-50 py-12 px-6 md:px-12 lg:px-20  [background-color:hsl(60,100%,85%)]">
+    <div className="min-h-screen bg-gray-50 px-6 lg:px-16 py-10  [background-color:hsl(60,100%,85%)]">
       {/* Back Button */}
       <button
         onClick={() => navigate(-1)}
@@ -27,7 +27,7 @@ const CampusPage: React.FC = () => {
       {/* Campus Title */}
       <h1 className="text-3xl font-bold text-center mb-8">{campus.name}</h1>
 
-       <section className="w-full bg-gray-50 py-12 px-6 md:px-12 lg:px-20  [background-color:hsl(220,100%,90%)]">
+       <section className="w-full bg-gray-50 py-12 px-6 md:px-12 lg:px-20  [background-color:hsl(60,100%,95%)]">
       {/* Gallery */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
         {campus.gallery.map((img) => (
