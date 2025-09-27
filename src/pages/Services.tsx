@@ -30,7 +30,8 @@ const Services = () => {
       id: "advising",
       title: "Academic Advising",
       description: "Educational guidance and career planning",
-      image: "https://img.icons8.com/color/96/advice.png",
+      image:
+        "https://img.icons8.com/color/96/teacher.png",
       collectionName: "academicAdvising",
       count: 0,
       route: "/services/academic-advising",
@@ -64,6 +65,9 @@ const Services = () => {
     },
   ]);
 
+  const [search, setSearch] = useState(""); // For search input
+  const [filteredServices, setFilteredServices] = useState<Service[]>(services);
+
   useEffect(() => {
     const fetchCounts = async () => {
       const updated = await Promise.all(
@@ -78,13 +82,21 @@ const Services = () => {
         })
       );
       setServices(updated);
+      setFilteredServices(updated);
     };
-
     fetchCounts();
   }, []);
 
+  // Filter services based on search input
+  useEffect(() => {
+    const filtered = services.filter((service) =>
+      service.title.toLowerCase().includes(search.toLowerCase())
+    );
+    setFilteredServices(filtered);
+  }, [search, services]);
+
   return (
-    <div className="relative p-10 min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+    <div className="relative p-10 min-h-screen [background-color:hsl(60,100%,95%)]">
       {/* Floating gradient background animation */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
         <motion.div
@@ -99,8 +111,9 @@ const Services = () => {
         />
       </div>
 
+      {/* Heading */}
       <motion.h1
-        className="text-4xl md:text-5xl font-extrabold text-center mb-14 bg-gradient-to-r from-blue-700 to-indigo-700 bg-clip-text text-transparent drop-shadow-lg"
+        className="text-4xl md:text-5xl font-extrabold text-center mb-14 text-primary bg-clip-text drop-shadow-lg"
         initial={{ opacity: 0, y: -40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7 }}
@@ -108,23 +121,63 @@ const Services = () => {
         Student Support Services
       </motion.h1>
 
+      {/* New Section */}
+      <section className="w-full py-16 px-6 md:px-12 lg:px-20">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row gap-0 shadow-lg rounded-xl overflow-hidden">
+          <div className="md:w-1/2 w-full bg-[hsl(60,100%,90%)] text-black p-10 flex flex-col justify-center">
+            <h2 className="text-3xl text-primary font-bold mb-6">What Does VSSC Offer?</h2>
+            <p className="text-base leading-relaxed">
+              We offer a comprehensive range of resources designed to support and enhance all aspects of student development. Our services include personalised tutoring, academic advising, and career counselling, each tailored to individual needs. Additionally, we host a variety of workshops aimed at promoting student wellness, growth, and confidence, ensuring a well-rounded approach to success.
+            </p>
+          </div>
+
+          <div className="md:w-1/2 w-full bg-primary text-white p-10 flex flex-col justify-center rounded-xl">
+            <ul className="list-disc list-inside space-y-2 text-lg">
+              <li>Academic Advice</li>
+              <li>Peer Tutoring</li>
+              <li>Career Counselling</li>
+              <li>Peer Mentoring</li>
+              <li>Communication Skills</li>
+              <li>Personality Development</li>
+              <li>Corporate-readiness Workshops</li>
+              <li>Self-care Strategies</li>
+              <li>Wellness Practices</li>
+            </ul>
+          </div>
+        </div>
+
+        
+<div className="max-w-6xl mx-auto mt-10 flex flex-col md:flex-row gap-4">
+  <input
+    type="text"
+    placeholder="Search services..."
+    value={search}
+    onChange={(e) => setSearch(e.target.value)}
+    className="p-2 text-sm rounded-lg border border-gray-300 flex-1"
+  />
+</div>
+
+      </section>
+
+      {/* Services Cards */}
       <motion.div
-        className="grid sm:grid-cols-2 lg:grid-cols-3 gap-10"
+        className="grid sm:grid-cols-2 lg:grid-cols-3 gap-10 mt-10"
         initial="hidden"
         animate="visible"
         variants={{
           hidden: { opacity: 0 },
-          visible: {
-            opacity: 1,
-            transition: { staggerChildren: 0.2 },
-          },
+          visible: { opacity: 1, transition: { staggerChildren: 0.2 } },
         }}
       >
-        {services.map((service) => (
+        {filteredServices.map((service) => (
           <motion.div
             key={service.id}
-            className="group bg-white/60 backdrop-blur-xl border border-gray-200 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden p-8 flex flex-col items-center text-center cursor-pointer"
-            whileHover={{ scale: 1.05, rotate: 1 }}
+            className="group [background-color:hsl(60,100%,90%)] backdrop-blur-xl border border-gray-200 rounded-3xl shadow-lg transition-all duration-300 overflow-hidden p-8 flex flex-col items-center text-center cursor-pointer"
+            whileHover={{
+              scale: 1.05,
+              rotate: 1,
+              boxShadow: "0 0 30px rgba(59, 130, 246, 0.5)", // light primary color shadow
+            }}
             whileTap={{ scale: 0.97 }}
             variants={{
               hidden: { opacity: 0, y: 50 },
@@ -142,9 +195,7 @@ const Services = () => {
             <h2 className="text-xl font-bold text-gray-800 group-hover:text-indigo-700 transition">
               {service.title}
             </h2>
-            <p className="text-gray-600 mt-3 flex-1 leading-relaxed">
-              {service.description}
-            </p>
+            <p className="text-gray-600 mt-3 flex-1 leading-relaxed">{service.description}</p>
             <motion.p
               className="mt-6 text-lg font-semibold text-indigo-600"
               initial={{ opacity: 0 }}
