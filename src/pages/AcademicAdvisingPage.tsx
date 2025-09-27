@@ -91,7 +91,7 @@ const [newSession, setNewSession] = useState({
  useEffect(() => {
   if (!userCollege || !user) return;
 
-  const q = collection(db, "academicadvising ");
+  const q = collection(db, "academicadvising");
 
   const unsubscribe = onSnapshot(q, async snapshot => {
     const allSessions: AcademicAdvisingSession[] = snapshot.docs.map(doc => ({
