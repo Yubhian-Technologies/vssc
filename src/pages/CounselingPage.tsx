@@ -70,8 +70,7 @@ const collegesList = [
 // admin states
   const [showForm, setShowForm] = useState(false);
 const [newSession, setNewSession] = useState({
-  title: "",
-  isGroup: undefined as boolean | undefined, // whether it's a group session
+  title: "", // whether it's a group session
   date: "",          // only for 1-on-1
   startTime: "",     // only for 1-on-1
   totalDuration: 0,  // only for 1-on-1
@@ -197,16 +196,11 @@ const [newSession, setNewSession] = useState({
 
   const handleBookSlot = (session: CounselingSession) => {
     setSelectedSession(session);
-     if (session.isGroup) {
-    // Directly open confirm dialog for group sessions
-    setShowDialog(true);
-  } else {
     // 1-on-1 session: open calendar to select date/slot
     setShowCalendar(true);
     setSelectedDate(null);
     setSelectedSlot(null);
     setAvailableSlots([]);
-  }
   };
 
   const handleSlotSelect = (slotTime: string) => {
@@ -216,35 +210,12 @@ const [newSession, setNewSession] = useState({
 
  const confirmJoin = async () => {
   if (bookingInProgress) return;
-  if (!user?.uid || !selectedSession || (!selectedSession.isGroup && !selectedSlot)) return;
+  if (!user?.uid || !selectedSession || (!selectedSlot)) return;
 
   setBookingInProgress(true);
   const sessionRef = doc(db, "counseling", selectedSession.id);
 
   try {
-    if (selectedSession.isGroup) {
-      // Group session code...
-      if (!selectedSession.slots || selectedSession.slots <= 0) {
-          alert("No slots left.");
-          return;
-        }
-        if (selectedSession.participants?.includes(user.uid)) {
-          alert("You already joined this group session.");
-          return;
-        }
-        await updateDoc(sessionRef, {
-          participants: arrayUnion(user.uid),
-          slots: increment(-1),
-        });
-        setSessions(prev =>
-  prev.map(s =>
-    s.id === selectedSession.id
-      ? { ...s, participants: [...(s.participants || []), user.uid] } // DON'T decrement slots here
-      : s
-  )
-        );
-        alert("You joined the group session!");
-    } else {
       await runTransaction(db, async (transaction) => {
         const sessionSnap = await transaction.get(sessionRef);
         if (!sessionSnap.exists()) throw new Error("Session not found");
@@ -284,7 +255,6 @@ const [newSession, setNewSession] = useState({
       });
 
       alert(`You booked the slot at ${selectedSlot}`);
-    }
   } catch (err: any) {
     alert(err.message || "Booking failed. Try again.");
   } finally {
@@ -300,7 +270,7 @@ const [newSession, setNewSession] = useState({
 
  // --- Admin Features ---
 const handleAddSession = async () => {
-  if (!newSession.title || !newSession.date || newSession.isGroup === undefined) {
+  if (!newSession.title || !newSession.date) {
     alert("Please fill in all required fields.");
     return;
   }
@@ -314,14 +284,8 @@ const handleAddSession = async () => {
       tutorName: newSession.tutorName || "",
       skills: newSession.skills || [],
       createdAt: serverTimestamp(),
-      isGroup: newSession.isGroup,
     };
 
-    if (newSession.isGroup) {
-      // Group session fields
-      sessionData.slots = newSession.slots || 1;
-      sessionData.participants = [];
-    } else {
       // 1-on-1 session fields
       sessionData.date = newSession.date;
       sessionData.startTime = newSession.startTime;
@@ -354,7 +318,6 @@ const handleAddSession = async () => {
       });
 
       sessionData.bookedSlots = bookedSlots;
-    }
 
     await addDoc(collection(db, "counseling"), sessionData);
 
@@ -362,7 +325,6 @@ const handleAddSession = async () => {
     setNewSession({
       title: "",
       date: "",
-      isGroup: undefined,
       slots: 1,
       startTime: "",
       totalDuration: 0,
@@ -617,79 +579,12 @@ const handleAddSession = async () => {
         </small>
       </div>
 
-      {/* Is Group */}
-      <div className="flex items-center gap-4 mt-2">
-        <span className="font-semibold">Session Type:</span>
-        <label>
-          <input
-            type="radio"
-            name="isGroup"
-            checked={newSession.isGroup === true}
-            onChange={() => setNewSession({ ...newSession, isGroup: true })}
-          />{" "}
-          Group
-        </label>
-        <label>
-          <input
-            type="radio"
-            name="isGroup"
-            checked={newSession.isGroup === false}
-            onChange={() => setNewSession({ ...newSession, isGroup: false })}
-          />{" "}
-          1-on-1
-        </label>
-      </div>
+    
 
-      {/* Fields for Group */}
-      {newSession.isGroup && (
-        
-        
-        <div className="flex flex-col">
-            <div className="flex flex-col">
-            <label htmlFor="date" className="font-semibold mb-1">
-              Date
-            </label>
-            <input
-              type="date"
-              name="date"
-              id="date"
-              className="w-full p-2 border rounded-lg"
-              value={newSession.date || ""}
-              onChange={(e) => setNewSession({ ...newSession, date: e.target.value })}
-            />
-          </div>
-
-          <div className="flex flex-col">
-            <label htmlFor="startTime" className="font-semibold mb-1">
-              Start Time
-            </label>
-            <input
-              type="time"
-              name="startTime"
-              id="startTime"
-              className="w-full p-2 border rounded-lg"
-              value={newSession.startTime || ""}
-              onChange={(e) => setNewSession({ ...newSession, startTime: e.target.value })}
-            />
-          </div>
-          <label htmlFor="slots" className="font-semibold mb-1">
-            Number of Slots
-          </label>
-          <input
-            type="number"
-            name="slots"
-            id="slots"
-            placeholder="Enter number of slots"
-            className="w-full p-2 border rounded-lg"
-            value={newSession.slots || ""}
-            onChange={(e) => setNewSession({ ...newSession, slots: parseInt(e.target.value) })}
-          />
-          
-        </div>
-      )}
+    
 
       {/* Fields for 1-on-1 */}
-      {newSession.isGroup === false && (
+      {(
         <>
           <div className="flex flex-col">
             <label htmlFor="date" className="font-semibold mb-1">
