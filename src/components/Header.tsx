@@ -94,16 +94,16 @@ const Header = () => {
                   <Link to="/services/tutoring" className="block px-4 py-2 text-sm text-foreground hover:bg-muted rounded-t-md">
                     Tutoring Services
                   </Link>
-                  <Link to="/services/advising" className="block px-4 py-2 text-sm text-foreground hover:bg-muted">
+                  <Link to="/services/academic-advising" className="block px-4 py-2 text-sm text-foreground hover:bg-muted">
                     Academic Advising
                   </Link>
-                  <Link to="/services/workshops" className="block px-4 py-2 text-sm text-foreground hover:bg-muted">
+                  <Link to="/services/study-workshops" className="block px-4 py-2 text-sm text-foreground hover:bg-muted">
                     Study Skills Workshops
                   </Link>
                   <Link to="/services/counseling" className="block px-4 py-2 text-sm text-foreground hover:bg-muted">
                     Counseling Sessions
                   </Link>
-                  <Link to="/services/psychology" className="block px-4 py-2 text-sm text-foreground hover:bg-muted rounded-b-md">
+                  <Link to="/services/psychology-counseling" className="block px-4 py-2 text-sm text-foreground hover:bg-muted rounded-b-md">
                     Psychology Counseling Service
                   </Link>
                 </div>

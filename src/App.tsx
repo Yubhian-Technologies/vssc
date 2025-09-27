@@ -26,7 +26,10 @@ import { onAuthStateChanged } from "firebase/auth";
 import Appointment from "./pages/AppointmentPage";
 import Reservations from "./pages/RequestedAppointments "
 import AddAdmin from "./pages/addAdmin";
-
+import Counseling from "./pages/CounselingPage";
+import Pyschology from "./pages/PsychologyCounselingPage";
+import Academic from "./pages/AcademicAdvisingPage";
+import StudyWorkshop from "./pages/StudyWorkshopPage"
 const queryClient = new QueryClient();
 
 const App = () => {
@@ -72,10 +75,10 @@ const App = () => {
             <Route path = "/account" element={<AccountPage/>} />
             <Route path = "/appointment" element={<Appointment/>} />
             <Route path = "/reservations" element={<Reservations/>} />
-            <Route path="/services/counseling" element={<div>Cousenling Advising Page</div>} />
-          <Route path="/services/academic-advising" element={<div>Academic Advising Page</div>} />
-          <Route path="/services/study-workshops" element={<div>Study Workshops Page</div>} />
-          <Route path="/services/psychology-counseling" element={<div>Psychology Counseling Page</div>} />
+            <Route path="/services/counseling" element={<Counseling/>} />
+          <Route path="/services/academic-advising" element={<Academic/>} />
+          <Route path="/services/study-workshops" element={<StudyWorkshop/>} />
+          <Route path="/services/psychology-counseling" element={<Pyschology/>} />
           <Route path ="/addAdmin" element = {<AddAdmin/>} />
     
             

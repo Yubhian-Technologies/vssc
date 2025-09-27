@@ -98,7 +98,7 @@ const AddAdminPage = () => {
                 <p className="font-semibold text-lg">{user.name || "Unnamed User"}</p>
                 <p className="text-sm text-gray-600">{user.email}</p>
                 <p className="text-xs mt-1 text-gray-400">
-                  Role: {user.role || "user"}
+                  Role: {user.role || "student"}
                 </p>
               </div>
 
@@ -110,7 +110,7 @@ const AddAdminPage = () => {
                   <Switch
                     checked={user.role === "admin"}
                     onCheckedChange={(checked) =>
-                      setRole(user.id, checked ? "admin" : "user")
+                      setRole(user.id, checked ? "admin" : "student")
                     }
                   />
                 </div>
@@ -121,7 +121,7 @@ const AddAdminPage = () => {
                   <Switch
                     checked={user.role === "admin+"}
                     onCheckedChange={(checked) =>
-                      setRole(user.id, checked ? "admin+" : "user")
+                      setRole(user.id, checked ? "admin+" : "student")
                     }
                   />
                 </div>
