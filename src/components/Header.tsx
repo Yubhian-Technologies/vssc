@@ -67,7 +67,7 @@ const Header = () => {
   return (
     <header className="relative w-full bg-background border-b border-border">
       {/* Decorative background */}
-      <div className="absolute top-0 right-0 h-full w-1/4 bg-primary z-0 [clip-path:polygon(20%_0,100%_0,100%_100%,0%_100%)] opacity-90 pointer-events-none"></div>
+      <div className="absolute top-0 right-0 h-full w-1/3 bg-primary z-0 [clip-path:polygon(20%_0,100%_0,100%_100%,0%_100%)] opacity-90 pointer-events-none"></div>
 
       <div className="container mx-auto px-0 py-0 flex items-center justify-between relative z-10">
         {/* Logo */}
