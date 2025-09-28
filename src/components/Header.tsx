@@ -180,17 +180,7 @@ const Header = () => {
             <>
               <div className="relative group">
                 <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-primary cursor-pointer">
-                  {profileUrl ? (
-                    <img
-                      src={profileUrl}
-                      alt="Profile"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gray-300 flex items-center justify-center">
-                      <span className="text-white">U</span>
-                    </div>
-                  )}
+                  {profileUrl ? ( <img src={profileUrl} alt="Profile" className="w-full h-full object-cover" /> ) : ( <div className="w-full h-full bg-gray-300 flex items-center justify-center"> <span className="text-white">U</span> </div> )} </div> <div className="absolute right-0 mt-2 w-44 bg-background border border-border rounded-md shadow-lg opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all duration-200"> <Link to="/reservations" className="block px-4 py-2 text-sm text-foreground hover:bg-muted"> Your Reservations </Link> <Link to="/account" className="block px-4 py-2 text-sm text-foreground hover:bg-muted"> Account </Link> {role === "admin+" && ( <Link to="/addAdmin" className="block px-4 py-2 text-sm text-foreground hover:bg-muted" > Add Admins </Link> )}
                 </div>
               </div>
               <button
