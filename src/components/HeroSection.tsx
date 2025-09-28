@@ -1,7 +1,13 @@
 import { Button } from "@/components/ui/button";
 import heroStudent from "@/assets/hero-student.jpg";
 import { motion } from "framer-motion";
-
+import { useEffect, useState } from "react";
+import CongratsPopup from "../components/ui/CongratsPopup";
+import { useLocation } from "react-router-dom";
+import ArrowOverlay from "./ui/ArrowOverlay";
+import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { auth, db } from "../firebase";
+import DailyGameModal from "./DailyGameModal";
 const HeroSection = () => {
   const stats = [
     { icon: "", title: "FINDING NEMO" },
@@ -11,17 +17,78 @@ const HeroSection = () => {
     { icon: "", title: "HAPPY FEET" },
     { icon: "", title: "HIDDEN FIGURES" },
   ];
-
+  const [showGame, setShowGame] = useState(false);
   const firstPart = "Learn. Grow.";
   const secondPart = " Prosper.";
+  const location = useLocation();
 
   const duplicatedstats = [...stats, ...stats];
+  const [showCongrats, setShowCongrats] = useState(false);
+   const [showArrow, setShowArrow] = useState(false);
+  const [points, setPoints] = useState(0);
+
+ useEffect(() => {
+    if (location.state?.showCongrats) {
+      setShowCongrats(true);
+      // clear state so it doesn’t persist on refresh
+      setShowArrow(true); 
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+  useEffect(() => {
+    const checkDailyClaim = async () => {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+
+      if (userSnap.exists()) {
+        const data = userSnap.data();
+        const lastClaimed = data.lastDailyClaim?.toDate?.() || null;
+        const todayKey = new Date().toDateString();
+
+        setPoints(data.points || 0);
+
+        if (!lastClaimed || lastClaimed.toDateString() !== todayKey ) {
+          setShowGame(true); // Show game modal
+        }
+      }
+    };
+
+    checkDailyClaim();
+  }, []);
+  const handleGameComplete = async () => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const userRef = doc(db, "users", user.uid);
+    const userSnap = await getDoc(userRef);
+    if (!userSnap.exists()) return;
+
+    const currentPoints = userSnap.data().points || 0;
+
+    await updateDoc(userRef, {
+      points: currentPoints + 5,
+      lastDailyClaim: serverTimestamp(),
+    });
+
+    setPoints(currentPoints + 5);
+    setShowCongrats(true);
+    setShowGame(false);
+  };
 
   return (
+    
     <section
       data-aos="fade-down"
       className="relative h-auto py-10 sm:py-14 [background-color:hsl(60,100%,95%)]"
     >
+       {showCongrats && <CongratsPopup onClose={() => setShowCongrats(false)} />}
+{showArrow && <ArrowOverlay onClose={() => setShowArrow(false)} />}
+  {showGame && <DailyGameModal onComplete={handleGameComplete} />}
+
+
       <div className="container mx-auto px-2 py- sm:px-4 sm:py-10 md:py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-10 items-center">
           {/* Left Content */}

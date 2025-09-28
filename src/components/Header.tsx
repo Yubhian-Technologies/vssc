@@ -3,47 +3,60 @@ import { Link, useNavigate } from "react-router-dom";
 import { Menu, X, LogOut } from "lucide-react";
 import { auth, db } from "../firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
+import { doc, onSnapshot } from "firebase/firestore";
 import ButtonGradient from "./ui/ButtonGradient";
 import VSSCLogo from "@/assets/VSSC LOGO[1].png";
-import { doc, getDoc } from "firebase/firestore";
 
 const Header = () => {
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [profileUrl, setProfileUrl] = useState<string | null>(null);
-  const [isServicesOpen, setIsServicesOpen] = useState(false); // for mobile dropdown
+  const [isServicesOpen, setIsServicesOpen] = useState(false);
   const [role, setRole] = useState<string | null>(null);
+  const [points, setPoints] = useState<number>(0);
+
+  // Format points as 1k+, 1.5k+, etc.
+  const formatPoints = (num: number) => {
+    if (num < 1000) return num.toString();
+    if (num < 1000000) return (num / 1000).toFixed(1).replace(/\.0$/, "") + "K+";
+    return (num / 1000000).toFixed(1).replace(/\.0$/, "") + "M+";
+  };
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    let unsubscribeSnapshot: (() => void) | undefined;
+
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (user) {
         setIsLoggedIn(true);
         const docRef = doc(db, "users", user.uid);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          setProfileUrl(data.profileUrl || null);
-          setRole(data.role || null); // get user role
-        }
+        unsubscribeSnapshot = onSnapshot(docRef, (docSnap) => {
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            setProfileUrl(data.profileUrl || null);
+            setRole(data.role || null);
+            setPoints(data.points || 0);
+          }
+        });
       } else {
         setIsLoggedIn(false);
         setProfileUrl(null);
         setRole(null);
+        setPoints(0);
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeSnapshot) unsubscribeSnapshot();
+    };
   }, []);
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
   const handleLoginClick = () => {
     if (!isLoggedIn) navigate("/auth");
-    else {
-      if (role === "admin") navigate("/appointment");
-      else navigate("/appointment");
-    }
+    else navigate("/appointment");
   };
 
   const handleSignOut = async () => {
@@ -59,10 +72,22 @@ const Header = () => {
   const navLinks = [
     { name: "Home", path: "/" },
     { name: "About", path: "/about" },
-    { name: "Services", path: "/services" }, // dropdown handled separately
+    { name: "Services", path: "/services" },
     { name: "Tour", path: "/tour" },
     { name: "Help", path: "/help" },
   ];
+
+  const PointsBadge = () => (
+    <div
+      id="points-section"
+      className="flex items-center gap-2 px-3 py-1 bg-black/80 rounded-full shadow-lg relative overflow-hidden"
+    >
+      <div className="absolute inset-0 bg-gradient-to-t from-orange-600 via-yellow-400 to-transparent animate-pulse opacity-60 blur-sm"></div>
+      <span className="relative z-10 text-white font-bold text-lg">
+        {formatPoints(points)}🔥
+      </span>
+    </div>
+  );
 
   return (
     <header className="relative w-full bg-background border-b border-border">
@@ -73,7 +98,11 @@ const Header = () => {
         {/* Logo */}
         <div className="flex items-center hover:scale-105 transition-transform px-2 py-2">
           <Link to="/">
-            <img src={VSSCLogo} alt="VSSC Logo" className="w-8 h-8 sm:w-12 sm:h-12 object-contain" />
+            <img
+              src={VSSCLogo}
+              alt="VSSC Logo"
+              className="w-8 h-8 sm:w-12 sm:h-12 object-contain"
+            />
           </Link>
         </div>
 
@@ -91,79 +120,79 @@ const Header = () => {
 
                 {/* Desktop Dropdown */}
                 <div className="absolute left-0 mt-2 w-64 [background-color:hsl(60,100%,95%)] border border-border rounded-md shadow-lg opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all duration-200 z-50">
-                  <Link to="/services/tutoring" className="block px-4 py-2 text-sm text-foreground hover:bg-muted rounded-t-md">
+                  <Link
+                    to="/services/tutoring"
+                    className="block px-4 py-2 text-sm hover:bg-muted rounded-t-md"
+                  >
                     Tutoring Services
                   </Link>
-                  <Link to="/services/academic-advising" className="block px-4 py-2 text-sm text-foreground hover:bg-muted">
+                  <Link
+                    to="/services/academic-advising"
+                    className="block px-4 py-2 text-sm hover:bg-muted"
+                  >
                     Academic Advising
                   </Link>
-                  <Link to="/services/study-workshops" className="block px-4 py-2 text-sm text-foreground hover:bg-muted">
+                  <Link
+                    to="/services/study-workshops"
+                    className="block px-4 py-2 text-sm hover:bg-muted"
+                  >
                     Study Skills Workshops
                   </Link>
-                  <Link to="/services/counseling" className="block px-4 py-2 text-sm text-foreground hover:bg-muted">
+                  <Link
+                    to="/services/counseling"
+                    className="block px-4 py-2 text-sm hover:bg-muted"
+                  >
                     Counseling Sessions
                   </Link>
-                  <Link to="/services/psychology-counseling" className="block px-4 py-2 text-sm text-foreground hover:bg-muted rounded-b-md">
+                  <Link
+                    to="/services/psychology-counseling"
+                    className="block px-4 py-2 text-sm hover:bg-muted rounded-b-md"
+                  >
                     Psychology Counseling Service
                   </Link>
                 </div>
               </div>
             ) : (
-              <Link key={link.name} to={link.path} className="relative text-foreground hover:text-primary font-semibold">
+              <Link
+                key={link.name}
+                to={link.path}
+                className="relative text-foreground hover:text-primary font-semibold"
+              >
                 {link.name}
               </Link>
             )
           )}
         </nav>
 
-        {/* Desktop Buttons */}
+        {/* Desktop Right */}
         <div className="hidden lg:flex items-center gap-4 relative z-20">
+          
           {isLoggedIn && role === "admin" ? (
-            <div className="relative group">
-              <ButtonGradient name="Appointments →" onClick={handleLoginClick} />
-              <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 bg-gray-700 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                See the list of requested appointments
-              </div>
-            </div>
+            <ButtonGradient name="Appointments →" onClick={handleLoginClick} />
           ) : (
             <ButtonGradient
               name={isLoggedIn ? "Book an Appointment →" : "Login/Register"}
               onClick={handleLoginClick}
             />
           )}
-
+          
           {isLoggedIn && (
             <>
-              {/* Profile icon */}
               <div className="relative group">
                 <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-primary cursor-pointer">
                   {profileUrl ? (
-                    <img src={profileUrl} alt="Profile" className="w-full h-full object-cover" />
+                    <img
+                      src={profileUrl}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                    />
                   ) : (
                     <div className="w-full h-full bg-gray-300 flex items-center justify-center">
                       <span className="text-white">U</span>
                     </div>
                   )}
                 </div>
-                <div className="absolute right-0 mt-2 w-44 bg-background border border-border rounded-md shadow-lg opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all duration-200">
-                  <Link to="/reservations" className="block px-4 py-2 text-sm text-foreground hover:bg-muted">
-                    Your Reservations
-                  </Link>
-                  <Link to="/account" className="block px-4 py-2 text-sm text-foreground hover:bg-muted">
-                    Account
-                  </Link>
-                  {role === "admin+" && (
-        <Link
-          to="/addAdmin"
-          className="block px-4 py-2 text-sm text-foreground hover:bg-muted"
-        >
-          Add Admins
-        </Link>
-      )}
-                </div>
               </div>
-
-              {/* Sign out icon */}
               <button
                 onClick={handleSignOut}
                 className="ml-3 w-10 h-10 bg-muted rounded-full flex items-center justify-center cursor-pointer shadow hover:shadow-md transition-shadow"
@@ -171,9 +200,11 @@ const Header = () => {
               >
                 <LogOut className="w-5 h-5 text-foreground" />
               </button>
+              <PointsBadge />
             </>
           )}
         </div>
+        
 
         {/* Mobile Menu Toggle */}
         <button
@@ -186,41 +217,74 @@ const Header = () => {
 
       {/* Mobile Menu */}
       {isMenuOpen && (
-        <div className="lg:hidden absolute top-full left-0 w-full bg-background border-t border-border shadow-md z-[999] justify-center items-center">
+        <div className="lg:hidden absolute top-full left-0 w-full bg-background border-t border-border shadow-md z-[999]">
           <nav className="flex flex-col px-6 py-4 gap-4 justify-center items-center">
+            
             {navLinks.map((link) =>
               link.name === "Services" ? (
                 <div key="Services" className="w-full flex flex-col items-center">
                   <div className="flex items-center justify-center gap-1">
-                    <Link to="/services" className="text-foreground font-semibold hover:text-primary" onClick={() => setIsMenuOpen(false)}>
+                    <Link
+                      to="/services"
+                      className="text-foreground font-semibold hover:text-primary"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
                       Services
                     </Link>
-                    <button onClick={() => setIsServicesOpen(!isServicesOpen)} className="text-foreground hover:text-primary">
+                    <button
+                      onClick={() => setIsServicesOpen(!isServicesOpen)}
+                      className="text-foreground hover:text-primary"
+                    >
                       {isServicesOpen ? "▴" : "▾"}
                     </button>
                   </div>
                   {isServicesOpen && (
                     <div className="mt-2 flex flex-col justify-center items-center bg-background rounded-md shadow-md border border-border w-full">
-                      <Link to="/services/tutoring" className="px-4 py-2 text-sm text-foreground hover:bg-muted rounded-t-md" onClick={() => setIsMenuOpen(false)}>
+                      <Link
+                        to="/services/tutoring"
+                        className="px-4 py-2 text-sm hover:bg-muted rounded-t-md"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
                         Tutoring Services
                       </Link>
-                      <Link to="/services/advising" className="px-4 py-2 text-sm text-foreground hover:bg-muted" onClick={() => setIsMenuOpen(false)}>
+                      <Link
+                        to="/services/advising"
+                        className="px-4 py-2 text-sm hover:bg-muted"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
                         Academic Advising
                       </Link>
-                      <Link to="/services/workshops" className="px-4 py-2 text-sm text-foreground hover:bg-muted" onClick={() => setIsMenuOpen(false)}>
+                      <Link
+                        to="/services/workshops"
+                        className="px-4 py-2 text-sm hover:bg-muted"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
                         Study Skills Workshops
                       </Link>
-                      <Link to="/services/counseling" className="px-4 py-2 text-sm text-foreground hover:bg-muted" onClick={() => setIsMenuOpen(false)}>
+                      <Link
+                        to="/services/counseling"
+                        className="px-4 py-2 text-sm hover:bg-muted"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
                         Counseling Sessions
                       </Link>
-                      <Link to="/services/psychology" className="px-4 py-2 text-sm text-foreground hover:bg-muted rounded-b-md" onClick={() => setIsMenuOpen(false)}>
+                      <Link
+                        to="/services/psychology"
+                        className="px-4 py-2 text-sm hover:bg-muted rounded-b-md"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
                         Psychology Counseling Service
                       </Link>
                     </div>
                   )}
                 </div>
               ) : (
-                <Link key={link.name} to={link.path} onClick={() => setIsMenuOpen(false)} className="text-foreground hover:text-primary font-semibold">
+                <Link
+                  key={link.name}
+                  to={link.path}
+                  onClick={() => setIsMenuOpen(false)}
+                  className="text-foreground hover:text-primary font-semibold"
+                >
                   {link.name}
                 </Link>
               )
@@ -230,7 +294,10 @@ const Header = () => {
             {isLoggedIn && role === "admin" ? (
               <ButtonGradient name="Appointments →" onClick={handleLoginClick} />
             ) : (
-              <ButtonGradient name={isLoggedIn ? "Book an Appointment →" : "Login/Register"} onClick={handleLoginClick} />
+              <ButtonGradient
+                name={isLoggedIn ? "Book an Appointment →" : "Login/Register"}
+                onClick={handleLoginClick}
+              />
             )}
 
             {isLoggedIn && (
