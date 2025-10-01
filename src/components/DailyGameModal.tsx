@@ -29,7 +29,6 @@ const DailyGameModal: React.FC<DailyGameModalProps> = ({ onComplete, onClose }) 
     if (lastClaim === today) {
       setClaimedToday(true); // Already claimed today
     } else {
-      // Pick a random game
       const randomGame = games[Math.floor(Math.random() * games.length)];
       setSelectedGame(randomGame);
     }
@@ -42,13 +41,32 @@ const DailyGameModal: React.FC<DailyGameModalProps> = ({ onComplete, onClose }) 
     onComplete(); // Award 5 points
   };
 
+  const handleSkip = () => {
+    const confirmSkip = window.confirm(
+      "Are you sure you want to skip? You will not receive any points."
+    );
+    if (confirmSkip) {
+      setSelectedGame(null); // Close the modal
+      if (onClose) onClose();
+    }
+  };
+
   if (claimedToday || !selectedGame) return null;
 
   const GameComponent = selectedGame.component;
 
   return (
     <div className="fixed inset-0 bg-black/70 flex justify-center items-center z-50">
-      <div className="bg-white p-6 rounded-lg max-w-md w-full text-center">
+      <div className="bg-white p-6 rounded-lg max-w-md w-full text-center relative">
+        {/* Cross button */}
+        <button
+          onClick={handleSkip}
+          className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+          title="Skip game"
+        >
+          ✖
+        </button>
+
         <h2 className="text-xl font-bold mb-4">{selectedGame.name}</h2>
         <p>Solve this game to earn 5 points!</p>
 
