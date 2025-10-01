@@ -80,6 +80,7 @@ const Header = () => {
   const PointsBadge = () => (
     <div
       id="points-section"
+      onClick={() => navigate("/leaderboard")}
       className="flex items-center gap-2 px-3 py-1 bg-black/80 rounded-full shadow-lg relative overflow-hidden"
     >
       <div className="absolute inset-0 bg-gradient-to-t from-orange-600 via-yellow-400 to-transparent animate-pulse opacity-60 blur-sm"></div>

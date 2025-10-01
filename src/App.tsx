@@ -30,6 +30,7 @@ import Counseling from "./pages/CounselingPage";
 import Pyschology from "./pages/PsychologyCounselingPage";
 import Academic from "./pages/AcademicAdvisingPage";
 import StudyWorkshop from "./pages/StudyWorkshopPage"
+import LeaderboardPage from "./pages/LeaderboardPage"
 const queryClient = new QueryClient();
 
 const App = () => {
@@ -80,6 +81,7 @@ const App = () => {
           <Route path="/services/study-workshops" element={<StudyWorkshop/>} />
           <Route path="/services/psychology-counseling" element={<Pyschology/>} />
           <Route path ="/addAdmin" element = {<AddAdmin/>} />
+          <Route path="/leaderboard" element={<LeaderboardPage />} />
     
             
             {/* Auth route: redirect to hero if already logged in */}
