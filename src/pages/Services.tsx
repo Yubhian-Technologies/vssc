@@ -30,7 +30,8 @@ const Services = () => {
       id: "advising",
       title: "Academic Advising",
       description: "Educational guidance and career planning",
-      image: "https://img.icons8.com/color/96/advice.png",
+      image:
+        "https://img.icons8.com/color/96/teacher.png",
       collectionName: "academicAdvising",
       count: 0,
       route: "/services/academic-advising",

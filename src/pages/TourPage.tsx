@@ -49,9 +49,9 @@ const TourPage: React.FC = () => {
   // Inside your TourPage component
 
 const campusBgColors = [
-  "bg-[hsl(220,100%,95%)]",
-  "bg-[hsl(210,100%,93%)]", // light green
-  "bg-[hsl(220,100%,90%)]",
+  "bg-[hsl(60,100%,95%)]",
+  "bg-[hsl(60,100%,95%)]", // light green
+  "bg-[hsl(60,100%,95%)]",
   "bg-[hsl(60,100%,95%)]"
 ];
 
@@ -76,7 +76,7 @@ return (
     </div>
 
     {/* Flex Row Campuses */}
-    <section className="w-full bg-gray-50 py-12 px-6 md:px-12 lg:px-20  [background-color:hsl(60,100%,95%)]">
+    <section className="w-full bg-gray-50 py-12 px-6 md:px-12 lg:px-20  [background-color:hsl(60,100%,85%)]">
   <div className="flex flex-col gap-16 px-6 lg:px-16 py-12">
     {campuses.map((campus, index) => (
       <div

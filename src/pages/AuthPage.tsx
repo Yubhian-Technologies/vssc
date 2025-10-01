@@ -72,6 +72,7 @@ export default function AuthPage() {
       if (isLogin) {
         // 🔹 Login
         userCredential = await signInWithEmailAndPassword(auth, email, password);
+        navigate("/hero");
       } else {
         // 🔹 Register
         const selectedCollege = colleges.find((c) => c.name === college);
@@ -89,12 +90,16 @@ export default function AuthPage() {
           name: name,
           email: email,
           college: college,
-          role: "user", // default role
+          role: "student", // default role
+          points : 10,
           keywords: generateKeywords(name, email), // 🔹 add keywords
         });
+        navigate("/hero", { state: { showCongrats: true } });
       }
+      
+      
+     
 
-      navigate("/hero");
     } catch (err: any) {
       setError(err.message);
     }
