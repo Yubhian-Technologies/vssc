@@ -3,6 +3,7 @@ import { db } from "../firebase";
 import { collection, getDocs } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import advising from "@/assets/filter25.jpg";
 
 interface Service {
   id: string;
@@ -30,8 +31,7 @@ const Services = () => {
       id: "advising",
       title: "Academic Advising",
       description: "Educational guidance and career planning",
-      image:
-        "https://img.icons8.com/color/96/teacher.png",
+      image: "https://img.icons8.com/color/96/teacher.png",
       collectionName: "academicAdvising",
       count: 0,
       route: "/services/academic-advising",
@@ -111,17 +111,28 @@ const Services = () => {
         />
       </div>
 
-      {/* Heading */}
-      <motion.h1
-        className="text-4xl md:text-5xl font-extrabold text-center mb-14 text-primary bg-clip-text drop-shadow-lg"
-        initial={{ opacity: 0, y: -40 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7 }}
-      >
-        Student Support Services
-      </motion.h1>
+      {/* Hero Section */}
+      <section className="text-center py-16">
+        <motion.h1
+          className="text-3xl md:text-5xl font-extrabold text-primary mb-6 drop-shadow-lg"
+          initial={{ opacity: 0, y: -40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7 }}
+        >
+          Empowering Students to Learn, Grow, and Succeed!
+        </motion.h1>
+        <motion.p
+          className="text-lg md:text-xl text-gray-700 max-w-2xl mx-auto mb-6"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+        >
+          Explore a range of services designed to boost your learning, wellbeing, and career development.
+        </motion.p>
+        
+      </section>
 
-      {/* New Section */}
+      {/*New Section */}
       <section className="w-full py-16 px-6 md:px-12 lg:px-20">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row gap-0 shadow-lg rounded-xl overflow-hidden">
           <div className="md:w-1/2 w-full bg-[hsl(60,100%,90%)] text-black p-10 flex flex-col justify-center">
@@ -147,16 +158,6 @@ const Services = () => {
         </div>
 
         
-<div className="max-w-6xl mx-auto mt-10 flex flex-col md:flex-row gap-4">
-  <input
-    type="text"
-    placeholder="Search services..."
-    value={search}
-    onChange={(e) => setSearch(e.target.value)}
-    className="p-2 text-sm rounded-lg border border-gray-300 flex-1"
-  />
-</div>
-
       </section>
 
       {/* Services Cards */}
@@ -176,7 +177,7 @@ const Services = () => {
             whileHover={{
               scale: 1.05,
               rotate: 1,
-              boxShadow: "0 0 30px rgba(59, 130, 246, 0.5)", // light primary color shadow
+              boxShadow: "0 0 30px rgba(59, 130, 246, 0.5)",
             }}
             whileTap={{ scale: 0.97 }}
             variants={{
