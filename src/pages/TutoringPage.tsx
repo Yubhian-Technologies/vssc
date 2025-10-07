@@ -18,6 +18,8 @@ import { Users, Clock, BookOpen, User as UserIcon } from "lucide-react";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { runTransaction } from "firebase/firestore";
+import green3 from "@/assets/green3.png"
+import { motion } from "framer-motion";
 
 interface TutoringSession {
   id: string;
@@ -413,12 +415,37 @@ export default function TutoringPage() {
     setShowParticipants(true);
   };
 
+
   return (
+
+    <div>
+      <div className="relative w-full h-72 md:h-96 lg:h-[28rem]">
+        <img
+          src={green3}
+          alt="About Banner"
+          className="w-full h-full object-contain object-top"
+        />
+        <div className="absolute inset-0 bg-black bg-opacity-70"></div>
+        <div className="absolute inset-0 flex flex-col justify-center items-center text-center text-white px-4">
+          <motion.h1
+          className="text-3xl md:text-5xl font-bold text-white mb-6 drop-shadow-lg"
+          initial={{ opacity: 0, y: -40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7 }}
+        >
+          Available Tutoring Sessions
+        </motion.h1>
+          <p className="max-w-2xl text-lg">
+            No sessions available for your college.
+          </p>
+        </div>
+      </div>
     <div className="p-6 min-h-screen [background-color:hsl(60,100%,95%)]">
-      <TitleHeroSection
+      {/* <TitleHeroSection
         title="Available Tutoring Sessions"
         subtitle="Join sessions to improve your skills"
-      />
+      /> */}
+      
 
       <SearchFilter data={sessions} onFilteredData={setFilteredSessions} />
 
@@ -817,9 +844,9 @@ export default function TutoringPage() {
       {/* Calendar Modal */}
       {showCalendar && selectedSession && !selectedSession.isGroup && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md">
+          <div className="bg-background rounded-xl p-6 w-full max-w-md">
             <h2 className="text-xl font-bold mb-4">{selectedSession.title} - Select Date</h2>
-            <Calendar onClickDay={handleDateClick} tileClassName={tileClassName} />
+            <Calendar className="[background-color:hsl(60,100%,95%)] mb-3" onClickDay={handleDateClick} tileClassName={tileClassName} />
 
             {selectedDate && availableSlots.length > 0 && (
               <div className="mt-4">
@@ -834,7 +861,7 @@ export default function TutoringPage() {
                       <button
                         key={slot.time}
                         className={`py-2 rounded-lg text-sm font-semibold text-white transition
-                          ${slot.booked ? (isUserSlot ? "bg-green-600" : "bg-gray-400") : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-indigo-600 hover:to-blue-600"}`}
+                          ${slot.booked ? (isUserSlot ? "bg-green-600" : "bg-gray-400") : "bg-primary"}`}
                         onClick={() => handleSlotSelect(slot.time)}
                         disabled={slot.booked}
                       >
@@ -846,12 +873,14 @@ export default function TutoringPage() {
               </div>
             )}
 
-            <button
-              className="px-4 py-2 rounded-lg bg-gray-300 hover:bg-gray-400"
+            <div className="flex justify-center items-center">
+              <button
+              className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-800 text-white justify-center items-center"
               onClick={() => setShowCalendar(false)}
             >
               Close
             </button>
+            </div>
           </div>
         </div>
       )}
@@ -884,6 +913,7 @@ export default function TutoringPage() {
           </div>
         </div>
       )}
+    </div>
     </div>
   );
 }

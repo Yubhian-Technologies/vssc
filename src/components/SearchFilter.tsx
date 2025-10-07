@@ -91,7 +91,7 @@ export default function SearchFilter<T extends Session>({
       <div className="relative">
         <button
           onClick={() => setIsFilterOpen(!isFilterOpen)}
-          className="flex items-center p-3 border border-gray-300 rounded-lg bg-background hover:bg-gray-100"
+          className="flex items-center p-3 border border-background-300 rounded-lg bg-background hover:bg-background"
         >
           <Filter className="w-5 h-5 mr-2 text-gray-600" />
           Filter by Skills ({selectedSkills.length})
@@ -104,7 +104,7 @@ export default function SearchFilter<T extends Session>({
               uniqueSkills.map((skill) => (
                 <label
                   key={skill}
-                  className="flex items-center p-3 hover:bg-gray-100 cursor-pointer"
+                  className="flex items-center p-3 hover:bg-back cursor-pointer"
                 >
                   <input
                     type="checkbox"

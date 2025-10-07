@@ -55,8 +55,8 @@ const campusBgColors = [
   "bg-[hsl(60,100%,95%)]"
 ];
 
-return (
-  <div className="bg-gray-50">
+return ( 
+  <div className="bg-gray-50 ">
     {/* Banner */}
     <div className="relative w-full h-72 md:h-96 lg:h-[28rem]">
       <img
@@ -76,7 +76,7 @@ return (
     </div>
 
     {/* Flex Row Campuses */}
-    <section className="w-full bg-gray-50 py-12 px-6 md:px-12 lg:px-20  [background-color:hsl(60,100%,85%)]">
+    <section className="w-full bg-gray-50 py-12 px-6 md:px-12 lg:px-20  [background-color:hsl(60,100%,90%)]">
   <div className="flex flex-col gap-16 px-6 lg:px-16 py-12">
     {campuses.map((campus, index) => (
       <div
@@ -100,7 +100,7 @@ return (
           <p className="text-gray-700">{campus.description}</p>
           <button
             onClick={() => navigate(`/campus/${campus.id}`)}
-            className="self-start px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+            className="self-start px-6 py-2 bg-primary text-white rounded-lg hover:bg-blue-900 transition"
           >
             Explore
           </button>

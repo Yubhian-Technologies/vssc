@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import TitleHeroSection from "@/components/TitleHeroSection";
 import SearchFilter from "@/components/SearchFilter";
 import { db } from "../firebase";
+import green2 from "@/assets/green2.png"
+import { motion } from "framer-motion";
+
 import {
   collection,
   doc,
@@ -450,11 +453,33 @@ export default function StudyWorkshopPage() {
   };
 
   return (
+    <div>
+      <div className="relative w-full h-72 md:h-96 lg:h-[28rem]">
+        <img
+          src={green2}
+          alt="About Banner"
+          className="w-full h-full object-contain object-top"
+        />
+        <div className="absolute inset-0 bg-black bg-opacity-70"></div>
+        <div className="absolute inset-0 flex flex-col justify-center items-center text-center text-white px-4">
+          <motion.h1
+          className="text-3xl md:text-5xl font-bold text-white mb-6 drop-shadow-lg"
+          initial={{ opacity: 0, y: -40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7 }}
+        >
+          Available Tutoring Sessions
+        </motion.h1>
+          <p className="max-w-2xl text-lg">
+            No sessions available for your college.
+          </p>
+        </div>
+      </div>
     <div className="p-6 min-h-screen [background-color:hsl(60,100%,95%)]">
-      <TitleHeroSection
+      {/* <TitleHeroSection
         title="Available Study Workshop Sessions"
         subtitle="Join workshops to enhance your learning and study skills"
-      />
+      /> */}
 
       <SearchFilter data={sessions} onFilteredData={setFilteredSessions} />
 
@@ -920,6 +945,7 @@ export default function StudyWorkshopPage() {
           </div>
         </div>
       )}
+    </div>
     </div>
   );
 }

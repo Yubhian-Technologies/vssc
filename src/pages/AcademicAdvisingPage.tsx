@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import TitleHeroSection from "@/components/TitleHeroSection";
 import SearchFilter from "@/components/SearchFilter";
 import { db } from "../firebase";
+import green4 from "@/assets/green4.png"
+import { motion } from "framer-motion";
 import {
   collection,
   doc,
@@ -439,11 +441,35 @@ export default function AcademicAdvisingPage() {
   };
 
   return (
+
+    <div>
+
+      <div className="relative w-full h-72 md:h-96 lg:h-[28rem]">
+        <img
+          src={green4}
+          alt="About Banner"
+          className="w-full h-full object-contain object-top"
+        />
+        <div className="absolute inset-0 bg-black bg-opacity-70"></div>
+        <div className="absolute inset-0 flex flex-col justify-center items-center text-center text-white px-4">
+          <motion.h1
+          className="text-3xl md:text-5xl font-bold text-white mb-6 drop-shadow-lg"
+          initial={{ opacity: 0, y: -40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7 }}
+        >
+          Available Academic Advising Sessions
+        </motion.h1>
+          <p className="max-w-2xl text-lg">
+            Book a session with your advisor to get guidance and support
+          </p>
+        </div>
+      </div>
     <div className="p-6 min-h-screen [background-color:hsl(60,100%,95%)]">
-      <TitleHeroSection
+      {/* <TitleHeroSection
         title="Available Academic Advising Sessions"
         subtitle="Book a session with your advisor to get guidance and support"
-      />
+      /> */}
 
       <SearchFilter data={sessions} onFilteredData={setFilteredSessions} />
 
@@ -909,6 +935,7 @@ export default function AcademicAdvisingPage() {
           </div>
         </div>
       )}
+    </div>
     </div>
   );
 }

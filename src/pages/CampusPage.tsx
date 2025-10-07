@@ -13,12 +13,12 @@ const CampusPage: React.FC = () => {
   }
 
   return (
-    <section className="w-full bg-gray-50 py-12 px-6 md:px-12 lg:px-20  [background-color:hsl(60,100%,85%)]">
-    <div className="min-h-screen bg-gray-50 px-6 lg:px-16 py-10  [background-color:hsl(60,100%,85%)]">
+    <section className="w-full py-12 px-6 md:px-12 lg:px-20  [background-color:hsl(60,100%,90%)]">
+    <div className="min-h-screen bg-gray-50 px-6 lg:px-16 py-10  [background-color:hsl(60,100%,90%)]">
       {/* Back Button */}
       <button
         onClick={() => navigate(-1)}
-        className="mb-6 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+        className="mb-6 bg-primary hover:bg-blue-900 text-white px-4 py-2 rounded-lg"
       >
         ← Back
       </button>

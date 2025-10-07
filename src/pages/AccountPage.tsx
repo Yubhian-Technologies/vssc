@@ -88,8 +88,8 @@ const AccountPage = () => {
   if (!userData) return <div className="min-h-screen flex items-center justify-center">User data not found.</div>;
 
   return (
-    <div className="min-h-screen bg-gray-100 flex justify-center items-start pt-20 px-4">
-      <div className="bg-white shadow-xl rounded-xl w-full max-w-2xl p-6 relative flex flex-col md:flex-row items-center gap-6">
+    <div className="min-h-screen text-primary [background-color:hsl(60,100%,95%)] flex justify-center items-start pt-20 px-4">
+      <div className="[background-color:hsl(60,100%,90%)] shadow-xl rounded-xl w-full max-w-2xl p-6 relative flex flex-col md:flex-row items-center gap-6">
         
         {/* Profile Picture */}
         <div className="flex-shrink-0 flex flex-col items-center">
@@ -127,12 +127,12 @@ const AccountPage = () => {
             <textarea
               value={extra}
               onChange={(e) => setExtra(e.target.value)}
-              className="mt-1 w-full border rounded p-2"
+              className="mt-1 w-full border rounded p-2 [background-color:hsl(60,100%,95%)]"
               placeholder="Add extra details..."
             />
             <button
               onClick={handleExtraUpdate}
-              className="mt-2 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded transition"
+              className="mt-2 bg-primary hover:bg-blue-900 text-white py-2 px-4 rounded transition"
             >
               Update Extra Details
             </button>
