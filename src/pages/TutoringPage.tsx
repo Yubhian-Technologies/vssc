@@ -436,7 +436,7 @@ export default function TutoringPage() {
           Available Tutoring Sessions
         </motion.h1>
           <p className="max-w-2xl text-lg">
-            No sessions available for your college.
+            Book a session with your advisor to get guidance and support
           </p>
         </div>
       </div>

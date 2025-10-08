@@ -868,9 +868,9 @@ export default function AcademicAdvisingPage() {
       {/* Calendar Modal */}
       {showCalendar && selectedSession && !selectedSession.isGroup && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md">
+          <div className="[background-color:hsl(60,100%,90%)] rounded-xl p-6 w-full max-w-md">
             <h2 className="text-xl font-bold mb-4">{selectedSession.title} - Select Date</h2>
-            <Calendar onClickDay={handleDateClick} tileClassName={tileClassName} />
+            <Calendar className="[background-color:hsl(60,100%,90%)]" onClickDay={handleDateClick} tileClassName={tileClassName} />
 
             {selectedDate && availableSlots.length > 0 && (
               <div className="mt-4">
@@ -897,12 +897,14 @@ export default function AcademicAdvisingPage() {
               </div>
             )}
 
-            <button
-              className="px-4 py-2 rounded-lg bg-gray-300 hover:bg-gray-400"
+            <div className="flex justify-center items-center">
+              <button
+              className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-800 text-white justify-center items-center"
               onClick={() => setShowCalendar(false)}
             >
               Close
             </button>
+            </div>
           </div>
         </div>
       )}
@@ -910,7 +912,7 @@ export default function AcademicAdvisingPage() {
       {/* Confirm Dialog */}
       {showDialog && selectedSession && (selectedSession.isGroup || selectedSlot) && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white rounded-xl p-6 w-96">
+          <div className="[background-color:hsl(60,100%,95%)] rounded-xl p-6 w-96">
             <h2 className="text-xl font-bold mb-4">Confirm Booking</h2>
             <p className="mb-4">
               Are you sure you want to {selectedSession.isGroup ? "join" : "book"}{" "}
