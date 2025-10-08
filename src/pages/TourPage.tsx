@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import Tilt from "react-parallax-tilt";
+import { motion } from "framer-motion";
 
 import filter21 from "../assets/filter21.jpg";
 import filter22 from "../assets/filter22.jpg";
@@ -57,13 +58,22 @@ const TourPage: React.FC = () => {
     <div className="bg-gray-50">
       {/* Banner */}
       <div className="relative w-full h-72 md:h-96 lg:h-[28rem]">
-        <img src={Land1} alt="Tour Banner" className="w-full h-full object-cover" />
+        <img
+          src={Land1}
+          alt="About Banner"
+          className="w-full h-full object-contain object-top"
+        />
         <div className="absolute inset-0 bg-black bg-opacity-60"></div>
         <div className="absolute inset-0 flex flex-col justify-center items-center text-center text-white px-4">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 text-[hsl(60,100%,95%)]">
-            VISHNU GALLERY
-          </h1>
-          <p className="text-lg max-w-3xl text-[hsl(60,100%,95%)]">
+          <motion.h1
+          className="text-3xl md:text-5xl font-bold text-white mb-6 drop-shadow-lg"
+          initial={{ opacity: 0, y: -40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7 }}
+        >
+          VISHNU GALLERY
+        </motion.h1>
+          <p className="max-w-2xl text-lg">
             Explore the beautiful campuses of the Vishnu Educational Society. Each campus offers world-class facilities, a vibrant student life, and a commitment to academic excellence.
           </p>
         </div>

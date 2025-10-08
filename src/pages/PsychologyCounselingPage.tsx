@@ -449,7 +449,7 @@ export default function PsychologyCounselingPage() {
           alt="About Banner"
           className="w-full h-full object-contain object-top"
         />
-        <div className="absolute inset-0 bg-black bg-opacity-70"></div>
+        <div className="absolute inset-0 bg-black bg-opacity-60"></div>
         <div className="absolute inset-0 flex flex-col justify-center items-center text-center text-white px-4">
           <motion.h1
           className="text-3xl md:text-5xl font-bold text-white mb-6 drop-shadow-lg"
