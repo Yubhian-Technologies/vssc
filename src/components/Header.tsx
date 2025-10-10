@@ -93,7 +93,8 @@ const Header = () => {
   return (
     <header className="relative w-full bg-background border-b border-border">
       {/* Decorative background */}
-      <div className="absolute top-0 right-0 h-full w-1/3 bg-primary z-0 [clip-path:polygon(20%_0,100%_0,100%_100%,0%_100%)] opacity-90 pointer-events-none"></div>
+      <div className="absolute top-0 right-0 h-full w-[300px] md:w-[400px] bg-primary z-0 [clip-path:polygon(20%_0,100%_0,100%_100%,0%_100%)] opacity-90 pointer-events-none"></div>
+
 
       <div className="container mx-auto px-0 py-0 flex items-center justify-between relative z-10">
         {/* Logo */}
@@ -184,13 +185,7 @@ const Header = () => {
                   {profileUrl ? ( <img src={profileUrl} alt="Profile" className="w-full h-full object-cover" /> ) : ( <div className="w-full h-full bg-gray-300 flex items-center justify-center"> <span className="text-white">U</span> </div> )} </div> <div className="absolute right-0 mt-2 w-44 bg-background border border-border rounded-md shadow-lg opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all duration-200"> <Link to="/reservations" className="block px-4 py-2 text-sm text-foreground hover:bg-muted"> Your Reservations </Link> <Link to="/account" className="block px-4 py-2 text-sm text-foreground hover:bg-muted"> Account </Link> {role === "admin+" && ( <Link to="/addAdmin" className="block px-4 py-2 text-sm text-foreground hover:bg-muted" > Add Admins </Link> )}
                 </div>
               </div>
-              <button
-                onClick={handleSignOut}
-                className="ml-3 w-10 h-10 bg-muted rounded-full flex items-center justify-center cursor-pointer shadow hover:shadow-md transition-shadow"
-                title="Sign Out"
-              >
-                <LogOut className="w-5 h-5 text-foreground" />
-              </button>
+             
               <PointsBadge />
             </>
           )}

@@ -1,22 +1,30 @@
 import React from "react";
 import heroImage from "@/assets/hero-student.jpg";
 import filter21 from "@/assets/filter21.jpg";
+import {motion} from "framer-motion"
 
 const About = () => {
   return (
     <div className="w-full">
       
-      <div className="relative w-full h-72 md:h-96 lg:h-[28rem]">
+       <div className="relative w-full h-72 md:h-96 lg:h-[28rem]">
         <img
           src={heroImage}
           alt="About Banner"
-          className="w-full h-full object-cover"
+          className="w-full h-full object-contain object-top"
         />
         <div className="absolute inset-0 bg-black bg-opacity-60"></div>
         <div className="absolute inset-0 flex flex-col justify-center items-center text-center text-white px-4">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">About Us</h1>
+          <motion.h1
+          className="text-3xl md:text-5xl font-bold text-white mb-6 drop-shadow-lg"
+          initial={{ opacity: 0, y: -40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7 }}
+        >
+          VISHNU GALLERY
+        </motion.h1>
           <p className="max-w-2xl text-lg">
-            Learn more about our journey, mission, and vision for the future.
+            Explore the beautiful campuses of the Vishnu Educational Society. Each campus offers world-class facilities, a vibrant student life, and a commitment to academic excellence.
           </p>
         </div>
       </div>

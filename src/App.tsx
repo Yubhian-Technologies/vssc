@@ -31,6 +31,7 @@ import Pyschology from "./pages/PsychologyCounselingPage";
 import Academic from "./pages/AcademicAdvisingPage";
 import StudyWorkshop from "./pages/StudyWorkshopPage"
 import LeaderboardPage from "./pages/LeaderboardPage"
+import ScrollToTopButton from "./components/ScrollToTopButton";
 const queryClient = new QueryClient();
 
 const App = () => {
@@ -99,7 +100,9 @@ const App = () => {
               />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          
           <Footer />
+          <ScrollToTopButton></ScrollToTopButton>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
