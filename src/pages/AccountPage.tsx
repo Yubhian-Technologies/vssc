@@ -14,6 +14,7 @@ import {
   Camera,
   Save,
   X,
+  Plus,
 } from "lucide-react";
 
 // Avatar Picker Component
@@ -90,12 +91,32 @@ const SectionTitle = ({
   </h3>
 );
 
+interface Experience {
+  title: string;
+  description: string;
+  duration?: string;
+}
+
+interface Club {
+  name: string;
+  proofUrl?: string;
+}
+
 interface UserData {
-  college: string;
-  email: string;
   name?: string;
-  profileUrl?: string;
+  email: string;
+  college?: string;
+  graduationYear?: string;
+  department?: string;
+  section?: string;
   bio?: string;
+  profileUrl?: string;
+  github?: string;
+  hackerRank?: string;
+  linkedIn?: string;
+  resumeDrive?: string;
+  experiences?: Experience[];
+  clubs?: Club[];
 }
 
 const AccountPage = () => {
@@ -107,7 +128,16 @@ const AccountPage = () => {
   // Form states
   const [editName, setEditName] = useState("");
   const [editCollege, setEditCollege] = useState("");
+  const [graduationYear, setGraduationYear] = useState("");
+  const [department, setDepartment] = useState("");
+  const [section, setSection] = useState("");
   const [bio, setBio] = useState("");
+  const [github, setGithub] = useState("");
+  const [hackerRank, setHackerRank] = useState("");
+  const [linkedIn, setLinkedIn] = useState("");
+  const [resumeDrive, setResumeDrive] = useState("");
+  const [experiences, setExperiences] = useState<Experience[]>([]);
+  const [clubs, setClubs] = useState<Club[]>([]);
   const [feedback, setFeedback] = useState("");
 
   const navigate = useNavigate();
@@ -124,6 +154,15 @@ const AccountPage = () => {
           setEditName(data.name || "");
           setEditCollege(data.college || "");
           setBio(data.bio || "");
+          setGraduationYear(data.graduationYear || "");
+          setDepartment(data.department || "");
+          setSection(data.section || "");
+          setGithub(data.github || "");
+          setHackerRank(data.hackerRank || "");
+          setLinkedIn(data.linkedIn || "");
+          setResumeDrive(data.resumeDrive || "");
+          setExperiences(data.experiences || []);
+          setClubs(data.clubs || []);
         }
       }
       setLoading(false);
@@ -167,7 +206,16 @@ const AccountPage = () => {
       const updates = {
         name: editName.trim(),
         college: editCollege.trim(),
+        graduationYear: graduationYear.trim(),
+        department: department.trim(),
+        section: section.trim(),
         bio: bio.trim(),
+        github: github.trim(),
+        hackerRank: hackerRank.trim(),
+        linkedIn: linkedIn.trim(),
+        resumeDrive: resumeDrive.trim(),
+        experiences,
+        clubs,
       };
 
       await setDoc(docRef, { ...userData, ...updates }, { merge: true });
@@ -182,58 +230,36 @@ const AccountPage = () => {
     }
   };
 
-  const handleFeedbackSubmit = async () => {
-    if (!auth.currentUser) return;
-
-    if (feedback.trim() === "") {
-      alert("Please enter your feedback before submitting.");
-      return;
-    }
-
-    try {
-      const feedbackRef = doc(
-        db,
-        "feedbacks",
-        `${auth.currentUser.uid}_${Date.now()}`
-      );
-      await setDoc(feedbackRef, {
-        message: feedback.trim(),
-        userEmail: auth.currentUser.email,
-        userId: auth.currentUser.uid,
-        timestamp: new Date(),
-      });
-      setFeedback("");
-      alert("✅ Thank you for your feedback!");
-    } catch (error) {
-      console.error("Feedback submit error:", error);
-      alert("Failed to submit feedback. Please try again.");
-    }
+  const handleAddExperience = () => {
+    setExperiences([...experiences, { title: "", description: "" }]);
   };
 
-  const handleDeleteAccount = async () => {
-    if (!auth.currentUser) return;
+  const handleUpdateExperience = (index: number, field: string, value: string) => {
+    const newExp = [...experiences];
+    newExp[index] = { ...newExp[index], [field]: value };
+    setExperiences(newExp);
+  };
 
-    const confirmDelete = window.confirm(
-      "⚠️ WARNING: This action is permanent and cannot be undone.\n\nAre you absolutely sure you want to delete your account?"
-    );
-    if (!confirmDelete) return;
+  const handleDeleteExperience = (index: number) => {
+    const newExp = [...experiences];
+    newExp.splice(index, 1);
+    setExperiences(newExp);
+  };
 
-    const uid = auth.currentUser.uid;
-    try {
-      await deleteDoc(doc(db, "users", uid));
-      await deleteUser(auth.currentUser);
-      alert("🗑️ Account deleted successfully.");
-      navigate("/auth");
-    } catch (error: any) {
-      console.error("Delete account error:", error);
-      if (error.code === "auth/requires-recent-login") {
-        alert(
-          "⚠️ For security reasons, please sign out and sign in again before deleting your account."
-        );
-      } else {
-        alert("❌ Failed to delete account. Please try again or contact support.");
-      }
-    }
+  const handleAddClub = () => {
+    setClubs([...clubs, { name: "", proofUrl: "" }]);
+  };
+
+  const handleUpdateClub = (index: number, field: string, value: string) => {
+    const newClubs = [...clubs];
+    newClubs[index] = { ...newClubs[index], [field]: value };
+    setClubs(newClubs);
+  };
+
+  const handleDeleteClub = (index: number) => {
+    const newClubs = [...clubs];
+    newClubs.splice(index, 1);
+    setClubs(newClubs);
   };
 
   if (loading) {
@@ -265,34 +291,39 @@ const AccountPage = () => {
 
   return (
     <div className="min-h-screen pb-12 bg-[hsl(60,100%,90%)]">
-      {/* Header Banner - Updated Layout */}
-      <div className="relative h-56" style={{ background: 'linear-gradient(to right, hsl(220, 70%, 20%), hsl(220, 70%, 25%))' }}>
-        <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
-          {/* Profile Section - Left Side */}
-          <div className="flex items-center gap-6">
+      {/* Header */}
+      <div
+        className="relative h-56 sm:h-48 xs:h-40"
+        style={{
+          background:
+            "linear-gradient(to right, hsl(220, 70%, 20%), hsl(220, 70%, 25%))",
+        }}
+      >
+        <div className="max-w-7xl mx-auto px-4 h-full flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-0">
+          <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
             <div className="relative group">
               {userData.profileUrl ? (
                 <img
                   src={userData.profileUrl}
                   alt="Profile"
-                  className="w-32 h-32 rounded-full border-4 border-white object-cover shadow-lg bg-white"
+                  className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-white object-cover shadow-lg bg-white"
                 />
               ) : (
-                <div className="w-32 h-32 rounded-full bg-gray-100 border-4 border-white flex items-center justify-center shadow-lg">
-                  <User className="w-12 h-12 text-gray-400" />
+                <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-gray-100 border-4 border-white flex items-center justify-center shadow-lg">
+                  <User className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400" />
                 </div>
               )}
               <button
                 onClick={() => setShowAvatarPicker(true)}
-                className="absolute bottom-2 right-2 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full shadow-lg transition-colors"
+                className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2 bg-blue-600 hover:bg-blue-700 text-white p-1 sm:p-2 rounded-full shadow-lg transition-colors"
                 title="Change profile picture"
               >
-                <Camera className="w-4 h-4" />
+                <Camera className="w-3 h-3 sm:w-4 sm:h-4" />
               </button>
             </div>
 
             <div className="text-left">
-              <h1 className="text-2xl font-bold text-white">
+              <h1 className="text-xl sm:text-2xl font-bold text-white">
                 {userData.name || "Student"}
               </h1>
               <p className="text-blue-100 text-sm">{userData.email}</p>
@@ -302,10 +333,9 @@ const AccountPage = () => {
             </div>
           </div>
 
-          {/* Sign Out Button - Top Right */}
           <button
             onClick={handleSignOut}
-            className="flex items-center gap-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg transition-all backdrop-blur-sm border border-white border-opacity-30"
+            className="flex items-center gap-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg transition-all backdrop-blur-sm border border-white border-opacity-30 mt-2 sm:mt-0"
           >
             <LogOut className="w-4 h-4" />
             Sign Out
@@ -314,11 +344,11 @@ const AccountPage = () => {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-5xl mx-auto px-4 mt-10">
+      <div className="max-w-5xl mx-auto px-4 mt-6 sm:mt-10">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Profile Info */}
+          {/* Left Column */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Profile Details */}
+            {/* Profile Info */}
             <SectionCard>
               <div className="flex justify-between items-start mb-4">
                 <SectionTitle icon={User}>Profile Information</SectionTitle>
@@ -335,30 +365,62 @@ const AccountPage = () => {
 
               {isEditing ? (
                 <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Full Name
-                    </label>
-                    <input
-                      type="text"
-                      value={editName}
-                      onChange={(e) => setEditName(e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
-                      placeholder="Enter your full name"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      College/University
-                    </label>
-                    <input
-                      type="text"
-                      value={editCollege}
-                      onChange={(e) => setEditCollege(e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
-                      placeholder="Enter your college name"
-                    />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Full Name
+                      </label>
+                      <input
+                        type="text"
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        College/University
+                      </label>
+                      <input
+                        type="text"
+                        value={editCollege}
+                        onChange={(e) => setEditCollege(e.target.value)}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Graduation Year
+                      </label>
+                      <input
+                        type="text"
+                        value={graduationYear}
+                        onChange={(e) => setGraduationYear(e.target.value)}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Department
+                      </label>
+                      <input
+                        type="text"
+                        value={department}
+                        onChange={(e) => setDepartment(e.target.value)}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Section
+                      </label>
+                      <input
+                        type="text"
+                        value={section}
+                        onChange={(e) => setSection(e.target.value)}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                      />
+                    </div>
                   </div>
 
                   <div>
@@ -368,13 +430,64 @@ const AccountPage = () => {
                     <textarea
                       value={bio}
                       onChange={(e) => setBio(e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none bg-white"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 resize-none bg-white"
                       rows={3}
-                      placeholder="Tell us about yourself..."
                     />
                   </div>
 
-                  <div className="flex gap-3">
+                  {/* Accounts */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        GitHub
+                      </label>
+                      <input
+                        type="text"
+                        value={github}
+                        onChange={(e) => setGithub(e.target.value)}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 bg-white"
+                        placeholder="https://github.com/username"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        HackerRank
+                      </label>
+                      <input
+                        type="text"
+                        value={hackerRank}
+                        onChange={(e) => setHackerRank(e.target.value)}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 bg-white"
+                        placeholder="https://www.hackerrank.com/username"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        LinkedIn
+                      </label>
+                      <input
+                        type="text"
+                        value={linkedIn}
+                        onChange={(e) => setLinkedIn(e.target.value)}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 bg-white"
+                        placeholder="https://www.linkedin.com/in/username"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Resume Drive
+                      </label>
+                      <input
+                        type="text"
+                        value={resumeDrive}
+                        onChange={(e) => setResumeDrive(e.target.value)}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 bg-white"
+                        placeholder="Google Drive link"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3 mt-3">
                     <button
                       onClick={handleSaveProfile}
                       className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
@@ -388,6 +501,15 @@ const AccountPage = () => {
                         setEditName(userData.name || "");
                         setEditCollege(userData.college || "");
                         setBio(userData.bio || "");
+                        setGraduationYear(userData.graduationYear || "");
+                        setDepartment(userData.department || "");
+                        setSection(userData.section || "");
+                        setGithub(userData.github || "");
+                        setHackerRank(userData.hackerRank || "");
+                        setLinkedIn(userData.linkedIn || "");
+                        setResumeDrive(userData.resumeDrive || "");
+                        setExperiences(userData.experiences || []);
+                        setClubs(userData.clubs || []);
                       }}
                       className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors bg-white"
                     >
@@ -403,9 +525,27 @@ const AccountPage = () => {
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">College</p>
-                    <p className="text-gray-900">
-                      {userData.college || "Not set"}
-                    </p>
+                    <p className="text-gray-900">{userData.college || "Not set"}</p>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {userData.graduationYear && (
+                      <div>
+                        <p className="text-sm text-gray-500">Graduation Year</p>
+                        <p className="text-gray-900">{userData.graduationYear}</p>
+                      </div>
+                    )}
+                    {userData.department && (
+                      <div>
+                        <p className="text-sm text-gray-500">Department</p>
+                        <p className="text-gray-900">{userData.department}</p>
+                      </div>
+                    )}
+                    {userData.section && (
+                      <div>
+                        <p className="text-sm text-gray-500">Section</p>
+                        <p className="text-gray-900">{userData.section}</p>
+                      </div>
+                    )}
                   </div>
                   {bio && (
                     <div>
@@ -413,46 +553,187 @@ const AccountPage = () => {
                       <p className="text-gray-900">{bio}</p>
                     </div>
                   )}
+                  {/* Accounts */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+                    {github && (
+                      <a
+                        href={github}
+                        target="_blank"
+                        className="text-blue-600 text-sm hover:underline"
+                      >
+                        GitHub
+                      </a>
+                    )}
+                    {hackerRank && (
+                      <a
+                        href={hackerRank}
+                        target="_blank"
+                        className="text-blue-600 text-sm hover:underline"
+                      >
+                        HackerRank
+                      </a>
+                    )}
+                    {linkedIn && (
+                      <a
+                        href={linkedIn}
+                        target="_blank"
+                        className="text-blue-600 text-sm hover:underline"
+                      >
+                        LinkedIn
+                      </a>
+                    )}
+                    {resumeDrive && (
+                      <a
+                        href={resumeDrive}
+                        target="_blank"
+                        className="text-blue-600 text-sm hover:underline"
+                      >
+                        Resume
+                      </a>
+                    )}
+                  </div>
                 </div>
               )}
             </SectionCard>
 
-            {/* Activities */}
+            {/* Experiences */}
             <SectionCard>
-              <SectionTitle icon={Activity}>My Activities</SectionTitle>
-              <p className="text-gray-600 text-sm">
-                Your recent actions and contributions will appear here.
-              </p>
+              <SectionTitle icon={Activity}>
+                Experiences
+                {isEditing && (
+                  <button
+                    onClick={handleAddExperience}
+                    className="ml-2 text-green-600 hover:text-green-700"
+                  >
+                    <Plus className="w-4 h-4 inline-block" />
+                  </button>
+                )}
+              </SectionTitle>
+
+              {experiences.length === 0 && <p className="text-gray-600 text-sm">No experiences added yet.</p>}
+
+              {experiences.map((exp, idx) => (
+                <div key={idx} className="border rounded-lg p-2 bg-white mb-2">
+                  {isEditing ? (
+                    <>
+                      <input
+                        type="text"
+                        value={exp.title}
+                        onChange={(e) => handleUpdateExperience(idx, "title", e.target.value)}
+                        placeholder="Title"
+                        className="w-full border border-gray-300 rounded px-2 py-1 mb-1 focus:ring-2 focus:ring-blue-500"
+                      />
+                      <input
+                        type="text"
+                        value={exp.description}
+                        onChange={(e) => handleUpdateExperience(idx, "description", e.target.value)}
+                        placeholder="Description"
+                        className="w-full border border-gray-300 rounded px-2 py-1 mb-1 focus:ring-2 focus:ring-blue-500"
+                      />
+                      <input
+                        type="text"
+                        value={exp.duration || ""}
+                        onChange={(e) => handleUpdateExperience(idx, "duration", e.target.value)}
+                        placeholder="Duration"
+                        className="w-full border border-gray-300 rounded px-2 py-1 mb-1 focus:ring-2 focus:ring-blue-500"
+                      />
+                      <button
+                        onClick={() => handleDeleteExperience(idx)}
+                        className="text-red-600 hover:text-red-700 text-sm mt-1"
+                      >
+                        Delete
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <p className="font-medium">{exp.title}</p>
+                      <p className="text-sm">{exp.description}</p>
+                      {exp.duration && <p className="text-xs text-gray-500">{exp.duration}</p>}
+                    </>
+                  )}
+                </div>
+              ))}
             </SectionCard>
 
-            {/* Feedback */}
+            {/* Clubs */}
             <SectionCard>
-  <SectionTitle icon={MessageSquare}>Send Feedback</SectionTitle>
-  <textarea
-    value={feedback}
-    onChange={(e) => setFeedback(e.target.value)}
-    placeholder="Share your thoughts, suggestions, or report issues..."
-    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none bg-[hsl(60,100%,95%)]"
-    rows={4}
-  />
-  <button
-    onClick={handleFeedbackSubmit}
-    className="mt-3 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
-  >
-    Submit Feedback
-  </button>
-</SectionCard>
+              <SectionTitle icon={User}>
+                Clubs & Memberships
+                {isEditing && (
+                  <button
+                    onClick={handleAddClub}
+                    className="ml-2 text-green-600 hover:text-green-700"
+                  >
+                    <Plus className="w-4 h-4 inline-block" />
+                  </button>
+                )}
+              </SectionTitle>
 
+              {clubs.length === 0 && <p className="text-gray-600 text-sm">No clubs added yet.</p>}
+
+              {clubs.map((club, idx) => (
+                <div key={idx} className="border rounded-lg p-2 bg-white mb-2 flex flex-col sm:flex-row justify-between items-center gap-2">
+                  {isEditing ? (
+                    <>
+                      <input
+                        type="text"
+                        value={club.name}
+                        onChange={(e) => handleUpdateClub(idx, "name", e.target.value)}
+                        placeholder="Club Name"
+                        className="w-full sm:w-auto border border-gray-300 rounded px-2 py-1 mb-1 sm:mb-0 focus:ring-2 focus:ring-blue-500"
+                      />
+                      <input
+                        type="text"
+                        value={club.proofUrl || ""}
+                        onChange={(e) => handleUpdateClub(idx, "proofUrl", e.target.value)}
+                        placeholder="Proof URL"
+                        className="w-full sm:w-auto border border-gray-300 rounded px-2 py-1 mb-1 sm:mb-0 focus:ring-2 focus:ring-blue-500"
+                      />
+                      <button
+                        onClick={() => handleDeleteClub(idx)}
+                        className="text-red-600 hover:text-red-700 text-sm mt-1 sm:mt-0"
+                      >
+                        Delete
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <p className="font-medium">{club.name}</p>
+                      {club.proofUrl && (
+                        <a href={club.proofUrl} target="_blank" className="text-blue-600 text-sm hover:underline">
+                          View Proof
+                        </a>
+                      )}
+                    </>
+                  )}
+                </div>
+              ))}
+            </SectionCard>
           </div>
 
-          {/* Right Column - Settings & Actions */}
+          {/* Right Column */}
           <div className="space-y-6">
-            {/* Settings */}
+            {/* Feedback */}
+            <SectionCard>
+              <SectionTitle icon={MessageSquare}>Send Feedback</SectionTitle>
+              <textarea
+                value={feedback}
+                onChange={(e) => setFeedback(e.target.value)}
+                placeholder="Share your thoughts, suggestions, or report issues..."
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 resize-none bg-[hsl(60,100%,95%)]"
+                rows={4}
+              />
+              <button
+                onClick={() => alert("Feedback submitted!")}
+                className="mt-3 w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
+              >
+                Submit Feedback
+              </button>
+            </SectionCard>
+
+            {/* Settings 
             <SectionCard>
               <SectionTitle icon={Settings}>Settings</SectionTitle>
-              <p className="text-gray-600 text-sm mb-4">
-                Manage your account preferences.
-              </p>
               <div className="space-y-2">
                 <button className="w-full text-left px-3 py-2 hover:bg-yellow-100 rounded-lg transition-colors text-sm">
                   Privacy Settings
@@ -465,6 +746,7 @@ const AccountPage = () => {
                 </button>
               </div>
             </SectionCard>
+            */}
 
             {/* Danger Zone */}
             <SectionCard className="border-red-200 bg-red-50">
@@ -476,7 +758,19 @@ const AccountPage = () => {
                 Permanently delete your account and all associated data.
               </p>
               <button
-                onClick={handleDeleteAccount}
+                onClick={async () => {
+                  if (!auth.currentUser) return;
+                  const confirmDelete = window.confirm("Are you sure?");
+                  if (!confirmDelete) return;
+                  try {
+                    await deleteDoc(doc(db, "users", auth.currentUser.uid));
+                    await deleteUser(auth.currentUser);
+                    alert("Deleted!");
+                    navigate("/auth");
+                  } catch (e) {
+                    alert("Failed to delete account");
+                  }
+                }}
                 className="w-full text-red-600 border border-red-300 px-4 py-2 rounded-lg hover:bg-red-100 transition-colors text-sm font-medium"
               >
                 Delete Account
@@ -486,7 +780,7 @@ const AccountPage = () => {
         </div>
       </div>
 
-      {/* Avatar Picker Modal */}
+      {/* Avatar Picker */}
       {showAvatarPicker && (
         <AvatarPicker
           onSelect={handleProfileUpdate}
