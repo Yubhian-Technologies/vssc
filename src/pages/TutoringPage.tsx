@@ -888,7 +888,7 @@ export default function TutoringPage() {
       {/* Confirm Dialog */}
       {showDialog && selectedSession && (selectedSession.isGroup || selectedSlot) && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white rounded-xl p-6 w-96">
+          <div className="[background-color:hsl(60,100%,95%)] rounded-xl p-6 w-96">
             <h2 className="text-xl font-bold mb-4">Confirm Booking</h2>
             <p className="mb-4">
               Are you sure you want to {selectedSession.isGroup ? "join" : "book"}{" "}
@@ -897,13 +897,13 @@ export default function TutoringPage() {
             </p>
             <div className="flex justify-end gap-4">
               <button
-                className="px-4 py-2 rounded-lg bg-gray-300 hover:bg-gray-400"
+                className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-800 text-white"
                 onClick={() => setShowDialog(false)}
               >
                 Cancel
               </button>
               <button
-                className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+                className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-blue-900"
                 onClick={confirmJoin}
                 disabled={bookingInProgress}
               >

@@ -932,13 +932,13 @@ export default function StudyWorkshopPage() {
             </p>
             <div className="flex justify-end gap-4">
               <button
-                className="px-4 py-2 rounded-lg bg-gray-300 hover:bg-gray-400"
+                className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-800 text-white"
                 onClick={() => setShowDialog(false)}
               >
                 Cancel
               </button>
               <button
-                className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+                className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-blue-800"
                 onClick={confirmJoin}
                 disabled={bookingInProgress}
               >
