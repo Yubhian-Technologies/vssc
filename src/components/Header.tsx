@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, X, LogOut } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { auth, db } from "../firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { doc, onSnapshot } from "firebase/firestore";
@@ -77,18 +77,22 @@ const Header = () => {
     { name: "Help", path: "/help" },
   ];
 
-  const PointsBadge = () => (
-    <div
-      id="points-section"
-      onClick={() => navigate("/leaderboard")}
-      className="flex items-center gap-2 px-3 py-1 bg-black/80 rounded-full shadow-lg relative overflow-hidden"
-    >
-      <div className="absolute inset-0 bg-gradient-to-t from-orange-600 via-yellow-400 to-transparent animate-pulse opacity-60 blur-sm"></div>
-      <span className="relative z-10 text-white font-bold text-lg">
-        {formatPoints(points)}🔥
-      </span>
-    </div>
-  );
+ const PointsBadge = () => (
+  <div
+    id="points-section"
+    onClick={() => {
+      setIsMenuOpen(false); 
+      navigate("/leaderboard"); 
+    }}
+    className="flex items-center gap-2 px-3 py-1 bg-black/80 rounded-full shadow-lg relative overflow-hidden cursor-pointer"
+  >
+    <div className="absolute inset-0 bg-gradient-to-t from-orange-600 via-yellow-400 to-transparent animate-pulse opacity-60 blur-sm"></div>
+    <span className="relative z-10 text-white font-bold text-lg">
+      {formatPoints(points)}🔥
+    </span>
+  </div>
+);
+
 
   return (
     <header className="relative w-full bg-background border-b border-border">
@@ -177,15 +181,47 @@ const Header = () => {
               onClick={handleLoginClick}
             />
           )}
-          
+
           {isLoggedIn && (
             <>
               <div className="relative group">
                 <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-primary cursor-pointer">
-                  {profileUrl ? ( <img src={profileUrl} alt="Profile" className="w-full h-full object-cover" /> ) : ( <div className="w-full h-full bg-gray-300 flex items-center justify-center"> <span className="text-white">U</span> </div> )} </div> <div className="absolute right-0 mt-2 w-44 bg-background border border-border rounded-md shadow-lg opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all duration-200"> <Link to="/reservations" className="block px-4 py-2 text-sm text-foreground hover:bg-muted"> Your Reservations </Link> <Link to="/account" className="block px-4 py-2 text-sm text-foreground hover:bg-muted"> Account </Link> {role === "admin+" && ( <Link to="/addAdmin" className="block px-4 py-2 text-sm text-foreground hover:bg-muted" > Add Admins </Link> )}
+                  {profileUrl ? (
+                    <img
+                      src={profileUrl}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gray-300 flex items-center justify-center">
+                      <span className="text-white">U</span>
+                    </div>
+                  )}
+                </div>
+                <div className="absolute right-0 mt-2 w-44 bg-background border border-border rounded-md shadow-lg opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all duration-200">
+                  <Link
+                    to="/reservations"
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-muted"
+                  >
+                    Your Reservations
+                  </Link>
+                  <Link
+                    to="/account"
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-muted"
+                  >
+                    Account
+                  </Link>
+                  {role === "admin+" && (
+                    <Link
+                      to="/addAdmin"
+                      className="block px-4 py-2 text-sm text-foreground hover:bg-muted"
+                    >
+                      Add Admins
+                    </Link>
+                  )}
                 </div>
               </div>
-             
+
               <PointsBadge />
             </>
           )}
@@ -278,21 +314,34 @@ const Header = () => {
 
             {/* Buttons below menu */}
             {isLoggedIn && role === "admin" ? (
-              <ButtonGradient name="Appointments →" onClick={handleLoginClick} />
-            ) : (
-              <ButtonGradient
-                name={isLoggedIn ? "Book an Appointment →" : "Login/Register"}
-                onClick={handleLoginClick}
-              />
-            )}
+  <ButtonGradient
+    name="Appointments →"
+    onClick={() => {
+      setIsMenuOpen(false); // close mobile menu
+      handleLoginClick();    // navigate
+    }}
+  />
+) : (
+  <ButtonGradient
+    name={isLoggedIn ? "Book an Appointment →" : "Login/Register"}
+    onClick={() => {
+      setIsMenuOpen(false); // close mobile menu
+      handleLoginClick();    // navigate
+    }}
+  />
+)}
+
 
             {isLoggedIn && (
-              <button
-                onClick={handleSignOut}
-                className="flex justify-center items-center w-full bg-red-500 hover:bg-red-600 text-white py-2 rounded transition"
-              >
-                Sign Out
-              </button>
+              <>
+                <PointsBadge  /> 
+                <button
+                  onClick={handleSignOut}
+                  className="flex justify-center items-center w-full bg-red-500 hover:bg-red-600 text-white py-2 rounded transition"
+                >
+                  Sign Out
+                </button>
+              </>
             )}
           </nav>
         </div>

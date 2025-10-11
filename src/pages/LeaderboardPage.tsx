@@ -110,7 +110,7 @@ const LeaderboardPage = () => {
 
       {/* --- Title --- */}
       <motion.h1
-        className="text-6xl md:text-7xl font-extrabold mb-12 bg-gradient-to-r from-pink-500 via-purple-400 to-indigo-500 bg-clip-text text-transparent z-10 drop-shadow-lg"
+        className="text-6xl md:text-7xl font-extrabold mb-12 bg-gradient-to-r from-pink-500 via-purple-400 to-indigo-500 bg-clip-text text-transparent z-0 drop-shadow-lg"
         initial={{ y: -80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.7 }}
