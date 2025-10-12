@@ -72,7 +72,7 @@ export default function AuthPage() {
       if (isLogin) {
         // 🔹 Login
         userCredential = await signInWithEmailAndPassword(auth, email, password);
-        navigate("/hero");
+        navigate("/");
       } else {
         // 🔹 Register
         const selectedCollege = colleges.find((c) => c.name === college);

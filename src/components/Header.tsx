@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { auth, db } from "../firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
@@ -9,6 +9,7 @@ import VSSCLogo from "@/assets/VSSC LOGO[1].png";
 
 const Header = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [profileUrl, setProfileUrl] = useState<string | null>(null);
@@ -16,10 +17,12 @@ const Header = () => {
   const [role, setRole] = useState<string | null>(null);
   const [points, setPoints] = useState<number>(0);
 
-  // Format points as 1k+, 1.5k+, etc.
+  const isHome = location.pathname === "/";
+
   const formatPoints = (num: number) => {
     if (num < 1000) return num.toString();
-    if (num < 1000000) return (num / 1000).toFixed(1).replace(/\.0$/, "") + "K+";
+    if (num < 1000000)
+      return (num / 1000).toFixed(1).replace(/\.0$/, "") + "K+";
     return (num / 1000000).toFixed(1).replace(/\.0$/, "") + "M+";
   };
 
@@ -53,7 +56,6 @@ const Header = () => {
   }, []);
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
-
   const handleLoginClick = () => {
     if (!isLoggedIn) navigate("/auth");
     else navigate("/appointment");
@@ -75,39 +77,51 @@ const Header = () => {
     { name: "Services", path: "/services" },
     { name: "Tour", path: "/tour" },
     { name: "Help", path: "/help" },
+    { name: "Account", path: "/account" },
   ];
 
- const PointsBadge = () => (
-  <div
-    id="points-section"
-    onClick={() => {
-      setIsMenuOpen(false); 
-      navigate("/leaderboard"); 
-    }}
-    className="flex items-center gap-2 px-3 py-1 bg-black/80 rounded-full shadow-lg relative overflow-hidden cursor-pointer"
-  >
-    <div className="absolute inset-0 bg-gradient-to-t from-orange-600 via-yellow-400 to-transparent animate-pulse opacity-60 blur-sm"></div>
-    <span className="relative z-10 text-white font-bold text-lg">
-      {formatPoints(points)}🔥
-    </span>
-  </div>
-);
-
+  const PointsBadge = () => (
+    <div
+      id="points-section"
+      onClick={() => {
+        setIsMenuOpen(false);
+        navigate("/leaderboard");
+      }}
+      className="flex items-center gap-2 px-3 py-1 bg-black/80 rounded-full shadow-lg relative overflow-hidden cursor-pointer"
+    >
+      <div className="absolute inset-0 bg-gradient-to-t from-orange-600 via-yellow-400 to-transparent animate-pulse opacity-60 blur-sm"></div>
+      <span className="relative z-10 text-white font-bold text-lg">
+        {formatPoints(points)}🔥
+      </span>
+    </div>
+  );
 
   return (
-    <header className="relative w-full bg-background border-b border-border">
+    <header className="relative w-full bg-background border-b border-border z-[100]">
       {/* Decorative background */}
       <div className="absolute top-0 right-0 h-full w-[300px] md:w-[400px] bg-primary z-0 [clip-path:polygon(20%_0,100%_0,100%_100%,0%_100%)] opacity-90 pointer-events-none"></div>
 
-
-      <div className="container mx-auto px-0 py-0 flex items-center justify-between relative z-10">
-        {/* Logo */}
-        <div className="flex items-center hover:scale-105 transition-transform px-2 py-2">
-          <Link to="/">
+      {/* Header container */}
+      <div className="container mx-auto px-4 sm:px-6 py-2 flex items-center justify-between relative z-20">
+        {/* Logo section */}
+        <div
+          className={`flex items-center transition-all duration-500 ${
+            isHome ? "translate-y-4" : ""
+          }`}
+          style={{ marginLeft: "0.75rem" }} // move logo slightly right
+        >
+          <Link
+            to="/"
+            className={`transition-all duration-500 flex items-center ${
+              isHome
+                ? "scale-[1.7] drop-shadow-[0_0_25px_rgba(255,200,0,0.8)]"
+                : "scale-100"
+            }`}
+          >
             <img
               src={VSSCLogo}
               alt="VSSC Logo"
-              className="w-8 h-8 sm:w-12 sm:h-12 object-contain"
+              className="w-10 h-10 sm:w-14 sm:h-14 object-contain"
             />
           </Link>
         </div>
@@ -123,9 +137,7 @@ const Header = () => {
                 >
                   {link.name} <span>▾</span>
                 </Link>
-
-                {/* Desktop Dropdown */}
-                <div className="absolute left-0 mt-2 w-64 [background-color:hsl(60,100%,95%)] border border-border rounded-md shadow-lg opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all duration-200 z-50">
+                <div className="absolute left-0 mt-2 w-64 bg-[hsl(60,100%,95%)] border border-border rounded-md shadow-lg opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all duration-200 z-50">
                   <Link
                     to="/services/tutoring"
                     className="block px-4 py-2 text-sm hover:bg-muted rounded-t-md"
@@ -172,7 +184,6 @@ const Header = () => {
 
         {/* Desktop Right */}
         <div className="hidden lg:flex items-center gap-4 relative z-20">
-          
           {isLoggedIn && role === "admin" ? (
             <ButtonGradient name="Appointments →" onClick={handleLoginClick} />
           ) : (
@@ -226,11 +237,10 @@ const Header = () => {
             </>
           )}
         </div>
-        
 
-        {/* Mobile Menu Toggle */}
+        {/* Mobile Menu Button */}
         <button
-          className="lg:hidden flex items-center justify-center w-10 h-10 rounded-md border border-border text-white"
+          className="lg:hidden flex items-center justify-center w-10 h-10 rounded-md border border-border text-white relative z-[200]"
           onClick={toggleMenu}
         >
           {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -239,9 +249,8 @@ const Header = () => {
 
       {/* Mobile Menu */}
       {isMenuOpen && (
-        <div className="lg:hidden absolute top-full left-0 w-full bg-background border-t border-border shadow-md z-[999]">
+        <div className="lg:hidden absolute top-full left-0 w-full bg-background border-t border-border shadow-md z-[150]">
           <nav className="flex flex-col px-6 py-4 gap-4 justify-center items-center">
-            
             {navLinks.map((link) =>
               link.name === "Services" ? (
                 <div key="Services" className="w-full flex flex-col items-center">
@@ -312,29 +321,27 @@ const Header = () => {
               )
             )}
 
-            {/* Buttons below menu */}
             {isLoggedIn && role === "admin" ? (
-  <ButtonGradient
-    name="Appointments →"
-    onClick={() => {
-      setIsMenuOpen(false); // close mobile menu
-      handleLoginClick();    // navigate
-    }}
-  />
-) : (
-  <ButtonGradient
-    name={isLoggedIn ? "Book an Appointment →" : "Login/Register"}
-    onClick={() => {
-      setIsMenuOpen(false); // close mobile menu
-      handleLoginClick();    // navigate
-    }}
-  />
-)}
-
+              <ButtonGradient
+                name="Appointments →"
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  handleLoginClick();
+                }}
+              />
+            ) : (
+              <ButtonGradient
+                name={isLoggedIn ? "Book an Appointment →" : "Login/Register"}
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  handleLoginClick();
+                }}
+              />
+            )}
 
             {isLoggedIn && (
               <>
-                <PointsBadge  /> 
+                <PointsBadge />
                 <button
                   onClick={handleSignOut}
                   className="flex justify-center items-center w-full bg-red-500 hover:bg-red-600 text-white py-2 rounded transition"

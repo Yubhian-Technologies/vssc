@@ -89,7 +89,7 @@ const App = () => {
             <Route path="/auth" element={!user ? <Auth /> : <Navigate to="/hero" replace />} />
 
             {/* Hero route: redirect to auth if not logged in */}
-            <Route path="/hero" element={user ? <HeroSection /> : <Navigate to="/auth" replace />} />
+            <Route path="/" element={user ? <Index /> : <Navigate to="/auth" replace />} />
             <Route
             path="/services/tutoring"
             element={
