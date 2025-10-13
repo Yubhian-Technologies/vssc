@@ -61,7 +61,7 @@ export const campuses = [
     cover: filter25,
     gallery: [
       { id: "3-1", src: gallery1, alt: "Auditorium", description: "Venue for seminars, events, and cultural programs." },
-      { id: "3-2", src: gallery2, alt: "Auditorium", description: "Venue for seminars." },
+      { id: "3-2", src: gallery1, alt: "Auditorium", description: "Venue for seminars. events and culural programs." },
       { id: "3-3", src: gallery11, alt: "Special Class", description: "cultural programs and a friendly atmosphere." },
       { id: "3-4", src: gallery4, alt: "Auditorium", description: "Venue for seminars, events, and cultural programs." },
       { id: "3-5", src: gallery6, alt: "Special Class", description: "Venue for seminars, events, and cultural programs." },
