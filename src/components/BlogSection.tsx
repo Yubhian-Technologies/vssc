@@ -1,6 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import heroStudent from "@/assets/hero-student.jpg";
+import { useNavigate } from "react-router-dom"; // ✅ Import navigate hook
 
 const blogPost = {
   id: 1,
@@ -9,18 +10,30 @@ const blogPost = {
   image: heroStudent,
   category: "Education",
   tags: ["Student", "Tips", "Education", "Career", "Learning", "Motivation", "Success"],
-  shortDescription: "Practical tips for students and recent graduates to achieve academic and professional success.",
+  shortDescription:
+    "Practical tips for students and recent graduates to achieve academic and professional success.",
 };
 
 const categories = ["Education", "Academic", "Teaching", "Technology", "Lifestyle"];
 
 const BlogPage = () => {
+  const navigate = useNavigate(); // ✅ Initialize navigation
+
+  const handleMoreBlogs = () => {
+    navigate("/tour"); // ✅ Redirect to Tour page
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: "smooth" }); // ✅ Scroll to top after route change
+    }, 100);
+  };
+
   return (
     <section data-aos="fade-down" className="py-8 bg-background">
       <div className="container mx-auto px-3 py-4 sm:px-4 sm:py-6 md:py-8">
         {/* Header */}
         <div className="mb-6 text-center">
-          <span className="text-primary font-semibold text-2xl uppercase">BLOGS & ARTICLES</span>
+          <span className="text-primary font-semibold text-2xl uppercase">
+            BLOGS & ARTICLES
+          </span>
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground mt-1">
             Explore Latest Articles
           </h1>
@@ -37,9 +50,7 @@ const BlogPage = () => {
             />
             <h2 className="text-lg font-bold text-foreground mt-1">{blogPost.title}</h2>
             <p className="text-muted-foreground text-xs">{blogPost.shortDescription}</p>
-            <span className="text-primary font-medium cursor-pointer hover:underline text-xs">
-              Know More →
-            </span>
+            
           </div>
 
           {/* Sidebar */}
@@ -78,10 +89,12 @@ const BlogPage = () => {
 
         {/* More Blogs Button */}
         <div className="text-center">
-          <button className="text-white bg-[#1a3791] font-semibold border border-primary rounded px-3 py-1 text-sm hover:bg-black transition">
+          <button
+            onClick={handleMoreBlogs} // ✅ Added click handler
+            className="text-white bg-[#1a3791] font-semibold border border-primary rounded px-3 py-1 text-sm hover:bg-black transition"
+          >
             More Blogs →
           </button>
-          
         </div>
       </div>
     </section>

@@ -9,6 +9,22 @@ import filter23 from "../assets/filter23.jpg";
 import filter24 from "../assets/filter24.jpg";
 import filter25 from "../assets/filter25.jpg";
 import filter26 from "../assets/filter26.jpg";
+import gallery1 from "../assets/gallery1.jpg";
+import gallery2 from "../assets/gallery2.jpg";
+import gallery3 from "../assets/gallery3.jpg";
+import gallery4 from "../assets/gallery4.jpg";
+import gallery5 from "../assets/gallery5.jpg";
+import gallery6 from "../assets/gallery6.jpg";
+import gallery7 from "../assets/gallery7.jpg";
+import gallery8 from "../assets/gallery8.jpg";
+import gallery9 from "../assets/gallery9.jpg";
+import gallery10 from "../assets/gallery10.jpg";
+import gallery11 from "../assets/gallery11.jpg";
+import gallery12 from "../assets/gallery12.jpg";
+import gallery13 from "../assets/gallery13.jpg";
+import gallery14 from "../assets/gallery14.jpg";
+import gallery15 from "../assets/gallery15.jpg";
+
 import Land1 from "../assets/Land1.jpg";
 
 export const campuses = [
@@ -17,8 +33,12 @@ export const campuses = [
     name: "Vishnu Institute of Technology",
     cover: filter21,
     gallery: [
-      { id: "1-1", src: filter21, alt: "Campus front view", description: "Welcome to our beautiful campus entrance." },
-      { id: "1-2", src: filter22, alt: "Library", description: "State-of-the-art library with thousands of books." },
+      { id: "1-1", src: gallery7, alt: "Campus front view", description: "Welcome to our beautiful campus entrance." },
+      { id: "1-2", src: gallery10, alt: "Library", description: "State-of-the-art library with thousands of books." },
+      { id: "1-3", src: gallery12, alt: "Computer Lab", description: "Modern computer labs with high-speed internet." },
+      { id: "1-4", src: gallery12, alt: "Cafeteria", description: "Spacious cafeteria offering a variety ."},
+      { id: "1-5", src: gallery7, alt: "Sports Complex", description: "Indoor sports complex for various activities." },
+      
     ],
     description: "Explore the beautiful campus of Vishnu Institute of Technology with world-class facilities and vibrant student life.",
   },
@@ -27,8 +47,11 @@ export const campuses = [
     name: "Vishnu Dental College",
     cover: filter23,
     gallery: [
-      { id: "2-1", src: filter23, alt: "Innovation Lab", description: "Where students experiment and innovate." },
-      { id: "2-2", src: filter24, alt: "Hostel", description: "Comfortable student hostels with modern amenities." },
+      { id: "2-1", src: gallery10, alt: "Innovation Lab", description: "Where students experiment and innovate." },
+      { id: "2-2", src: gallery7, alt: "Hostel", description: "Comfortable student hostels with modern amenities." },
+      { id: "2-3", src: gallery8, alt: "Auditorium", description: "Venue for seminars, events, and cultural programs." },
+      { id: "2-4", src: gallery13, alt: "Cafeteria", description: "Spacious cafeteria offering a variety of cuisines." },
+      { id: "2-5", src: gallery15, alt: "Sports Ground", description: "Outdoor sports ground for various activities." },
     ],
     description: "Experience academic excellence and modern amenities at Vishnu Dental College.",
   },
@@ -37,8 +60,11 @@ export const campuses = [
     name: "Vishnu Pharmacy",
     cover: filter25,
     gallery: [
-      { id: "3-1", src: filter25, alt: "Auditorium", description: "Venue for seminars, events, and cultural programs." },
-      { id: "3-2", src: filter26, alt: "Cafeteria", description: "Delicious meals and a friendly atmosphere." },
+      { id: "3-1", src: gallery1, alt: "Auditorium", description: "Venue for seminars, events, and cultural programs." },
+      { id: "3-2", src: gallery2, alt: "Auditorium", description: "Venue for seminars." },
+      { id: "3-3", src: gallery11, alt: "Special Class", description: "cultural programs and a friendly atmosphere." },
+      { id: "3-4", src: gallery4, alt: "Auditorium", description: "Venue for seminars, events, and cultural programs." },
+      { id: "3-5", src: gallery6, alt: "Special Class", description: "Venue for seminars, events, and cultural programs." },
     ],
     description: "Join a thriving community at Vishnu Pharmacy with top-notch facilities and vibrant student life.",
   },

@@ -3,11 +3,12 @@ import heroStudent from "@/assets/hero-student.jpg";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import CongratsPopup from "../components/ui/CongratsPopup";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom"; // ✅ added useNavigate
 import ArrowOverlay from "./ui/ArrowOverlay";
 import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "../firebase";
 import DailyGameModal from "./DailyGameModal";
+
 const HeroSection = () => {
   const stats = [
     { icon: "", title: "FINDING NEMO" },
@@ -17,24 +18,25 @@ const HeroSection = () => {
     { icon: "", title: "HAPPY FEET" },
     { icon: "", title: "HIDDEN FIGURES" },
   ];
+
   const [showGame, setShowGame] = useState(false);
   const firstPart = "Learn. Grow.";
   const secondPart = " Prosper.";
   const location = useLocation();
+  const navigate = useNavigate(); // ✅ initialize navigate
 
-  const duplicatedstats = [...stats, ...stats];
   const [showCongrats, setShowCongrats] = useState(false);
-   const [showArrow, setShowArrow] = useState(false);
+  const [showArrow, setShowArrow] = useState(false);
   const [points, setPoints] = useState(0);
 
- useEffect(() => {
+  useEffect(() => {
     if (location.state?.showCongrats) {
       setShowCongrats(true);
-      // clear state so it doesn’t persist on refresh
-      setShowArrow(true); 
+      setShowArrow(true);
       window.history.replaceState({}, document.title);
     }
   }, [location.state]);
+
   useEffect(() => {
     const checkDailyClaim = async () => {
       const user = auth.currentUser;
@@ -50,14 +52,15 @@ const HeroSection = () => {
 
         setPoints(data.points || 0);
 
-        if (!lastClaimed || lastClaimed.toDateString() !== todayKey ) {
-          setShowGame(true); // Show game modal
+        if (!lastClaimed || lastClaimed.toDateString() !== todayKey) {
+          setShowGame(true);
         }
       }
     };
 
     checkDailyClaim();
   }, []);
+
   const handleGameComplete = async () => {
     const user = auth.currentUser;
     if (!user) return;
@@ -78,16 +81,19 @@ const HeroSection = () => {
     setShowGame(false);
   };
 
+  // ✅ handle Explore button click
+  const handleExploreClick = () => {
+    navigate("/services");
+  };
+
   return (
-    
     <section
       data-aos="fade-down"
       className="relative h-auto py-10 sm:py-14 [background-color:hsl(60,100%,95%)]"
     >
-       {showCongrats && <CongratsPopup onClose={() => setShowCongrats(false)} />}
-{showArrow && <ArrowOverlay onClose={() => setShowArrow(false)} />}
-  {showGame && <DailyGameModal onComplete={handleGameComplete} />}
-
+      {showCongrats && <CongratsPopup onClose={() => setShowCongrats(false)} />}
+      {showArrow && <ArrowOverlay onClose={() => setShowArrow(false)} />}
+      {showGame && <DailyGameModal onComplete={handleGameComplete} />}
 
       <div className="container mx-auto px-2 py- sm:px-4 sm:py-10 md:py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-10 items-center">
@@ -115,7 +121,9 @@ const HeroSection = () => {
                       visible: { opacity: 1, y: "0em" },
                     }}
                     transition={{ duration: 0.01 }}
-                    className={`text-yellow-500 ${char === " " ? "inline-block w-2" : ""}`}
+                    className={`text-yellow-500 ${
+                      char === " " ? "inline-block w-2" : ""
+                    }`}
                   >
                     {char}
                   </motion.span>
@@ -128,7 +136,9 @@ const HeroSection = () => {
                       visible: { opacity: 1, y: "0em" },
                     }}
                     transition={{ duration: 0.01 }}
-                    className={`text-primary ${char === " " ? "inline-block w-2" : ""}`}
+                    className={`text-primary ${
+                      char === " " ? "inline-block w-2" : ""
+                    }`}
                   >
                     {char}
                   </motion.span>
@@ -141,8 +151,13 @@ const HeroSection = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-              <Button size="lg" className="bg-primary hover:bg-black text-white px-6 sm:px-8">
-                Explore All Courses →
+              {/* ✅ Navigate to Services page on click */}
+              <Button
+                size="lg"
+                className="bg-primary hover:bg-black text-white px-6 sm:px-8"
+                onClick={handleExploreClick}
+              >
+                Explore All Services →
               </Button>
             </div>
           </div>
@@ -162,52 +177,51 @@ const HeroSection = () => {
             />
           </motion.div>
         </div>
-
-        
       </div>
+
       {/* Stats Marquee */}
-        <div className="relative mt-6 sm:mt-13 md:mt-13">
-  <div className="absolute inset-x-0 bottom-0 bg-black origin-bottom-left rotate-[-3deg] z-20 translate-y-6 sm:translate-y-10 md:translate-y-12">
-    <div className="marquee p-2 sm:p-3 md:p-4">
-      <div className="marquee-content flex gap-2 sm:gap-3">
-        {[...stats, ...stats, ...stats].map((stat, idx) => (
-          <div
-            key={idx}
-            className="text-center bg-gray-800 text-white rounded-lg shadow-none 
+      <div className="relative mt-6 sm:mt-13 md:mt-13">
+        <div className="absolute inset-x-0 bottom-0 bg-black origin-bottom-left rotate-[-3deg] z-20 translate-y-6 sm:translate-y-10 md:translate-y-12">
+          <div className="marquee p-2 sm:p-3 md:p-4">
+            <div className="marquee-content flex gap-2 sm:gap-3">
+              {[...stats, ...stats, ...stats].map((stat, idx) => (
+                <div
+                  key={idx}
+                  className="text-center bg-gray-800 text-white rounded-lg shadow-none 
                        min-w-[80px] sm:min-w-[100px] md:min-w-[120px] flex-shrink-0
                        p-1 sm:p-1.5 md:p-1.5"
-          >
-            <div className="font-semibold text-xs sm:text-sm">{stat.title}</div>
+                >
+                  <div className="font-semibold text-xs sm:text-sm">
+                    {stat.title}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-        ))}
+        </div>
       </div>
-    </div>
-  </div>
-</div>
-
 
       <style>{`
         .marquee {
-  width: 100%;       /* full width of parent */
-  overflow: hidden;  /* hide overflowing items */
-  position: relative;
-}
+          width: 100%;
+          overflow: hidden;
+          position: relative;
+        }
 
-.marquee-content {
-  display: flex;
-  flex-shrink: 0;
-  animation: marqueeAnim 30s linear infinite;
-}
+        .marquee-content {
+          display: flex;
+          flex-shrink: 0;
+          animation: marqueeAnim 30s linear infinite;
+        }
 
-.marquee:hover .marquee-content {
-  animation-play-state: paused;  /* pause on hover */
-}
+        .marquee:hover .marquee-content {
+          animation-play-state: paused;
+        }
 
-
-@keyframes marqueeAnim {
-  0%   { transform: translateX(0); }
-  100% { transform: translateX(-33.333%); }
-}
+        @keyframes marqueeAnim {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-33.333%); }
+        }
       `}</style>
     </section>
   );

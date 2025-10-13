@@ -114,10 +114,10 @@ const Footer = () => {
         </div>
         <div className="w-full overflow-hidden bg-primary py-2 mt-10">
            <div className="flex whitespace-nowrap animate-marquee">
-          <p className="text-xl sm:text-20xl md:text-7xl lg:text-10xl font-bold mr-20 opacity-5">
+          <p className="text-xl sm:text-20xl md:text-7xl lg:text-10xl font-bold mr-20 opacity-60">
              VISHNU STUDENT SUCCESS CENTRE
           </p>
-          <p className="text-xl sm:text-20xl md:text-7xl lg:text-10xl font-bold mr-20 opacity-5">
+          <p className="text-xl sm:text-20xl md:text-7xl lg:text-10xl font-bold mr-20 opacity-60">
              VISHNU STUDENT SUCCESS CENTRE
         </p>
    </div>

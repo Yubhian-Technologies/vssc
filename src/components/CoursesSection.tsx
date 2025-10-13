@@ -1,14 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
-// FINDING NEMO
-//import FindingNemo1 from "@/assets/FindingNemo1.jpg";
-//import FindingNemo2 from "@/assets/FindingNemo2.jpg";
-//import FindingNemo3 from "@/assets/FindingNemo3.jpg";
-//import FindingNemo4 from "@/assets/FindingNemo4.jpg";
-//import FindingNemo5 from "@/assets/FindingNemo5.jpg";
-//import FindingNemo6 from "@/assets/FindingNemo6.jpg";
+// IMAGES
 import two from "@/assets/two.png";
 import twelve from "@/assets/twelve.png";
 import eleven from "@/assets/eleven.png";
@@ -16,57 +11,29 @@ import ten from "@/assets/ten.png";
 import eight from "@/assets/eight.png";
 import nine from "@/assets/nine.png";
 
-// THE INCREDIBLES
-//import filter21 from "@/assets/filter21.jpg";
-//import filter22 from "@/assets/filter22.jpg";
-//import filter23 from "@/assets/filter23.jpg";
-//import filter24 from "@/assets/filter24.jpg";
-//import filter25 from "@/assets/filter25.jpg";
-//import filter26 from "@/assets/filter26.jpg";
 import green1 from "@/assets/green1.png";
 import green2 from "@/assets/green2.png";
 import green3 from "@/assets/green3.png";
 import green4 from "@/assets/green4.png";
 import green5 from "@/assets/green5.png";
-// INSIDE OUT
-//import insideout1 from "@/assets/insideout1.jpg";
-//import insideout2 from "@/assets/insideout2.jpg";
-//import insideout3 from "@/assets/insideout3.jpg";
-//import insideout4 from "@/assets/insideout4.jpg";
-//import insideout5 from "@/assets/insideout5.jpg";
-//import insideout6 from "@/assets/insideout6.jpg";
+
 import red1 from "@/assets/red1.png";
 import red2 from "@/assets/red2.png";
 import red3 from "@/assets/red3.png";
 import red4 from "@/assets/red4.png";
-// THE PURSUIT OF HAPPINESS
-//import pursuit1 from "@/assets/pursuit1.jpg";
-//import pursuit2 from "@/assets/pursuit2.jpg";
-//import pursuit3 from "@/assets/pursuit3.jpg";
-//import pursuit4 from "@/assets/pursuit4.jpg";
-//import pursuit5 from "@/assets/pursuit5.jpg";
-//import pursuit6 from "@/assets/pursuit6.jpg";
+
 import yellow1 from "@/assets/yellow1.png";
 import yellow2 from "@/assets/yellow2.png";
 import yellow3 from "@/assets/yellow3.png";
 import yellow4 from "@/assets/yellow4.png";
 import yellow5 from "@/assets/yellow5.png";
 
-// HAPPY FEET
-//import happy1 from "@/assets/happy1.jpg";
-//import happy2 from "@/assets/happy2.jpg";
-//import happy3 from "@/assets/happy3.jpg";
-//import happy4 from "@/assets/happy4.jpg";
-//import happy5 from "@/assets/happy5.jpg";
-//import happy6 from "@/assets/happy6.jpg";
 import maroon1 from "@/assets/maroon1.png";
 import maroon2 from "@/assets/maroon2.png";
 import maroon3 from "@/assets/maroon3.png";
 import maroon4 from "@/assets/maroon4.png";
 import maroon5 from "@/assets/maroon5.png";
 
-
-// HIDDEN FIGURES
 import hidden1 from "@/assets/hidden1.jpg";
 import hidden2 from "@/assets/hidden2.jpg";
 import hidden3 from "@/assets/hidden3.jpg";
@@ -127,7 +94,7 @@ const CoursesSection = () => {
       { focus: "Peer-network for Career-Fairs, Job searches, etc.", desc: "Career Mapping", image: yellow3 },
       { focus: "Career Interest Inventories", desc: "Career Mapping", image: yellow4 },
       { focus: "Experiential Learning Opportunities/ Job shadowing", desc: "Career Mapping", image: yellow4 },
-      { focus: "Assistance for Higher studies in Foreign Institutions", desc: "Career Mapping", image: yellow1 },
+      { focus: "Assistance for Higher studies in Foreign Institutions", desc: "Career Mapping", image: yellow5 },
     ],
     "HAPPY FEET": [
       { focus: "Mindfulness and Meditation Sessions", desc: "Wellness & Self-Care", image: maroon1 },
@@ -158,60 +125,91 @@ const CoursesSection = () => {
     return () => clearInterval(interval);
   }, [activeCategory]);
 
+  // Manual scroll handlers
+  const scrollLeft = () => {
+    if (scrollRef.current) scrollRef.current.scrollBy({ left: -250, behavior: "smooth" });
+  };
+  const scrollRight = () => {
+    if (scrollRef.current) scrollRef.current.scrollBy({ left: 250, behavior: "smooth" });
+  };
+
   return (
-    <section data-aos="fade-down" className="py-15 [background-color:hsl(60,100%,90%)]">
+    <section data-aos="fade-down" className="py-15 [background-color:hsl(60,100%,90%)] relative">
       <div className="container mx-auto px-3 py-4 sm:px-4 sm:py-8 md:py-10">
         <div className="text-center mb-10">
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mt-2 mb-6">
             Explore Our Courses by Category
           </h2>
 
-         
-<div className="flex flex-wrap justify-center gap-2 sm:gap-3 md:gap-4 mb-8">
-  {categories.map((category) => (
-    <Button
-      key={category}
-     
-      className={`px-3 sm:px-4 md:px-5 py-1 sm:py-1.5 rounded-full
-                 text-xs sm:text-sm md:text-sm font-medium
-                 ${
-                   activeCategory === category
-                     ? `${activeColors[category]} !hover:bg-[inherit] !hover:text-[inherit]`
-                     : "bg-white text-black !hover:bg-white !hover:text-black"
-                 }`}
-      onClick={() => setActiveCategory(category)}
-    >
-      {category}
-    </Button>
-  ))}
-</div>
-
-        </div>
-
-        {/* Courses */}
-        <div className="relative">
-          <div ref={scrollRef} className="overflow-hidden relative">
-            <div className="flex gap-4">
-              {[...courses[activeCategory], ...courses[activeCategory]].map((course, i) => (
-                <Card
-                  key={i}
-                  className="course-card [background-color:hsl(60,100%,95%)] shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden min-w-[200px] max-w-[220px]"
-                >
-                  <img
-                    src={course.image}
-                    alt={course.focus}
-                    className="w-full h-auto max-h-36 object-contain rounded-t-md"
-                  />
-                  <CardContent className="p-3 space-y-1">
-                    <h3 className="font-semibold text-gray-900 text-sm sm:text-base">{course.focus}</h3>
-                    <p className="text-gray-700 text-xs sm:text-sm">{course.desc}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+          <div className="flex flex-wrap justify-center gap-2 sm:gap-3 md:gap-4 mb-8">
+            {categories.map((category) => (
+              <Button
+                key={category}
+                className={`px-3 sm:px-4 md:px-5 py-1 sm:py-1.5 rounded-full
+                  text-xs sm:text-sm md:text-sm font-medium
+                  ${
+                    activeCategory === category
+                      ? `${activeColors[category]} !hover:bg-[inherit] !hover:text-[inherit]`
+                      : "bg-white text-black !hover:bg-white !hover:text-black"
+                  }`}
+                onClick={() => setActiveCategory(category)}
+              >
+                {category}
+              </Button>
+            ))}
           </div>
         </div>
+
+        {/* Scroll Buttons */}
+        <div className="relative flex items-center">
+          <button
+            onClick={scrollLeft}
+            className="absolute left-2 z-20 bg-primary text-white p-3 rounded-full shadow-lg hover:bg-black transition"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+
+          {/* Courses Scroll */}
+          <div
+            ref={scrollRef}
+            className="flex overflow-x-auto no-scrollbar gap-4 scroll-smooth px-10"
+          >
+            {[...courses[activeCategory], ...courses[activeCategory]].map((course, i) => (
+              <Card
+                key={i}
+                className="flex-shrink-0 min-w-[200px] max-w-[220px] [background-color:hsl(60,100%,95%)] shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden rounded-2xl"
+              >
+                <img
+                  src={course.image}
+                  alt={course.focus}
+                  className="w-full h-auto max-h-36 object-contain rounded-t-md"
+                />
+                <CardContent className="p-3 space-y-1">
+                  <h3 className="font-semibold text-gray-900 text-sm sm:text-base">{course.focus}</h3>
+                  <p className="text-gray-700 text-xs sm:text-sm">{course.desc}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <button
+            onClick={scrollRight}
+            className="absolute right-2 z-20 bg-primary text-white p-3 rounded-full shadow-lg hover:bg-black transition"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        </div>
       </div>
+
+      <style>{`
+        .no-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .no-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
     </section>
   );
 };
