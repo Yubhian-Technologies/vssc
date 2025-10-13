@@ -177,17 +177,25 @@ export default function TutoringPage() {
 
   const normalizeDate = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
 
-  const tileClassName = ({ date }: any) => {
-    return sessions.some((session) => {
-      if (!session.date) return false;
-      const sessionDate = normalizeDate(parseDate(session.date));
-      const currentDate = normalizeDate(date);
-      const hasAvailableSlot = session.bookedSlots?.some((s) => !s.booked);
-      return sessionDate.getTime() === currentDate.getTime() && hasAvailableSlot;
-    })
-      ? "bg-green-300 rounded-full"
-      : "";
-  };
+  // only highlight dates for the currently selectedSession
+const tileClassName = ({ date }: any) => {
+  // no selected session -> no highlights
+  if (!selectedSession || !selectedSession.date) return "";
+
+  // normalize both dates (remove time portion)
+  const sessionDate = normalizeDate(parseDate(selectedSession.date));
+  const currentDate = normalizeDate(date);
+
+  // check whether this selected session actually has any free slots
+  const hasAvailableSlot = selectedSession.bookedSlots?.some((s) => !s.booked);
+
+  // only highlight if the calendar tile matches the selected session's date
+  if (sessionDate.getTime() === currentDate.getTime() && hasAvailableSlot) {
+    return "bg-green-300 rounded-full";
+  }
+  return "";
+};
+
 
   const handleDateClick = (date: Date) => {
     if (!selectedSession || !selectedSession.date) return;
