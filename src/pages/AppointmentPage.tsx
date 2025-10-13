@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { db } from "../firebase";
+import emailjs from "@emailjs/browser";
+
+
 
 import {
   collection,
@@ -42,7 +45,7 @@ const AppointmentPage = () => {
 
   const [role, setRole] = useState<string | null>(null);
   const [college, setCollege] = useState<string | null>(null);
-
+    const [name, setName] = useState<string | null>(null);
   const [subject, setSubject] = useState("");
   const [doubt, setDoubt] = useState("");
   const [selectedFaculty, setSelectedFaculty] = useState<Faculty | null>(null);
@@ -65,6 +68,7 @@ const AppointmentPage = () => {
         const data = snap.docs[0].data() as DocumentData;
         setRole(data.role || "student");
         setCollege(data.college || null);
+        setName(data.name || null);
       }
     };
     fetchUserDetails();
@@ -112,7 +116,7 @@ const AppointmentPage = () => {
       facultyId: selectedFaculty.id,
       facultyName: selectedFaculty.name,
       studentId: user.uid,
-      studentName: user.displayName || user.email,
+      studentName: name,
       subject,
       doubt,
       status: "pending",
@@ -130,28 +134,66 @@ const AppointmentPage = () => {
 
   // 🔹 Admin: accept appointment
   const handleAccept = async (id: string) => {
-    if (!scheduleDate || !scheduleTime) {
-      alert("Select date and time");
-      return;
-    }
+  if (!scheduleDate || !scheduleTime) {
+    alert("Select date and time");
+    return;
+  }
 
-    const scheduledAt = `${scheduleDate} ${scheduleTime}`;
-    await updateDoc(doc(db, "appointments", id), {
-      status: "accepted",
-      scheduledAt,
-    });
+  const scheduledAt = `${scheduleDate} ${scheduleTime}`;
 
-    // Update local state
-    setAppointments((prev) =>
-      prev.map((a) =>
-        a.id === id ? { ...a, status: "accepted", scheduledAt } : a
-      )
+  // Update Firestore
+  await updateDoc(doc(db, "appointments", id), {
+    status: "accepted",
+    scheduledAt,
+  });
+
+  // Update local state
+  setAppointments((prev) =>
+    prev.map((a) =>
+      a.id === id ? { ...a, status: "accepted", scheduledAt } : a
+    )
+  );
+
+  // Find student email from appointment
+  const appointment = appointments.find((a) => a.id === id);
+  if (appointment) {
+    // Fetch student's email from Firestore users collection
+    const snap = await getDocs(
+      query(collection(db, "users"), where("uid", "==", appointment.studentId))
     );
 
-    setSchedulingId(null);
-    setScheduleDate("");
-    setScheduleTime("");
-  };
+    if (!snap.empty) {
+      const studentData = snap.docs[0].data() as DocumentData;
+      const toEmail = studentData.email;
+      const toName = appointment.studentName;
+      const facultyName = appointment.facultyName;
+
+      // Send email via EmailJS
+      try {
+        await emailjs.send(
+          "service_i0sjn21", // replace with your EmailJS Service ID
+          "template_wvfxvl7", // replace with your Template ID
+          {
+            to_name: toName,
+            faculty_name: facultyName,
+            scheduled_time: scheduledAt,
+            to_email: toEmail,
+          },
+          "EEoXK9gS-YnOA1hey" // replace with your EmailJS Public Key
+        );
+        console.log("Email sent successfully!");
+      } catch (error) {
+        console.error("Error sending email:", error);
+      }
+    }
+  }
+
+  // Reset scheduling
+  setSchedulingId(null);
+  setScheduleDate("");
+  setScheduleTime("");
+};
+
 
   // 🔹 Admin: reject appointment
   const handleIgnore = async (id: string) => {
