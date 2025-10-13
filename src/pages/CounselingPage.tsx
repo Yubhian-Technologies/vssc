@@ -696,7 +696,7 @@ export default function CounselingPage() {
             {/* Is Group */}
             <div className="flex items-center gap-4 mt-2">
               <span className="font-semibold">Session Type:</span>
-              <label>
+              {/* <label>
                 <input
                   type="radio"
                   name="isGroup"
@@ -704,7 +704,7 @@ export default function CounselingPage() {
                   onChange={() => setNewSession({ ...newSession, isGroup: true })}
                 />{" "}
                 Group
-              </label>
+              </label> */}
               <label>
                 <input
                   type="radio"
@@ -717,7 +717,7 @@ export default function CounselingPage() {
             </div>
 
             {/* Fields for Group */}
-            {newSession.isGroup && (
+            {/* {newSession.isGroup && (
               <div className="flex flex-col">
                 <div className="flex flex-col">
                   <label htmlFor="date" className="font-semibold mb-1">
@@ -759,7 +759,7 @@ export default function CounselingPage() {
                   onChange={(e) => setNewSession({ ...newSession, slots: parseInt(e.target.value) })}
                 />
               </div>
-            )}
+            )} */}
 
             {/* Fields for 1-on-1 */}
             {newSession.isGroup === false && (
