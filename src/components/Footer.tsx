@@ -3,23 +3,28 @@ import { Input } from "@/components/ui/input";
 import { Facebook, Twitter, Instagram, Linkedin, Underline } from "lucide-react";
 import vssc from "@/assets/VSSC LOGO[1].png";
 
+
 const Footer = () => {
   const navigationLinks = [
     { title: "Home", href: "#" },
-    { title: "About", href: "#" },
-    { title: "Contact", href: "#" },
-    { title: "Refund", href: "#" },
-    { title: "Help Center", href: "#" },
-    { title: "Privacy Policy", href: "#" },
+    { title: "About", href: "/About" },
+    { title: "Services", href: "/Services" },
+    { title: "Tour", href: "TourPage" },
+    { title: "Help", href: "Help" },
+    { title: "Account", href: "Account" },
   ];
 
   const courseLinks = [
-    { title: "Business Coach", href: "#" },
-    { title: "Development Coach", href: "#" },
-    { title: "Testimonials", href: "#" },
-    { title: "Seo Optimization", href: "#" },
-    { title: "Web design", href: "#" },
-    { title: "Life Coach", href: "#" },
+    { title: "Academic Advice", href: "/Services" },
+    { title: "Peer Tutoring", href: "/Services" },
+    { title: "Career Counselling", href: "/Services" },
+    { title: "Peer Mentoring", href: "/Services" },
+    { title: "Communication Skills", href: "/Services" },
+    { title: "Personality Development", href: "/Services" },
+    { title: "Corporate-readiness Workshops", href: "/Services" },
+    { title: "Self-care Strategies", href: "/Services" },
+    { title: "Wellness Practices", href: "/Services" },
+  
   ];
 
   return (
@@ -78,7 +83,7 @@ const Footer = () => {
               </div>
 
               <div>
-                <h3 className="text-base font-semibold mb-3">Courses</h3>
+                <h3 className="text-base font-semibold mb-3">Services</h3>
                 <ul className="space-y-1">
                   {courseLinks.map((link) => (
                     <li key={link.title}>
