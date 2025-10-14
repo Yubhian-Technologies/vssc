@@ -2,6 +2,7 @@ import React from "react";
 import heroImage from "@/assets/hero-student.jpg";
 import filter21 from "@/assets/filter21.jpg";
 import {motion} from "framer-motion"
+import aboutelement from "@/assets/about-element-1.png"
 
 const About = () => {
   return (
@@ -86,6 +87,64 @@ const About = () => {
           </div>
         </div>
       </section>
+  
+      {/* Our Mission Section */}
+<section className="w-full py-20 px-6 md:px-12 lg:px-20 bg-[hsl(60,100%,95%)]">
+  <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-10">
+
+    {/* Left Side */}
+    <div className="md:w-1/2 w-full flex flex-col items-start space-y-4">
+      
+      <h2 className="text-3xl md:text-4xl font-semibold text-primary">
+        Commitment
+      </h2>
+      <p className="text-gray-700 leading-relaxed  text-xl">
+       We are committed to helping students navigate their educational paths, overcome challenges, and achieve their goals through personalised support and guidance.
+        
+      </p>
+
+      <img
+        src={aboutelement}
+        alt="We Value"
+        className="w-full md:w-4/5 rounded-xl shadow-lg mt-6 hover:scale-[1.02] transition-transform duration-500"
+      />
+    </div>
+
+    {/* Right Side - Our Mission Box */}
+    <div className="md:w-2/3 w-full flex justify-center md:justify-end">
+      <div className="w-[90%] md:w-[70%] bg-[#001E6C]  shadow-2xl flex flex-col justify-center items-center text-center py-16 px-6 md:px-8 space-y-10 border-3 border-white">
+        
+        {/* Heading */}
+        <div>
+          <h2
+            className="text-5xl md:text-6xl font-extrabold text-white leading-tight"
+            style={{ fontFamily: '"Rubik Distressed", system-ui', letterSpacing: "2px" }}
+          >
+            OUR
+          </h2>
+          <h3
+            className="text-4xl md:text-5xl italic font-bold text-white"
+            style={{ fontFamily: '"Comic Neue", cursive' }}
+          >
+            MISSION
+          </h3>
+        </div>
+
+        {/* Inner white description box */}
+        <div className="bg-background text-black p-8 md:p-10 rounded-3xl shadow-xl max-w-[90%] mx-auto">
+          <p className="text-lg md:text-xl leading-relaxed font-serif">
+            To create a supportive, inclusive, and dynamic environment where every
+            student can discover their potential, build essential life skills, and
+            confidently shape their future.
+          </p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
     </div>
   );
 };

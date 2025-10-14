@@ -174,16 +174,14 @@ export default function AcademicAdvisingPage() {
   const normalizeDate = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
 
   const tileClassName = ({ date }: any) => {
-    return sessions.some((session) => {
-      if (!session.date) return false;
-      const sessionDate = normalizeDate(parseDate(session.date));
-      const currentDate = normalizeDate(date);
-      const hasAvailableSlot = session.bookedSlots?.some((s) => !s.booked);
-      return sessionDate.getTime() === currentDate.getTime() && hasAvailableSlot;
-    })
-      ? "bg-green-300 rounded-full"
-      : "";
-  };
+  if (!selectedSession || !selectedSession.date) return "";
+  const sessionDate = normalizeDate(parseDate(selectedSession.date));
+  const currentDate = normalizeDate(date);
+  const hasAvailableSlot = selectedSession.bookedSlots?.some((s) => !s.booked);
+  return sessionDate.getTime() === currentDate.getTime() && hasAvailableSlot
+    ? "bg-green-300 rounded-full"
+    : "";
+};
 
   const handleDateClick = (date: Date) => {
     if (!selectedSession || !selectedSession.date) return;

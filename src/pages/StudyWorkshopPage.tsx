@@ -704,7 +704,7 @@ export default function StudyWorkshopPage() {
                 />{" "}
                 Group
               </label>
-              <label>
+              {/* <label>
                 <input
                   type="radio"
                   name="isGroup"
@@ -712,7 +712,7 @@ export default function StudyWorkshopPage() {
                   onChange={() => setNewSession({ ...newSession, isGroup: false })}
                 />{" "}
                 1-on-1
-              </label>
+              </label> */}
             </div>
 
             {/* Fields for Group */}
@@ -761,7 +761,7 @@ export default function StudyWorkshopPage() {
             )}
 
             {/* Fields for 1-on-1 */}
-            {newSession.isGroup === false && (
+            {/* {newSession.isGroup === false && (
               <>
                 <div className="flex flex-col">
                   <label htmlFor="date" className="font-semibold mb-1">
@@ -825,7 +825,7 @@ export default function StudyWorkshopPage() {
                   />
                 </div>
               </>
-            )}
+            )} */}
 
             {/* Buttons */}
             <div className="flex justify-end gap-4 mt-4">

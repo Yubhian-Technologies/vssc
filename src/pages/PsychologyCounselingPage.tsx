@@ -173,17 +173,25 @@ export default function PsychologyCounselingPage() {
 
   const normalizeDate = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
 
-  const tileClassName = ({ date }: any) => {
-    return sessions.some((session) => {
-      if (!session.date) return false;
-      const sessionDate = normalizeDate(parseDate(session.date));
-      const currentDate = normalizeDate(date);
-      const hasAvailableSlot = session.bookedSlots?.some((s) => !s.booked);
-      return sessionDate.getTime() === currentDate.getTime() && hasAvailableSlot;
-    })
-      ? "bg-green-300 rounded-full"
-      : "";
-  };
+  // only highlight dates for the currently selectedSession
+const tileClassName = ({ date }: any) => {
+  // no selected session -> no highlights
+  if (!selectedSession || !selectedSession.date) return "";
+
+  // normalize both dates (remove time portion)
+  const sessionDate = normalizeDate(parseDate(selectedSession.date));
+  const currentDate = normalizeDate(date);
+
+  // check whether this selected session actually has any free slots
+  const hasAvailableSlot = selectedSession.bookedSlots?.some((s) => !s.booked);
+
+  // only highlight if the calendar tile matches the selected session's date
+  if (sessionDate.getTime() === currentDate.getTime() && hasAvailableSlot) {
+    return "bg-green-300 rounded-full";
+  }
+  return "";
+};
+
 
   const handleDateClick = (date: Date) => {
     if (!selectedSession || !selectedSession.date) return;
@@ -685,7 +693,7 @@ export default function PsychologyCounselingPage() {
             {/* Is Group */}
             <div className="flex items-center gap-4 mt-2">
               <span className="font-semibold">Session Type:</span>
-              <label>
+              {/* <label>
                 <input
                   type="radio"
                   name="isGroup"
@@ -693,7 +701,7 @@ export default function PsychologyCounselingPage() {
                   onChange={() => setNewSession({ ...newSession, isGroup: true })}
                 />{" "}
                 Group
-              </label>
+              </label> */}
               <label>
                 <input
                   type="radio"
@@ -706,7 +714,7 @@ export default function PsychologyCounselingPage() {
             </div>
 
             {/* Fields for Group */}
-            {newSession.isGroup && (
+            {/* {newSession.isGroup && (
               <div className="flex flex-col">
                 <div className="flex flex-col">
                   <label htmlFor="date" className="font-semibold mb-1">
@@ -748,7 +756,7 @@ export default function PsychologyCounselingPage() {
                   onChange={(e) => setNewSession({ ...newSession, slots: parseInt(e.target.value) })}
                 />
               </div>
-            )}
+            )} */}
 
             {/* Fields for 1-on-1 */}
             {newSession.isGroup === false && (
