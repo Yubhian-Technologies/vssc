@@ -98,7 +98,7 @@ const About = () => {
       <h2 className="text-3xl md:text-4xl font-semibold text-primary">
         Commitment
       </h2>
-      <p className="text-gray-700 leading-relaxed  text-xl">
+      <p className="text-gray-700 leading-relaxed  text-md">
        We are committed to helping students navigate their educational paths, overcome challenges, and achieve their goals through personalised support and guidance.
         
       </p>
@@ -132,7 +132,7 @@ const About = () => {
 
         {/* Inner white description box */}
         <div className="bg-background text-black p-8 md:p-10 rounded-3xl shadow-xl max-w-[90%] mx-auto">
-          <p className="text-lg md:text-xl leading-relaxed font-serif">
+          <p className="text-md md:text-md leading-relaxed font-serif">
             To create a supportive, inclusive, and dynamic environment where every
             student can discover their potential, build essential life skills, and
             confidently shape their future.
