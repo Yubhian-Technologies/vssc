@@ -42,7 +42,8 @@ interface TutoringSession {
     booked: boolean;
     user?: string | null;
   }[];
-
+  expiryDate?: string; // YYYY-MM-DD
+  expiryTime?: string; // "23:59"
 }
 
 interface UserData {
@@ -88,11 +89,20 @@ export default function TutoringPage() {
     description: "",
     tutorName: "",
     skills: [] as string[],
+    expiryDate: "", // YYYY-MM-DD
+    expiryTime: "", // "23:59"
   });
   const [showParticipants, setShowParticipants] = useState(false);
   const [selectedParticipants, setSelectedParticipants] = useState<UserData[]>([]);
 
-  
+  // --- Helper to check if session is expired ---
+  const isSessionExpired = (session: TutoringSession) => {
+    if (!session.expiryDate || !session.expiryTime) return false;
+    const [year, month, day] = session.expiryDate.split("-").map(Number);
+    const [hours, minutes] = session.expiryTime.split(":").map(Number);
+    const expiryDateTime = new Date(year, month - 1, day, hours, minutes);
+    return new Date() > expiryDateTime;
+  };
 
   // --- Fetch sessions in real-time ---
   useEffect(() => {
@@ -111,8 +121,11 @@ export default function TutoringPage() {
         // Admin: only sessions created by this admin
         filtered = allSessions.filter((session) => session.createdBy === user.uid);
       } else {
-        // Normal user: sessions for their college
-        filtered = allSessions.filter((session) => session.colleges.includes(userCollege));
+        // Normal user: sessions for their college, not expired
+        filtered = allSessions.filter(
+          (session) =>
+            session.colleges.includes(userCollege) && !isSessionExpired(session)
+        );
       }
 
       const updatedSessions = await Promise.all(
@@ -322,7 +335,7 @@ const tileClassName = ({ date }: any) => {
 
   // --- Admin Features ---
   const handleAddSession = async () => {
-    if (!newSession.title || !newSession.date || newSession.isGroup === undefined) {
+    if (!newSession.title || !newSession.date || newSession.isGroup === undefined || !newSession.expiryDate || !newSession.expiryTime) {
       alert("Please fill in all required fields.");
       return;
     }
@@ -337,12 +350,16 @@ const tileClassName = ({ date }: any) => {
         skills: newSession.skills || [],
         createdAt: serverTimestamp(),
         isGroup: newSession.isGroup,
+        expiryDate: newSession.expiryDate,
+        expiryTime: newSession.expiryTime,
       };
 
       if (newSession.isGroup) {
         // Group session fields
         sessionData.slots = newSession.slots || 1;
         sessionData.participants = [];
+        sessionData.date = newSession.date;
+        sessionData.startTime = newSession.startTime;
       } else {
         // 1-on-1 session fields
         sessionData.date = newSession.date;
@@ -393,6 +410,8 @@ const tileClassName = ({ date }: any) => {
         description: "",
         tutorName: "",
         skills: [],
+        expiryDate: "",
+        expiryTime: "",
       });
     } catch (err) {
       console.error("Error adding session:", err);
@@ -468,6 +487,9 @@ const tileClassName = ({ date }: any) => {
             >
               <div className="absolute top-0 right-0 px-3 py-1 text-xs font-semibold bg-primary text-white rounded-bl-lg">
                 {session.isGroup ? "Group" : "1-on-1"}
+                {userData?.role === "admin" && isSessionExpired(session) && (
+                  <span className="ml-2 bg-red-600 px-2 rounded">Expired</span>
+                )}
               </div>
               <h2 className="text-xl font-bold text-gray-800 group-hover:text-primary transition">
                 {session.title}
@@ -484,6 +506,18 @@ const tileClassName = ({ date }: any) => {
                   <BookOpen className="w-4 h-4 text-green-600" />
                   <span>
                     <strong>Skills:</strong> {session.skills.join(", ")}
+                  </span>
+                </p>
+                <p className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-blue-600" />
+                  <span>
+                    <strong>Start:</strong> {session.date} {session.startTime}
+                  </span>
+                </p>
+                <p className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-red-600" />
+                  <span>
+                    <strong>Expiry:</strong> {session.expiryDate} {session.expiryTime}
                   </span>
                 </p>
                 {session.isGroup ? (
@@ -505,7 +539,7 @@ const tileClassName = ({ date }: any) => {
               <button
                 className={`mt-5 w-full py-2 rounded-lg font-semibold text-white transition 
     ${
-      userData?.role === "admin"
+      userData?.role === "admin" || isSessionExpired(session)
         ? "bg-gray-400 cursor-not-allowed"
         : session.isGroup
         ? session.slots && session.slots > 0
@@ -518,6 +552,7 @@ const tileClassName = ({ date }: any) => {
                 onClick={() => handleBookSlot(session)}
                 disabled={
                   userData?.role === "admin" ||
+                  isSessionExpired(session) ||
                   (session.isGroup && (!session.slots || session.slots <= 0)) ||
                   (!session.isGroup && (!session.slotAvailable || session.slotAvailable <= 0))
                 }
@@ -800,6 +835,34 @@ const tileClassName = ({ date }: any) => {
                 </div>
               </>
             )}
+
+            {/* Expiry Date and Time */}
+            <div className="flex flex-col">
+              <label htmlFor="expiryDate" className="font-semibold mb-1">
+                Expiry Date
+              </label>
+              <input
+                type="date"
+                name="expiryDate"
+                id="expiryDate"
+                className="w-full p-2 border rounded-lg"
+                value={newSession.expiryDate || ""}
+                onChange={(e) => setNewSession({ ...newSession, expiryDate: e.target.value })}
+              />
+            </div>
+            <div className="flex flex-col">
+              <label htmlFor="expiryTime" className="font-semibold mb-1">
+                Expiry Time
+              </label>
+              <input
+                type="time"
+                name="expiryTime"
+                id="expiryTime"
+                className="w-full p-2 border rounded-lg"
+                value={newSession.expiryTime || ""}
+                onChange={(e) => setNewSession({ ...newSession, expiryTime: e.target.value })}
+              />
+            </div>
 
             {/* Buttons */}
             <div className="flex justify-end gap-4 mt-4">

@@ -7,7 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import AOS from "aos";
 import "aos/dist/aos.css";
 import { AuthProvider } from "./AuthContext";
-import AccountPage from "./pages/AccountPage"
+import AccountPage from "./pages/AccountPage";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/AuthPage";
@@ -21,17 +21,19 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProtectedRoute from "./ProctectedRoute";
 import HeroSection from "./components/HeroSection";
-import { auth } from "./firebase"; // import Firebase auth
+import { auth } from "./firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import Appointment from "./pages/AppointmentPage";
-import Reservations from "./pages/RequestedAppointments "
+import Reservations from "./pages/RequestedAppointments ";
 import AddAdmin from "./pages/addAdmin";
 import Counseling from "./pages/CounselingPage";
 import Pyschology from "./pages/PsychologyCounselingPage";
 import Academic from "./pages/AcademicAdvisingPage";
-import StudyWorkshop from "./pages/StudyWorkshopPage"
-import LeaderboardPage from "./pages/LeaderboardPage"
+import StudyWorkshop from "./pages/StudyWorkshopPage";
+import LeaderboardPage from "./pages/LeaderboardPage";
+import MyBookingsPage from "./pages/MyBookingsPage"; // ✅ ADD THIS IMPORT
 import ScrollToTopButton from "./components/ScrollToTopButton";
+
 const queryClient = new QueryClient();
 
 const App = () => {
@@ -51,7 +53,7 @@ const App = () => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
-      setLoading(false); // stop loading once state is determined
+      setLoading(false);
     });
 
     return () => unsubscribe();
@@ -65,44 +67,116 @@ const App = () => {
         <Toaster />
         <Sonner />
         <BrowserRouter>
-        <AuthProvider>
-          <Header />
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/services" element={<Services />} />
-            <Route path="/tour" element={<TourPage />} />
-            <Route path="/campus/:id" element={<CampusPage />} />
-            <Route path="/help" element={<Help />} />
-            <Route path = "/account" element={<AccountPage/>} />
-            <Route path = "/appointment" element={<Appointment/>} />
-            <Route path = "/reservations" element={<Reservations/>} />
-            <Route path="/services/counseling" element={<Counseling/>} />
-          <Route path="/services/academic-advising" element={<Academic/>} />
-          <Route path="/services/study-workshops" element={<StudyWorkshop/>} />
-          <Route path="/services/psychology-counseling" element={<Pyschology/>} />
-          <Route path ="/addAdmin" element = {<AddAdmin/>} />
-          <Route path="/leaderboard" element={<LeaderboardPage />} />
-    
-            
-            {/* Auth route: redirect to hero if already logged in */}
-            <Route path="/auth" element={!user ? <Auth /> : <Navigate to="/hero" replace />} />
+          <AuthProvider>
+            <Header />
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/" element={<Index />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/services" element={<Services />} />
+              <Route path="/tour" element={<TourPage />} />
+              <Route path="/campus/:id" element={<CampusPage />} />
+              <Route path="/help" element={<Help />} />
 
-            {/* Hero route: redirect to auth if not logged in */}
-            <Route path="/" element={user ? <Index /> : <Navigate to="/auth" replace />} />
-            <Route
-            path="/services/tutoring"
-            element={
-              <ProtectedRoute>
-                <Tutoring />
-              </ProtectedRoute>
-              }
+              {/* Auth Routes */}
+              <Route 
+                path="/auth" 
+                element={!user ? <Auth /> : <Navigate to="/" replace />} 
               />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          
-          <Footer />
-          <ScrollToTopButton></ScrollToTopButton>
+
+              {/* Protected Service Routes */}
+              <Route
+                path="/services/tutoring"
+                element={
+                  <ProtectedRoute>
+                    <Tutoring />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/services/counseling"
+                element={
+                  <ProtectedRoute>
+                    <Counseling />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/services/academic-advising"
+                element={
+                  <ProtectedRoute>
+                    <Academic />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/services/study-workshops"
+                element={
+                  <ProtectedRoute>
+                    <StudyWorkshop />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/services/psychology-counseling"
+                element={
+                  <ProtectedRoute>
+                    <Pyschology />
+                  </ProtectedRoute>
+                }
+              />
+
+              
+              
+
+              {/* Other Protected Routes */}
+              <Route 
+                path="/account" 
+                element={
+                  <ProtectedRoute>
+                    <AccountPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/appointment" 
+                element={
+                  <ProtectedRoute>
+                    <Appointment />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/reservations" 
+                element={
+                  <ProtectedRoute>
+                    <Reservations />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/leaderboard" 
+                element={
+                  <ProtectedRoute>
+                    <LeaderboardPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/addAdmin" 
+                element={
+                  <ProtectedRoute>
+                    <AddAdmin />
+                  </ProtectedRoute>
+                } 
+              />
+
+              {/* Catch-all */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+            
+            <Footer />
+            <ScrollToTopButton />
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
