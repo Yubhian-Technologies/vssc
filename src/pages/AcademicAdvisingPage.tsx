@@ -607,301 +607,340 @@ export default function AcademicAdvisingPage() {
 
         {/* Add Session Modal */}
         {showForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4 overflow-y-auto">
-            <div className="bg-white rounded-xl p-6 w-full max-w-lg space-y-4 max-h-[90vh] overflow-y-auto">
-              <h2 className="text-xl font-bold">Add New Academic Advising Session</h2>
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4 overflow-y-auto backdrop-blur-sm">
+    <div className="bg-[hsl(60,100%,95%)] rounded-2xl p-8 w-full max-w-lg space-y-6 max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100">
+      {/* Header */}
+      <div className="text-center border-b border-gray-100 pb-4">
+        <h2 className="text-2xl text-primary font-bold bg-gradient-to-r from-primary to-blue-600 bg-clip-text ">
+          Add New Academic Advising Session
+        </h2>
+        <p className="text-gray-500 text-sm mt-1">Fill in the details to create a new advising session</p>
+      </div>
 
-              {/* Session Title */}
-              <div className="flex flex-col">
-                <label htmlFor="title" className="font-semibold mb-1">
-                  Title
-                </label>
-                <input
-                  type="text"
-                  name="title"
-                  id="title"
-                  placeholder="Enter session title"
-                  className="w-full p-2 border rounded-lg"
-                  value={newSession.title || ""}
-                  onChange={(e) => setNewSession({ ...newSession, title: e.target.value })}
-                />
-              </div>
+      {/* Form Container */}
+      <form className="space-y-6">
+        {/* Session Title */}
+        <div className="space-y-2">
+          <label htmlFor="title" className="flex items-center gap-2 font-semibold text-gray-700">
+            
+            Title
+          </label>
+          <input
+            type="text"
+            name="title"
+            id="title"
+            placeholder="Enter session title"
+            className="w-full p-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
+            value={newSession.title || ""}
+            onChange={(e) => setNewSession({ ...newSession, title: e.target.value })}
+          />
+        </div>
 
-              {/* Description */}
-              <div className="flex flex-col">
-                <label htmlFor="description" className="font-semibold mb-1">
-                  Description
-                </label>
-                <textarea
-                  name="description"
-                  id="description"
-                  placeholder="Enter session description"
-                  className="w-full p-2 border rounded-lg"
-                  value={newSession.description || ""}
-                  onChange={(e) => setNewSession({ ...newSession, description: e.target.value })}
-                />
-              </div>
+        {/* Description */}
+        <div className="space-y-2">
+          <label htmlFor="description" className="flex items-center gap-2 font-semibold text-gray-700">
+            
+            Description
+          </label>
+          <textarea
+            name="description"
+            id="description"
+            placeholder="Enter session description"
+            rows={2}
+            className="w-full p-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 resize-none bg-gray-50 hover:bg-white"
+            value={newSession.description || ""}
+            onChange={(e) => setNewSession({ ...newSession, description: e.target.value })}
+          />
+        </div>
 
-              {/* Tutor Name */}
-              <div className="flex flex-col">
-                <label htmlFor="tutorName" className="font-semibold mb-1">
-                  Tutor Name
-                </label>
-                <input
-                  type="text"
-                  name="tutorName"
-                  id="tutorName"
-                  placeholder="Enter tutor name"
-                  className="w-full p-2 border rounded-lg"
-                  value={newSession.tutorName || ""}
-                  onChange={(e) => setNewSession({ ...newSession, tutorName: e.target.value })}
-                />
-              </div>
+        {/* Tutor Name */}
+        <div className="space-y-2">
+          <label htmlFor="tutorName" className="flex items-center gap-2 font-semibold text-gray-700">
+            
+            Tutor Name
+          </label>
+          <input
+            type="text"
+            name="tutorName"
+            id="tutorName"
+            placeholder="Enter tutor name"
+            className="w-full p-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
+            value={newSession.tutorName || ""}
+            onChange={(e) => setNewSession({ ...newSession, tutorName: e.target.value })}
+          />
+        </div>
 
-              {/* Skills */}
-              <div className="flex flex-col">
-                <label htmlFor="skills" className="font-semibold mb-1">
-                  Skills
-                </label>
-                <input
-                  type="text"
-                  name="skills"
-                  id="skills"
-                  placeholder="Enter skills separated by commas"
-                  className="w-full p-2 border rounded-lg"
-                  value={newSession.skills?.join(", ") || ""}
-                  onChange={(e) =>
-                    setNewSession({
-                      ...newSession,
-                      skills: e.target.value.split(",").map((s) => s.trim()).filter((s) => s),
-                    })
-                  }
-                />
-              </div>
+        {/* Skills */}
+        <div className="space-y-2">
+          <label htmlFor="skills" className="flex items-center gap-2 font-semibold text-gray-700">
+            
+            Skills
+          </label>
+          <input
+            type="text"
+            name="skills"
+            id="skills"
+            placeholder="Enter skills separated by commas"
+            className="w-full p-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
+            value={newSession.skills?.join(", ") || ""}
+            onChange={(e) =>
+              setNewSession({
+                ...newSession,
+                skills: e.target.value.split(",").map((s) => s.trim()).filter((s) => s),
+              })
+            }
+          />
+          <p className="text-xs text-gray-500 flex items-center gap-1">
+            
+            Separate multiple skills with commas
+          </p>
+        </div>
 
-              {/* Colleges Multi-Select Dropdown */}
-              <div className="flex flex-col">
-                <label htmlFor="colleges" className="font-semibold mb-1">
-                  Colleges
-                </label>
-                <select
-                  name="colleges"
-                  id="colleges"
-                  className="w-full p-2 border rounded-lg"
-                  multiple
-                  value={newSession.colleges && newSession.colleges.length > 0 ? newSession.colleges : []}
-                  onChange={(e) =>
-                    setNewSession({
-                      ...newSession,
-                      colleges: Array.from(e.target.selectedOptions, (option) => option.value),
-                    })
-                  }
-                >
-                  <option value="" disabled hidden>
-                    Select College(s)
-                  </option>
-                  <option value="Vishnu Institute of Technology">Vishnu Institute of Technology</option>
-                  <option value="Vishnu Dental College">Vishnu Dental College</option>
-                  <option value="Shri Vishnu College of Pharmacy">Shri Vishnu College of Pharmacy</option>
-                  <option value="BV Raju Institute of Technology">BV Raju Institute of Technology</option>
-                  <option value="BVRIT Hyderabad College of Engineering">
-                    BVRIT Hyderabad College of Engineering
-                  </option>
-                  <option value="Shri Vishnu Engineering College for Women">
-                    Shri Vishnu Engineering College for Women
-                  </option>
-                </select>
-                <small className="text-gray-500 mt-1">
-                  Hold Ctrl (Cmd on Mac) to select multiple colleges
-                </small>
-              </div>
+        {/* Colleges Multi-Select Dropdown */}
+        <div className="space-y-3">
+          <label htmlFor="colleges" className="flex items-center gap-2 font-semibold text-gray-700">
+            
+            Colleges
+          </label>
+          <select
+            name="colleges"
+            id="colleges"
+            className="w-full p-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white h-40"
+            multiple
+            value={newSession.colleges && newSession.colleges.length > 0 ? newSession.colleges : []}
+            onChange={(e) =>
+              setNewSession({
+                ...newSession,
+                colleges: Array.from(e.target.selectedOptions, (option) => option.value),
+              })
+            }
+          >
+            <option value="" disabled hidden>
+              Select College(s)
+            </option>
+            <option value="Vishnu Institute of Technology">Vishnu Institute of Technology</option>
+            <option value="Vishnu Dental College">Vishnu Dental College</option>
+            <option value="Shri Vishnu College of Pharmacy">Shri Vishnu College of Pharmacy</option>
+            <option value="BV Raju Institute of Technology">BV Raju Institute of Technology</option>
+            <option value="BVRIT Hyderabad College of Engineering">
+              BVRIT Hyderabad College of Engineering
+            </option>
+            <option value="Shri Vishnu Engineering College for Women">
+              Shri Vishnu Engineering College for Women
+            </option>
+          </select>
+          <p className="text-xs text-gray-500 flex items-center gap-1">
+            
+            Hold Ctrl (Cmd on Mac) to select multiple colleges
+          </p>
+        </div>
 
-              {/* Is Group */}
-              <div className="flex items-center gap-4 mt-2">
-                <span className="font-semibold">Session Type:</span>
-                <label>
-                  <input
-                    type="radio"
-                    name="isGroup"
-                    checked={newSession.isGroup === true}
-                    onChange={() => setNewSession({ ...newSession, isGroup: true })}
-                  />{" "}
-                  Group
-                </label>
-                <label>
-                  <input
-                    type="radio"
-                    name="isGroup"
-                    checked={newSession.isGroup === false}
-                    onChange={() => setNewSession({ ...newSession, isGroup: false })}
-                  />{" "}
-                  1-on-1
-                </label>
-              </div>
+        {/* Session Type */}
+        <div className="space-y-3">
+          <label className="flex items-center gap-2 font-semibold text-gray-700">
+            
+            Session Type
+          </label>
+          <div className="flex items-center gap-6 bg-[hsl(60,100%,95%)] border-2 p-2 rounded-xl">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                name="isGroup"
+                className="w-4 h-4 text-primary focus:ring-primary"
+                checked={newSession.isGroup === true}
+                onChange={() => setNewSession({ ...newSession, isGroup: true })}
+              />
+              <span className="font-medium text-gray-700">Group</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                name="isGroup"
+                className="w-4 h-4 text-primary focus:ring-primary"
+                checked={newSession.isGroup === false}
+                onChange={() => setNewSession({ ...newSession, isGroup: false })}
+              />
+              <span className="font-medium text-gray-700">1-on-1</span>
+            </label>
+          </div>
+        </div>
 
-              {/* Fields for Group */}
-              {newSession.isGroup && (
-                <div className="flex flex-col">
-                  <div className="flex flex-col">
-                    <label htmlFor="date" className="font-semibold mb-1">
-                      Date
-                    </label>
-                    <input
-                      type="date"
-                      name="date"
-                      id="date"
-                      className="w-full p-2 border rounded-lg"
-                      value={newSession.date || ""}
-                      onChange={(e) => setNewSession({ ...newSession, date: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="flex flex-col">
-                    <label htmlFor="startTime" className="font-semibold mb-1">
-                      Start Time
-                    </label>
-                    <input
-                      type="time"
-                      name="startTime"
-                      id="startTime"
-                      className="w-full p-2 border rounded-lg"
-                      value={newSession.startTime || ""}
-                      onChange={(e) => setNewSession({ ...newSession, startTime: e.target.value })}
-                    />
-                  </div>
-                  <label htmlFor="slots" className="font-semibold mb-1">
-                    Number of Slots
-                  </label>
-                  <input
-                    type="number"
-                    name="slots"
-                    id="slots"
-                    placeholder="Enter number of slots"
-                    className="w-full p-2 border rounded-lg"
-                    value={newSession.slots || ""}
-                    onChange={(e) => setNewSession({ ...newSession, slots: parseInt(e.target.value) })}
-                  />
-                </div>
-              )}
-
-              {/* Fields for 1-on-1 */}
-              {newSession.isGroup === false && (
-                <>
-                  <div className="flex flex-col">
-                    <label htmlFor="date" className="font-semibold mb-1">
-                      Date
-                    </label>
-                    <input
-                      type="date"
-                      name="date"
-                      id="date"
-                      className="w-full p-2 border rounded-lg"
-                      value={newSession.date || ""}
-                      onChange={(e) => setNewSession({ ...newSession, date: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="flex flex-col">
-                    <label htmlFor="startTime" className="font-semibold mb-1">
-                      Start Time
-                    </label>
-                    <input
-                      type="time"
-                      name="startTime"
-                      id="startTime"
-                      className="w-full p-2 border rounded-lg"
-                      value={newSession.startTime || ""}
-                      onChange={(e) => setNewSession({ ...newSession, startTime: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="flex flex-col">
-                    <label htmlFor="totalDuration" className="font-semibold mb-1">
-                      Total Duration (minutes)
-                    </label>
-                    <input
-                      type="number"
-                      name="totalDuration"
-                      id="totalDuration"
-                      placeholder="Enter total duration"
-                      className="w-full p-2 border rounded-lg"
-                      value={newSession.totalDuration || ""}
-                      onChange={(e) =>
-                        setNewSession({ ...newSession, totalDuration: parseInt(e.target.value) })
-                      }
-                    />
-                  </div>
-
-                  <div className="flex flex-col">
-                    <label htmlFor="slotDuration" className="font-semibold mb-1">
-                      Slot Duration (minutes)
-                    </label>
-                    <input
-                      type="number"
-                      name="slotDuration"
-                      id="slotDuration"
-                      placeholder="Enter slot duration"
-                      className="w-full p-2 border rounded-lg"
-                      value={newSession.slotDuration || ""}
-                      onChange={(e) =>
-                        setNewSession({ ...newSession, slotDuration: parseInt(e.target.value) })
-                      }
-                    />
-                  </div>
-                </>
-              )}
-
-              {/* Expiry Date and Time */}
-              <div className="flex flex-col">
-                <label htmlFor="expiryDate" className="font-semibold mb-1">
-                  Expiry Date
-                </label>
+        {/* Group Session Fields */}
+        {newSession.isGroup && (
+          <div className="space-y-4 p-2 bg-blue-50 rounded-xl border border-blue-100">
+            <h3 className="font-semibold text-blue-800 flex items-center gap-2">
+              
+              Group Session Details
+            </h3>
+            
+            <div className="grid grid-cols-1 gap-2">
+              <div className="space-y-2">
+                <label htmlFor="date" className="font-semibold text-gray-700 text-sm">Date</label>
                 <input
                   type="date"
-                  name="expiryDate"
-                  id="expiryDate"
-                  className="w-full p-2 border rounded-lg"
-                  value={newSession.expiryDate || ""}
-                  onChange={(e) => setNewSession({ ...newSession, expiryDate: e.target.value })}
-                />
-              </div>
-              <div className="flex flex-col">
-                <label htmlFor="expiryTime" className="font-semibold mb-1">
-                  Expiry Time
-                </label>
-                <input
-                  type="time"
-                  name="expiryTime"
-                  id="expiryTime"
-                  className="w-full p-2 border rounded-lg"
-                  value={newSession.expiryTime || ""}
-                  onChange={(e) => setNewSession({ ...newSession, expiryTime: e.target.value })}
+                  name="date"
+                  id="date"
+                  className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white"
+                  value={newSession.date || ""}
+                  onChange={(e) => setNewSession({ ...newSession, date: e.target.value })}
                 />
               </div>
 
-              {/* Buttons */}
-              <div className="flex justify-end gap-4 mt-4">
-                <button
-                  className="px-4 py-2 rounded-lg bg-gray-300 hover:bg-gray-400"
-                  onClick={() => setShowForm(false)}
-                >
-                  Cancel
-                </button>
-                <button
-                  className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
-                  onClick={handleAddSession}
-                >
-                  Add Session
-                </button>
+              <div className="space-y-2">
+                <label htmlFor="startTime" className="font-semibold text-gray-700 text-sm">Start Time</label>
+                <input
+                  type="time"
+                  name="startTime"
+                  id="startTime"
+                  className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white"
+                  value={newSession.startTime || ""}
+                  onChange={(e) => setNewSession({ ...newSession, startTime: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="slots" className="font-semibold text-gray-700 text-sm">Number of Slots</label>
+                <input
+                  type="number"
+                  name="slots"
+                  id="slots"
+                  placeholder="Enter number of slots"
+                  className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white"
+                  value={newSession.slots || ""}
+                  onChange={(e) => setNewSession({ ...newSession, slots: parseInt(e.target.value) })}
+                />
               </div>
             </div>
           </div>
         )}
 
+        {/* 1-on-1 Fields */}
+        {newSession.isGroup === false && (
+          <div className="space-y-4 p-2 bg-green-50 rounded-xl border border-green-100">
+            <h3 className="font-semibold text-green-800 flex items-center gap-2">
+              
+              1-on-1 Session Details
+            </h3>
+            
+            <div className="grid grid-cols-1 gap-2">
+              <div className="space-y-2">
+                <label htmlFor="date" className="font-semibold text-gray-700 text-sm">Date</label>
+                <input
+                  type="date"
+                  name="date"
+                  id="date"
+                  className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white"
+                  value={newSession.date || ""}
+                  onChange={(e) => setNewSession({ ...newSession, date: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="startTime" className="font-semibold text-gray-700 text-sm">Start Time</label>
+                <input
+                  type="time"
+                  name="startTime"
+                  id="startTime"
+                  className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white"
+                  value={newSession.startTime || ""}
+                  onChange={(e) => setNewSession({ ...newSession, startTime: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="totalDuration" className="font-semibold text-gray-700 text-sm">Total Duration (minutes)</label>
+                <input
+                  type="number"
+                  name="totalDuration"
+                  id="totalDuration"
+                  placeholder="Enter total duration"
+                  className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white"
+                  value={newSession.totalDuration || ""}
+                  onChange={(e) =>
+                    setNewSession({ ...newSession, totalDuration: parseInt(e.target.value) })
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="slotDuration" className="font-semibold text-gray-700 text-sm">Slot Duration (minutes)</label>
+                <input
+                  type="number"
+                  name="slotDuration"
+                  id="slotDuration"
+                  placeholder="Enter slot duration"
+                  className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white"
+                  value={newSession.slotDuration || ""}
+                  onChange={(e) =>
+                    setNewSession({ ...newSession, slotDuration: parseInt(e.target.value) })
+                  }
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Expiry Fields */}
+        <div className="grid grid-cols-1 gap-2">
+          <div className="space-y-2">
+            <label htmlFor="expiryDate" className="flex items-center gap-2 font-semibold text-gray-700">
+             
+              Expiry Date
+            </label>
+            <input
+              type="date"
+              name="expiryDate"
+              id="expiryDate"
+              className="w-full p-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
+              value={newSession.expiryDate || ""}
+              onChange={(e) => setNewSession({ ...newSession, expiryDate: e.target.value })}
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <label htmlFor="expiryTime" className="flex items-center gap-2 font-semibold text-gray-700">
+              
+              Expiry Time
+            </label>
+            <input
+              type="time"
+              name="expiryTime"
+              id="expiryTime"
+              className="w-full p-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
+              value={newSession.expiryTime || ""}
+              onChange={(e) => setNewSession({ ...newSession, expiryTime: e.target.value })}
+            />
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+          <button
+            type="button"
+            className="px-6 py-3 rounded-xl bg-red-500 text-white font-medium hover:bg-red-800 transition-all duration-200 flex items-center gap-2 shadow-sm"
+            onClick={() => setShowForm(false)}
+          >
+            
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="px-6 py-3 rounded-xl bg-gradient-to-r from-primary to-blue-600 text-white font-medium  transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+            onClick={handleAddSession}
+          >
+            
+            Add Session
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+)}
+
         {/* Participants Modal */}
         {showParticipants && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <div className="bg-white p-6 rounded-lg shadow-lg w-[450px]">
+            <div className="bg-[hsl(60,100%,95%)] p-6 rounded-lg shadow-lg w-[450px]">
               <h3 className="text-lg font-bold mb-4">Participants</h3>
               {selectedParticipants.length === 0 ? (
                 <p className="text-sm text-gray-500">No participants yet</p>
@@ -918,7 +957,7 @@ export default function AcademicAdvisingPage() {
               <div className="flex justify-end mt-4">
                 <button
                   onClick={() => setShowParticipants(false)}
-                  className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400"
+                  className="px-4 py-2 rounded bg-red-500 text-white hover:bg-red-700"
                 >
                   Close
                 </button>

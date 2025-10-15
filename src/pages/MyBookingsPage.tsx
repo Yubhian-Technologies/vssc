@@ -27,7 +27,6 @@ interface UnifiedBooking {
   expiryDate?: string;
   expiryTime?: string;
   status: "upcoming" | "confirmed" | "expired" | "cancelled";
-  bookedAt: string; // ✅ exact time user booked
 }
 
 // Service-to-Collection Mapping
@@ -39,6 +38,7 @@ const SERVICE_COLLECTIONS: Record<UnifiedBooking["serviceType"], string> = {
   "Psychology Counseling": "psychologycounseling",
 } as const;
 
+// Check if a session is expired
 const isSessionExpired = (expiryDate?: string, expiryTime?: string): boolean => {
   if (!expiryDate || !expiryTime) return false;
   const [year, month, day] = expiryDate.split("-").map(Number);
@@ -67,29 +67,15 @@ const fetchServiceBookings = (
     allSessions.forEach((session: any) => {
       let isBooked = false;
       let slotTime: string | undefined;
-      let bookedAt: string = new Date().toISOString();
 
       if (session.isGroup) {
         isBooked = session.participants?.includes(userId) || false;
-        // Use when the user joined if available
-        const participantData = session.participantDetails?.find(
-          (p: any) => p.user === userId
-        );
-        if (participantData?.bookedAt?.toDate) {
-          bookedAt = participantData.bookedAt.toDate().toISOString();
-        }
       } else {
         const bookedSlot = session.bookedSlots?.find(
-          (slot: { user?: string; time?: string; bookedAt?: any }) =>
-            slot.user === userId
+          (slot: { user?: string; time?: string }) => slot.user === userId
         );
         isBooked = !!bookedSlot;
-        if (bookedSlot) {
-          slotTime = bookedSlot.time;
-          if (bookedSlot.bookedAt?.toDate) {
-            bookedAt = bookedSlot.bookedAt.toDate().toISOString();
-          }
-        }
+        if (bookedSlot) slotTime = bookedSlot.time;
       }
 
       if (isBooked && session.date) {
@@ -115,7 +101,6 @@ const fetchServiceBookings = (
           expiryDate: session.expiryDate,
           expiryTime: session.expiryTime,
           status,
-          bookedAt,
         });
       }
     });
@@ -134,12 +119,8 @@ const fetchServiceBookings = (
 export default function MyBookingsPage() {
   const { user } = useAuth();
   const [bookings, setBookings] = useState<UnifiedBooking[]>([]);
-  const [filter, setFilter] = useState<
-    "all" | "upcoming" | "confirmed" | "expired"
-  >("all");
-  const [selectedService, setSelectedService] = useState<
-    UnifiedBooking["serviceType"] | "all"
-  >("all");
+  const [filter, setFilter] = useState<"all" | "upcoming" | "confirmed" | "expired">("all");
+  const [selectedService, setSelectedService] = useState<UnifiedBooking["serviceType"] | "all">("all");
   const [loading, setLoading] = useState<boolean>(true);
   const [showAll, setShowAll] = useState(false);
 
@@ -166,23 +147,40 @@ export default function MyBookingsPage() {
     };
   }, [user?.uid]);
 
-  // ✅ Sort latest booked first
   const filteredBookings = useMemo(() => {
-    let result = [...bookings];
+  let result = [...bookings];
 
-    if (filter !== "all") {
-      result = result.filter((b) => b.status === filter);
+  if (filter !== "all") {
+    result = result.filter((b) => b.status === filter);
+  }
+
+  if (selectedService !== "all") {
+    result = result.filter((b) => b.serviceType === selectedService);
+  }
+
+  // Sort by status first (upcoming > confirmed > expired) and then by date+slotTime descending
+  const statusOrder: Record<UnifiedBooking["status"], number> = {
+    upcoming: 0,
+    confirmed: 1,
+    expired: 2,
+    cancelled: 3,
+  };
+
+  result.sort((a, b) => {
+    // First, compare status
+    if (statusOrder[a.status] !== statusOrder[b.status]) {
+      return statusOrder[a.status] - statusOrder[b.status];
     }
 
-    if (selectedService !== "all") {
-      result = result.filter((b) => b.serviceType === selectedService);
-    }
+    // Then, compare date+slotTime descending
+    const dateA = new Date(a.date + " " + (a.slotTime || "00:00"));
+    const dateB = new Date(b.date + " " + (b.slotTime || "00:00"));
+    return dateB.getTime() - dateA.getTime(); // latest first
+  });
 
-    // ✅ Sort by bookedAt descending (latest booked appears first)
-    return result.sort(
-      (a, b) => new Date(b.bookedAt).getTime() - new Date(a.bookedAt).getTime()
-    );
-  }, [bookings, filter, selectedService]);
+  return result;
+}, [bookings, filter, selectedService]);
+
 
   const displayBookings = showAll ? filteredBookings : filteredBookings.slice(0, 2);
 
@@ -213,6 +211,8 @@ export default function MyBookingsPage() {
   }
 
   return (
+    <div>
+      
     <div className="min-h-screen bg-[hsl(60,100%,95%)] py-10">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
@@ -228,10 +228,47 @@ export default function MyBookingsPage() {
           </p>
         </motion.div>
 
-        {/* Filters and Stats */}
-        {/* (keep your existing filter UI here — unchanged) */}
+        {/* Filter Controls */}
+<motion.div
+  initial={{ opacity: 0, y: -10 }}
+  animate={{ opacity: 1, y: 0 }}
+  className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4"
+>
+  {/* Service Filter */}
+  <select
+    value={selectedService}
+    onChange={(e) =>
+      setSelectedService(e.target.value as UnifiedBooking["serviceType"] | "all")
+    }
+    className="border border-gray-300 rounded-lg px-4 py-2 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary w-full sm:w-auto"
+  >
+    <option value="all">All Services</option>
+    <option value="Tutoring">Tutoring</option>
+    <option value="Academic Advising">Academic Advising</option>
+    <option value="Study Workshop">Study Workshop</option>
+    <option value="Counseling">Counseling</option>
+    <option value="Psychology Counseling">Psychology Counseling</option>
+  </select>
 
-        {/* Bookings */}
+  {/* Status Filter Buttons */}
+  <div className="flex flex-wrap gap-2">
+    {(["all", "upcoming", "confirmed", "expired"] as const).map((status) => (
+      <button
+        key={status}
+        onClick={() => setFilter(status)}
+        className={`px-4 py-2 rounded-lg border font-medium transition ${
+          filter === status
+            ? "bg-primary text-white border-primary"
+            : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
+        }`}
+      >
+        {status.charAt(0).toUpperCase() + status.slice(1)}
+      </button>
+    ))}
+  </div>
+</motion.div>
+
+
         {filteredBookings.length === 0 ? (
           <motion.div
             initial={{ opacity: 0 }}
@@ -280,13 +317,7 @@ export default function MyBookingsPage() {
                       )}
                       <p>
                         <strong>Type:</strong>{" "}
-                        {booking.type === "group"
-                          ? "Group Session"
-                          : "1-on-1 Session"}
-                      </p>
-                      <p className="text-gray-500">
-                        <strong>Booked On:</strong>{" "}
-                        {new Date(booking.bookedAt).toLocaleString()}
+                        {booking.type === "group" ? "Group Session" : "1-on-1 Session"}
                       </p>
                     </div>
                   </div>
@@ -333,6 +364,7 @@ export default function MyBookingsPage() {
           </div>
         )}
       </div>
+    </div>
     </div>
   );
 }
