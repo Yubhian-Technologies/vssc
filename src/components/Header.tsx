@@ -173,7 +173,7 @@ const Header = () => {
                   </Link>
                 </div>
               </div>
-            ) : (
+            ) : link.name === "Account" ? null : (
               <Link
                 key={link.name}
                 to={link.path}
