@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { doc, getDoc, setDoc, deleteDoc } from "firebase/firestore";
 import { db, auth } from "../firebase";
-import { signOut, deleteUser, updateProfile } from "firebase/auth";
+import { signOut, deleteUser, updateProfile, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import {
   LogOut,
@@ -369,14 +369,23 @@ const handleDeleteReservation = (idx: number) => setReservations(reservations.fi
       </div>
     </div>
 
-    {/* Right side: Sign Out */}
-    <div className="flex-shrink-0">
+    {/* Right side: Reservations & Sign Out */}
+    <div className="flex-shrink-0 flex flex-col sm:flex-row gap-2">
+      <button
+        onClick={() => navigate("/reservations")}
+        className="flex items-center justify-center gap-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-3 py-2 rounded-lg transition-all backdrop-blur-sm border border-white border-opacity-30 text-sm"
+      >
+        <Activity className="w-4 h-4" />
+        <span className="hidden sm:inline">Reservations</span>
+        <span className="sm:hidden">Reservations</span>
+      </button>
       <button
         onClick={handleSignOut}
-        className="flex items-center gap-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg transition-all backdrop-blur-sm border border-white border-opacity-30"
+        className="flex items-center justify-center gap-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-3 py-2 rounded-lg transition-all backdrop-blur-sm border border-white border-opacity-30 text-sm"
       >
         <LogOut className="w-4 h-4" />
-        Sign Out
+        <span className="hidden sm:inline">Sign Out</span>
+        <span className="sm:hidden">SignOut</span>
       </button>
     </div>
   </div>
@@ -385,7 +394,7 @@ const handleDeleteReservation = (idx: number) => setReservations(reservations.fi
 
       {/* Main Content */}
       <div className="max-w-5xl mx-auto px-4 mt-6 sm:mt-10">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
           {/* Left Column */}
           <div className="lg:col-span-2 space-y-6">
             {/* Profile Info */}
@@ -908,17 +917,6 @@ const handleDeleteReservation = (idx: number) => setReservations(reservations.fi
 
           {/* Right Column */}
           <div className="space-y-6">
-            {/* Reservations */}
-            <SectionCard>
-              <SectionTitle icon={Activity}>Reservations</SectionTitle>
-              <button
-                onClick={() => navigate("/reservations")}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg transition-colors font-medium"
-              >
-                View My Reservations
-              </button>
-            </SectionCard>
-
             {/* Feedback */}
             <SectionCard>
               <SectionTitle icon={MessageSquare}>Send Feedback</SectionTitle>
@@ -936,6 +934,42 @@ const handleDeleteReservation = (idx: number) => setReservations(reservations.fi
                 Submit Feedback
               </button>
             </SectionCard>
+
+            {/* Delete Account */}
+            <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+              <h3 className="text-lg font-semibold mb-2 flex items-center gap-2 text-red-600">
+                <Trash2 className="w-5 h-5" />
+                Delete Account
+              </h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Permanently delete your account and all associated data. This action cannot be undone.
+              </p>
+              <button
+                onClick={async () => {
+                  if (!auth.currentUser) return;
+                  const confirmDelete = window.confirm("Are you sure you want to delete your account? This action cannot be undone.");
+                  if (!confirmDelete) return;
+                  
+                  const password = prompt("Please enter your password to confirm account deletion:");
+                  if (!password) return;
+                  
+                  try {
+                    const credential = EmailAuthProvider.credential(auth.currentUser.email!, password);
+                    await reauthenticateWithCredential(auth.currentUser, credential);
+                    await deleteDoc(doc(db, "users", auth.currentUser.uid));
+                    await deleteUser(auth.currentUser);
+                    alert("Account deleted successfully!");
+                    navigate("/auth");
+                  } catch (error) {
+                    console.error("Delete account error:", error);
+                    alert("Failed to delete account. Please check your password and try again.");
+                  }
+                }}
+                className="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors font-medium"
+              >
+                Delete Account
+              </button>
+            </div>
 
           
             {/* Danger Zone Section 
