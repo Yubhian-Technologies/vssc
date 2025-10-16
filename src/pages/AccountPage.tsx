@@ -908,6 +908,17 @@ const handleDeleteReservation = (idx: number) => setReservations(reservations.fi
 
           {/* Right Column */}
           <div className="space-y-6">
+            {/* Reservations */}
+            <SectionCard>
+              <SectionTitle icon={Activity}>Reservations</SectionTitle>
+              <button
+                onClick={() => navigate("/reservations")}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg transition-colors font-medium"
+              >
+                View My Reservations
+              </button>
+            </SectionCard>
+
             {/* Feedback */}
             <SectionCard>
               <SectionTitle icon={MessageSquare}>Send Feedback</SectionTitle>
