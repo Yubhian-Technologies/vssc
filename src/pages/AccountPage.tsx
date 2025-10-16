@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { doc, getDoc, setDoc, deleteDoc } from "firebase/firestore";
 import { db, auth } from "../firebase";
@@ -62,7 +63,7 @@ const AvatarPicker = ({
   );
 };
 
-// Section Card Component
+// ✅ Fixed template string syntax here
 const SectionCard = ({
   children,
   className = "",
@@ -77,7 +78,6 @@ const SectionCard = ({
   </div>
 );
 
-// Section Title Component
 const SectionTitle = ({
   icon: Icon,
   children,
@@ -118,6 +118,7 @@ interface UserData {
   experiences?: Experience[];
   clubs?: Club[];
   skills?: string[];
+  accounts?: { platform: string; url: string }[]; // ✅ Added accounts field
 }
 
 const AccountPage = () => {
@@ -141,11 +142,13 @@ const AccountPage = () => {
   const [clubs, setClubs] = useState<Club[]>([]);
   const [skills, setSkills] = useState<string[]>([]);
   const [accounts, setAccounts] = useState<{ platform: string; url: string }[]>([]);
+  const [feedback, setFeedback] = useState<string>(""); // ✅ Add this
+  const [reservations, setReservations] = useState<{ name: string }[]>([]);
 
-  const [feedback, setFeedback] = useState("");
 
   const navigate = useNavigate();
 
+  // ✅ Fetch accounts from Firestore along with other fields
   useEffect(() => {
     const fetchUserData = async () => {
       if (auth.currentUser) {
@@ -168,6 +171,7 @@ const AccountPage = () => {
           setExperiences(data.experiences || []);
           setClubs(data.clubs || []);
           setSkills(data.skills || []);
+          setAccounts(data.accounts || []); // ✅ Fix: load accounts from Firestore
         }
       }
       setLoading(false);
@@ -198,6 +202,7 @@ const AccountPage = () => {
     }
   };
 
+  // ✅ Save accounts when updating profile
   const handleSaveProfile = async () => {
     if (!auth.currentUser) return;
 
@@ -222,6 +227,7 @@ const AccountPage = () => {
         experiences,
         clubs,
         skills,
+        accounts, // ✅ Save accounts to Firestore
       };
 
       await setDoc(docRef, { ...userData, ...updates }, { merge: true });
@@ -279,6 +285,14 @@ const AccountPage = () => {
     newClubs.splice(index, 1);
     setClubs(newClubs);
   };
+  const handleAddReservation = () => setReservations([...reservations, { name: "" }]);
+const handleUpdateReservation = (idx: number, value: string) => {
+  const newRes = [...reservations];
+  newRes[idx].name = value;
+  setReservations(newRes);
+};
+const handleDeleteReservation = (idx: number) => setReservations(reservations.filter((_, i) => i !== idx));
+  
 
   if (loading) {
     return (
@@ -306,6 +320,8 @@ const AccountPage = () => {
       </div>
     );
   }
+
+
 
   return (
     <div className="min-h-screen pb-12 bg-[hsl(60,100%,90%)]">
@@ -398,7 +414,7 @@ const AccountPage = () => {
             type="text"
             value={editName}
             onChange={(e) => setEditName(e.target.value)}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-[hsl(60,100%,95%)]"
           />
         </div>
         <div>
@@ -409,7 +425,7 @@ const AccountPage = () => {
             type="text"
             value={editCollege}
             onChange={(e) => setEditCollege(e.target.value)}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-[hsl(60,100%,95%)]"
           />
         </div>
         <div>
@@ -420,7 +436,7 @@ const AccountPage = () => {
             type="text"
             value={graduationYear}
             onChange={(e) => setGraduationYear(e.target.value)}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-[hsl(60,100%,95%)]"
           />
         </div>
         <div>
@@ -431,7 +447,7 @@ const AccountPage = () => {
             type="text"
             value={department}
             onChange={(e) => setDepartment(e.target.value)}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-[hsl(60,100%,95%)]"
           />
         </div>
         <div>
@@ -442,7 +458,7 @@ const AccountPage = () => {
             type="text"
             value={section}
             onChange={(e) => setSection(e.target.value)}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-[hsl(60,100%,95%)]"
           />
         </div>
       </div>
@@ -454,7 +470,7 @@ const AccountPage = () => {
         <textarea
           value={bio}
           onChange={(e) => setBio(e.target.value)}
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 resize-none bg-white"
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 resize-none bg-[hsl(60,100%,95%)]"
           rows={3}
         />
       </div>
@@ -503,7 +519,7 @@ const AccountPage = () => {
           
             {/* Accounts & Links */}
            
-             <SectionCard>
+           <SectionCard>
   <SectionTitle icon={Settings}>Accounts & Links</SectionTitle>
 
   {accounts.length === 0 && (
@@ -513,98 +529,135 @@ const AccountPage = () => {
   )}
 
   {isEditing ? (
-    <div className="space-y-4">
-      {accounts.map((account, index) => (
+    <div className="space-y-3">
+      {accounts.map((account, idx) => (
         <div
-          key={index}
-          className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center border border-gray-200 rounded-lg p-4 shadow-sm bg-white"
+          key={idx}
+          className="flex flex-col sm:flex-row sm:items-center gap-2 border border-gray-200 rounded-lg p-3 shadow-sm bg-[hsl(60,100%,95%)]"
         >
-          {/* Platform Name */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Platform
-            </label>
-            <input
-              type="text"
-              value={account.platform}
-              onChange={(e) => {
-                const newAccounts = [...accounts];
-                newAccounts[index].platform = e.target.value;
-                setAccounts(newAccounts);
-              }}
-              placeholder="e.g. GitHub, LinkedIn, Portfolio"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 bg-white"
-            />
-          </div>
+          {/* Platform */}
+          <input
+            type="text"
+            value={account.platform}
+            onChange={(e) => {
+              const newAccounts = [...accounts];
+              newAccounts[idx].platform = e.target.value;
+              setAccounts(newAccounts);
+            }}
+            placeholder="Platform (e.g. GitHub, LinkedIn)"
+            className="flex-1 border border-gray-300 rounded px-3 py-1.5 focus:ring-2 focus:ring-blue-500 bg-[hsl(60,100%,95%)]"
+          />
 
-          {/* Account Link */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Link
-            </label>
-            <input
-              type="url"
-              value={account.url}
-              onChange={(e) => {
-                const newAccounts = [...accounts];
-                newAccounts[index].url = e.target.value;
-                setAccounts(newAccounts);
-              }}
-              placeholder="https://example.com/profile"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 bg-white"
-            />
-          </div>
+          {/* URL */}
+          <input
+            type="url"
+            value={account.url}
+            onChange={(e) => {
+              const newAccounts = [...accounts];
+              newAccounts[idx].url = e.target.value;
+              setAccounts(newAccounts);
+            }}
+            placeholder="Profile URL"
+            className="flex-1 border border-gray-300 rounded px-3 py-1.5 focus:ring-2 focus:ring-blue-500 bg-[hsl(60,100%,95%)]"
+          />
 
-          {/* Delete Button Centered */}
-          <div className="sm:col-span-2 flex justify-center mt-3">
-            <button
-              onClick={() => {
-                const updated = accounts.filter((_, i) => i !== index);
-                setAccounts(updated);
-              }}
-              className="bg-red-500 hover:bg-red-600 text-white font-medium py-1.5 px-5 rounded-lg shadow transition duration-200"
-            >
-              Delete
-            </button>
-          </div>
+          {/* Delete Button */}
+          <button
+            onClick={() => {
+              const updated = accounts.filter((_, i) => i !== idx);
+              setAccounts(updated);
+            }}
+            className="bg-red-500 hover:bg-red-600 text-white font-medium px-3 py-1 rounded transition duration-200"
+          >
+            Delete
+          </button>
         </div>
       ))}
 
-      {/* Add Account Button Centered */}
-      <div className="flex justify-center mt-6">
+      {/* Add Account Button */}
+      <div className="flex justify-center mt-4">
         <button
-          onClick={() => setAccounts([...accounts, { platform: "", url: "" }])}
-          className="bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-6 rounded-lg shadow transition duration-200"
+          onClick={() =>
+            setAccounts([...accounts, { platform: "", url: "" }])
+          }
+          className="bg-green-500 hover:bg-green-600 text-white font-medium px-5 py-2 rounded-lg shadow transition duration-200"
         >
           Add Account
         </button>
       </div>
     </div>
   ) : (
-    <div className="space-y-3">
-      {accounts.map((account, index) => (
+    <div className="flex flex-col gap-2">
+      {accounts.map((account, idx) => (
         <a
-          key={index}
+          key={idx}
           href={account.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors px-4 py-3 rounded-lg shadow-sm font-medium break-words"
+          className="flex items-center justify-between bg-blue-100 text-blue-800 font-medium px-3 py-2 rounded-lg shadow-sm hover:bg-blue-200 transition"
         >
           <span>{account.platform}</span>
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5 text-gray-500"
+            className="h-5 w-5 text-blue-700"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M14 5l7 7m0 0l-7 7m7-7H3"
+            />
           </svg>
         </a>
       ))}
     </div>
   )}
 </SectionCard>
+{/* Reservations*
+<SectionCard>
+  <SectionTitle icon={Activity}>Reservations</SectionTitle>
+
+  {reservations.length === 0 && !isEditing && (
+    <p className="text-gray-600 text-sm mb-4 text-center">
+      No reservations yet.
+    </p>
+  )}
+
+  {isEditing ? (
+    <div className="space-y-3">
+      {reservations.map((res, idx) => (
+        <div key={idx} className="border border-gray-200 rounded-lg p-3 shadow-sm bg-[hsl(60,100%,95%)]">
+          <input
+            type="text"
+            value={res.name}
+            onChange={(e) => handleUpdateReservation(idx, e.target.value)}
+            placeholder="Reservation Name"
+            className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 bg-[hsl(60,100%,95%)]"
+          />
+          <button onClick={() => handleDeleteReservation(idx)} className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded mt-2">
+            Delete
+          </button>
+        </div>
+      ))}
+      <div className="flex justify-center mt-4">
+        <button onClick={handleAddReservation} className="bg-green-500 hover:bg-green-600 text-white px-5 py-2 rounded-lg shadow">
+          Add Reservation
+        </button>
+      </div>
+    </div>
+  ) : (
+    <div className="space-y-2">
+      {reservations.map((res, idx) => (
+        <p key={idx} className="bg-blue-100 text-blue-800 px-3 py-2 rounded-lg">{res.name}</p>
+      ))}
+    </div>
+  )}
+</SectionCard>*/}
+
+
 
 
             {/* Skills */}
@@ -620,7 +673,7 @@ const AccountPage = () => {
       {skills.map((skill, idx) => (
         <div
           key={idx}
-          className="flex items-center gap-2 border border-gray-200 rounded-lg p-2 shadow-sm bg-white"
+          className="flex items-center gap-2 border border-gray-200 rounded-lg p-2 shadow-sm bg-[hsl(60,100%,95%)]"
         >
           <input
             type="text"
@@ -631,14 +684,14 @@ const AccountPage = () => {
               setSkills(newSkills);
             }}
             placeholder="Enter skill"
-            className="flex-1 border border-gray-300 rounded px-3 py-1.5 focus:ring-2 focus:ring-blue-500"
+            className="flex-1 border border-gray-300 rounded px-3 py-1.5 focus:ring-2 focus:ring-blue-500 bg-[hsl(60,100%,95%)]"
           />
           <button
             onClick={() => {
               const newSkills = skills.filter((_, i) => i !== idx);
               setSkills(newSkills);
             }}
-            className="bg-red-500 hover:bg-red-600 text-white font-medium px-3 py-1 rounded transition duration-200"
+            className="bg-red-500 hover:bg-red-600 text-white font-medium px-3 py-1 rounded transition duration-200 bg-[hsl(60,100%,95%)]"
           >
             Delete
           </button>
@@ -684,7 +737,7 @@ const AccountPage = () => {
     {experiences.map((exp, idx) => (
       <div
         key={idx}
-        className="border border-gray-200 rounded-lg p-4 shadow-sm bg-white"
+        className="border border-gray-200 rounded-lg p-4 shadow-sm bg-[hsl(60,100%,95%)]"
       >
         {isEditing ? (
           <>
@@ -696,7 +749,7 @@ const AccountPage = () => {
                   handleUpdateExperience(idx, "title", e.target.value)
                 }
                 placeholder="Title"
-                className="flex-1 border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                className="flex-1 border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 bg-[hsl(60,100%,95%)]"
               />
               <input
                 type="text"
@@ -705,7 +758,7 @@ const AccountPage = () => {
                   handleUpdateExperience(idx, "duration", e.target.value)
                 }
                 placeholder="Duration"
-                className="w-36 border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                className="w-36 border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 bg-[hsl(60,100%,95%)]"
               />
             </div>
             <textarea
@@ -722,7 +775,7 @@ const AccountPage = () => {
             <div className="flex justify-end mt-2">
               <button
                 onClick={() => handleDeleteExperience(idx)}
-                className="bg-red-500 hover:bg-red-600 text-white font-medium px-4 py-1.5 rounded-lg shadow transition duration-200"
+                className="bg-red-500 hover:bg-red-600 text-white font-medium px-4 py-1.5 rounded-lg shadow transition duration-200 bg-[hsl(60,100%,95%)]"
               >
                 Delete
               </button>
@@ -770,10 +823,10 @@ const AccountPage = () => {
       {clubs.map((club, idx) => (
         <div
           key={idx}
-          className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center border border-gray-200 rounded-lg p-4 shadow-sm bg-white"
+          className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center border border-gray-200 rounded-lg p-4 shadow-sm bg-[hsl(60,100%,95%)]"
         >
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 mb-1" >
               Club Name
             </label>
             <input
@@ -781,7 +834,7 @@ const AccountPage = () => {
               value={club.name}
               onChange={(e) => handleUpdateClub(idx, "name", e.target.value)}
               placeholder="Club Name"
-              className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 bg-[hsl(60,100%,95%)]"
             />
           </div>
 
@@ -794,7 +847,7 @@ const AccountPage = () => {
               value={club.proofUrl || ""}
               onChange={(e) => handleUpdateClub(idx, "proofUrl", e.target.value)}
               placeholder="https://example.com/proof"
-              className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 bg-[hsl(60,100%,95%)]"
             />
           </div>
 
@@ -874,7 +927,7 @@ const AccountPage = () => {
             </SectionCard>
 
           
-            {/* Danger Zone Section */}
+            {/* Danger Zone Section 
 <SectionCard className="border-red-200 bg-red-50 mt-6">
   <h3 className="text-lg font-semibold mb-2 flex items-center gap-2 text-red-600">
     <Trash2 className="w-5 h-5" />
@@ -901,7 +954,7 @@ const AccountPage = () => {
   >
     Delete Account
   </button>
-</SectionCard>
+</SectionCard>*/}
     
       {isEditing && (
   <div className="flex gap-3 mt-4">
