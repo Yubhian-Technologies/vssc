@@ -1,17 +1,19 @@
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Facebook, Twitter, Instagram, Linkedin, Underline } from "lucide-react";
+import { Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
 import vssc from "@/assets/VSSC LOGO[1].png";
 
-
 const Footer = () => {
+  const navigate = useNavigate();
+
   const navigationLinks = [
     { title: "Home", href: "#" },
     { title: "About", href: "/About" },
     { title: "Services", href: "/Services" },
-    { title: "Tour", href: "TourPage" },
-    { title: "Help", href: "Help" },
-    { title: "Account", href: "Account" },
+    { title: "Tour", href: "/TourPage" },
+    { title: "Help", href: "/Help" },
+    { title: "Account", href: "/Account" },
   ];
 
   const courseLinks = [
@@ -24,19 +26,34 @@ const Footer = () => {
     { title: "Corporate-readiness Workshops", href: "/Services" },
     { title: "Self-care Strategies", href: "/Services" },
     { title: "Wellness Practices", href: "/Services" },
-  
+  ];
+
+  const socialLinks = [
+    {
+      Icon: Facebook,
+      url: "https://www.facebook.com/srivishnueducationalsocietybhimavaram/",
+      external: true,
+    },
+    { Icon: Twitter, url: "", external: true }, // Disabled because URL is missing
+    {
+      Icon: Instagram,
+      url: "https://www.instagram.com/vishnueducationalsociety/",
+      external: true,
+    },
+    {
+      Icon: Linkedin,
+      url: "https://www.linkedin.com/school/vitbhimavaram/posts/?feedView=all",
+      external: true,
+    },
   ];
 
   return (
-    <footer
-      data-aos="fade-down"
-      className="bg-primary text-white text-[0.9rem]"
-    >
+    <footer className="bg-primary text-white text-[0.9rem]">
       <div className="container mx-auto px-3 py-4 sm:px-4 sm:py-8 md:py-10">
         <div className="grid md:grid-cols-2 gap-6">
           <div className="p-6 rounded-xl shadow-lg shadow-black/20">
             <div className="mb-6">
-              <div className="flex items-center  transition-transform">
+              <div className="flex items-center transition-transform">
                 <img
                   src={vssc}
                   alt="VSSC Logo"
@@ -50,13 +67,28 @@ const Footer = () => {
               </p>
             </div>
 
+            {/* Social Buttons */}
             <div className="flex gap-3">
-              {[Facebook, Twitter, Instagram, Linkedin].map((Icon, idx) => (
+              {socialLinks.map(({ Icon, url, external }, idx) => (
                 <Button
                   key={idx}
                   variant="ghost"
                   size="icon"
-                  className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white"
+                  aria-label={url ? `Go to ${url}` : "No link available"}
+                  className={`w-9 h-9 rounded-full text-white ${
+                    url
+                      ? "bg-white/10 hover:bg-white/20 cursor-pointer"
+                      : "bg-white/20 cursor-not-allowed"
+                  }`}
+                  onClick={() => {
+                    if (!url) return; // Disabled button does nothing
+                    if (external) {
+                      window.open(url, "_blank", "noopener,noreferrer");
+                    } else {
+                      navigate(url);
+                    }
+                  }}
+                  disabled={!url}
                 >
                   <Icon className="w-4 h-4" />
                 </Button>
@@ -64,6 +96,7 @@ const Footer = () => {
             </div>
           </div>
 
+          {/* Navigation & Services & Subscribe */}
           <div className="p-6 rounded-xl shadow-lg shadow-black/20">
             <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
               <div>
@@ -117,25 +150,26 @@ const Footer = () => {
             </div>
           </div>
         </div>
-        <div className="w-full overflow-hidden bg-primary py-2 mt-10">
-           <div className="flex whitespace-nowrap animate-marquee">
-          <p className="text-xl sm:text-20xl md:text-7xl lg:text-10xl font-bold mr-20 opacity-60">
-             VISHNU STUDENT SUCCESS CENTRE
-          </p>
-          <p className="text-xl sm:text-20xl md:text-7xl lg:text-10xl font-bold mr-20 opacity-60">
-             VISHNU STUDENT SUCCESS CENTRE
-        </p>
-   </div>
-</div>
 
-        
+        {/* Marquee */}
+        <div className="w-full overflow-hidden bg-primary py-2 mt-10">
+          <div className="flex whitespace-nowrap animate-marquee">
+            <p className="text-xl sm:text-20xl md:text-7xl lg:text-10xl font-bold mr-20 opacity-60">
+              VISHNU STUDENT SUCCESS CENTRE
+            </p>
+            <p className="text-xl sm:text-20xl md:text-7xl lg:text-10xl font-bold mr-20 opacity-60">
+              VISHNU STUDENT SUCCESS CENTRE
+            </p>
+          </div>
+        </div>
 
         <div className="mt-6 text-center text-white/70 text-sm">
-          @ {new Date().getFullYear()} Vishnu Student Success Centre. All rights
+          © {new Date().getFullYear()} Vishnu Student Success Centre. All rights
           reserved.
         </div>
       </div>
 
+      {/* Marquee animation */}
       <style>
         {`
           @keyframes marquee {

@@ -375,7 +375,7 @@ const handleDeleteReservation = (idx: number) => setReservations(reservations.fi
         onClick={() => navigate("/reservations")}
         className="flex items-center justify-center gap-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-3 py-2 rounded-lg transition-all backdrop-blur-sm border border-white border-opacity-30 text-sm"
       >
-        <Activity className="w-4 h-4" />
+       
         <span className="hidden sm:inline">Reservations</span>
         <span className="sm:hidden">Reservations</span>
       </button>
