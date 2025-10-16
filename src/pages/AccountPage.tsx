@@ -16,7 +16,9 @@ import {
   Save,
   X,
   Plus,
+  Upload,
 } from "lucide-react";
+import { uploadToCloudinary } from "../utils/cloudinary";
 
 // Avatar Picker Component
 const AvatarPicker = ({
@@ -26,20 +28,37 @@ const AvatarPicker = ({
   onSelect: (url: string) => void;
   onClose: () => void;
 }) => {
+  const [uploading, setUploading] = useState(false);
   const avatars = [
-    "https://i.pravatar.cc/150?img=1",
-    "https://i.pravatar.cc/150?img=2",
-    "https://i.pravatar.cc/150?img=3",
-    "https://i.pravatar.cc/150?img=4",
-    "https://i.pravatar.cc/150?img=5",
-    "https://i.pravatar.cc/150?img=6",
+    "https://cdn-icons-png.flaticon.com/512/3135/3135823.png",
+    "https://cdn-icons-png.flaticon.com/512/3135/3135715.png",
+    "https://cdn-icons-png.flaticon.com/512/3135/3135768.png",
+    "https://cdn-icons-png.flaticon.com/512/3135/3135789.png",
+    "https://cdn-icons-png.flaticon.com/512/3135/3135739.png",
+    "https://cdn-icons-png.flaticon.com/512/3135/3135755.png"
   ];
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const imageUrl = await uploadToCloudinary(file);
+      onSelect(imageUrl);
+    } catch (error) {
+      console.error('Upload failed:', error);
+      alert('Failed to upload image. Please try again.');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+      <div className="bg-[hsl(60,100%,95%)] rounded-lg p-6 max-w-md w-full mx-4">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold">Choose Profile Picture</h3>
+          <h3 className="text-lg font-semibold">Upload Profile</h3>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600"
@@ -47,16 +66,42 @@ const AvatarPicker = ({
             <X className="w-5 h-5" />
           </button>
         </div>
-        <div className="grid grid-cols-3 gap-4">
-          {avatars.map((url) => (
-            <img
-              key={url}
-              src={url}
-              alt="avatar option"
-              className="w-20 h-20 rounded-full border-2 border-gray-200 cursor-pointer hover:border-blue-500 transition-all hover:scale-105"
-              onClick={() => onSelect(url)}
+        
+        {/* Upload and Remove Buttons */}
+        <div className="mb-4 flex gap-2">
+          <label className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg cursor-pointer transition-colors">
+            <Upload className="w-4 h-4" />
+            {uploading ? 'Uploading...' : 'Upload Image'}
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFileUpload}
+              className="hidden"
+              disabled={uploading}
             />
-          ))}
+          </label>
+          <button
+            onClick={() => onSelect('')}
+            className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
+          >
+            <Trash2 className="w-4 h-4" />
+            Remove
+          </button>
+        </div>
+        
+        <div className="border-t pt-4">
+          <p className="text-sm text-gray-500 mb-3">Or choose from presets:</p>
+          <div className="grid grid-cols-3 gap-4">
+            {avatars.map((url) => (
+              <img
+                key={url}
+                src={url}
+                alt="avatar option"
+                className="w-20 h-20 rounded-full border-2 border-gray-200 cursor-pointer hover:border-blue-500 transition-all hover:scale-105"
+                onClick={() => onSelect(url)}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </div>
