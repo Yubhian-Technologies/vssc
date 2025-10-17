@@ -33,6 +33,7 @@ import StudyWorkshop from "./pages/StudyWorkshopPage";
 import LeaderboardPage from "./pages/LeaderboardPage";
 import MyBookingsPage from "./pages/MyBookingsPage"; // ✅ ADD THIS IMPORT
 import ScrollToTopButton from "./components/ScrollToTopButton";
+import LoadingScreen from "./components/LoadingScreen";
 
 const queryClient = new QueryClient();
 
@@ -59,7 +60,7 @@ const App = () => {
     return () => unsubscribe();
   }, []);
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <LoadingScreen></LoadingScreen>
 
   return (
     <QueryClientProvider client={queryClient}>
