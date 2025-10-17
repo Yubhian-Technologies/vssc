@@ -162,12 +162,7 @@ const CoursesSection = () => {
 
         {/* Scroll Buttons */}
         <div className="relative flex items-center">
-          <button
-            onClick={scrollLeft}
-            className="absolute left-2 z-20 bg-primary text-white p-3 rounded-full shadow-lg hover:bg-black transition"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
+          
 
           {/* Courses Scroll */}
           <div
@@ -192,12 +187,7 @@ const CoursesSection = () => {
             ))}
           </div>
 
-          <button
-            onClick={scrollRight}
-            className="absolute right-2 z-20 bg-primary text-white p-3 rounded-full shadow-lg hover:bg-black transition"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </button>
+          
         </div>
       </div>
 

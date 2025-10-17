@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { db } from "../firebase";
 import emailjs from "@emailjs/browser";
-
+import { toastSuccess,toastError } from "@/components/ui/sonner";
 
 
 import {
@@ -126,7 +126,7 @@ const AppointmentPage = () => {
     setDoubt("");
     setSelectedFaculty(null);
     setModalOpen(false);
-    alert("Appointment request sent ");
+    toastSuccess("Appointment request sent ");
 
     navigate("/reservations");
     scrollTo(0, 0);
@@ -135,7 +135,7 @@ const AppointmentPage = () => {
   // 🔹 Admin: accept appointment
   const handleAccept = async (id: string) => {
   if (!scheduleDate || !scheduleTime) {
-    alert("Select date and time");
+    toastError("Select date and time");
     return;
   }
 

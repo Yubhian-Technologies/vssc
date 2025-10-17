@@ -121,6 +121,7 @@ export default function MyBookingsPage() {
   const [bookings, setBookings] = useState<UnifiedBooking[]>([]);
   const [filter, setFilter] = useState<"all" | "upcoming" | "confirmed" | "expired">("all");
   const [selectedService, setSelectedService] = useState<UnifiedBooking["serviceType"] | "all">("all");
+  const [selectedDate, setSelectedDate] = useState<string>(""); // New state for date picker
   const [loading, setLoading] = useState<boolean>(true);
   const [showAll, setShowAll] = useState(false);
 
@@ -147,40 +148,39 @@ export default function MyBookingsPage() {
     };
   }, [user?.uid]);
 
+  // Filter and sort bookings
   const filteredBookings = useMemo(() => {
-  let result = [...bookings];
+    let result = [...bookings];
 
-  if (filter !== "all") {
-    result = result.filter((b) => b.status === filter);
-  }
-
-  if (selectedService !== "all") {
-    result = result.filter((b) => b.serviceType === selectedService);
-  }
-
-  // Sort by status first (upcoming > confirmed > expired) and then by date+slotTime descending
-  const statusOrder: Record<UnifiedBooking["status"], number> = {
-    upcoming: 0,
-    confirmed: 1,
-    expired: 2,
-    cancelled: 3,
-  };
-
-  result.sort((a, b) => {
-    // First, compare status
-    if (statusOrder[a.status] !== statusOrder[b.status]) {
-      return statusOrder[a.status] - statusOrder[b.status];
+    // Filter by selected date
+    if (selectedDate) {
+      result = result.filter((b) => b.date === selectedDate);
+    } else if (filter !== "all") {
+      result = result.filter((b) => b.status === filter);
     }
 
-    // Then, compare date+slotTime descending
-    const dateA = new Date(a.date + " " + (a.slotTime || "00:00"));
-    const dateB = new Date(b.date + " " + (b.slotTime || "00:00"));
-    return dateB.getTime() - dateA.getTime(); // latest first
-  });
+    if (selectedService !== "all") {
+      result = result.filter((b) => b.serviceType === selectedService);
+    }
 
-  return result;
-}, [bookings, filter, selectedService]);
+    const statusOrder: Record<UnifiedBooking["status"], number> = {
+      upcoming: 0,
+      confirmed: 1,
+      expired: 2,
+      cancelled: 3,
+    };
 
+    result.sort((a, b) => {
+      if (statusOrder[a.status] !== statusOrder[b.status]) {
+        return statusOrder[a.status] - statusOrder[b.status];
+      }
+      const dateA = new Date(a.date + " " + (a.slotTime || "00:00"));
+      const dateB = new Date(b.date + " " + (b.slotTime || "00:00"));
+      return dateA.getTime() - dateB.getTime();
+    });
+
+    return result;
+  }, [bookings, filter, selectedService, selectedDate]);
 
   const displayBookings = showAll ? filteredBookings : filteredBookings.slice(0, 2);
 
@@ -211,7 +211,7 @@ export default function MyBookingsPage() {
   }
 
   return (
-    <div>
+    
       
     <div className="min-h-screen bg-[hsl(60,100%,95%)] py-10">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -229,44 +229,65 @@ export default function MyBookingsPage() {
         </motion.div>
 
         {/* Filter Controls */}
-<motion.div
-  initial={{ opacity: 0, y: -10 }}
-  animate={{ opacity: 1, y: 0 }}
-  className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4"
->
-  {/* Service Filter */}
-  <select
-    value={selectedService}
-    onChange={(e) =>
-      setSelectedService(e.target.value as UnifiedBooking["serviceType"] | "all")
-    }
-    className="border border-gray-300 rounded-lg px-4 py-2 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary w-full sm:w-auto"
-  >
-    <option value="all">All Services</option>
-    <option value="Tutoring">Tutoring</option>
-    <option value="Academic Advising">Academic Advising</option>
-    <option value="Study Workshop">Study Workshop</option>
-    <option value="Counseling">Counseling</option>
-    <option value="Psychology Counseling">Psychology Counseling</option>
-  </select>
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4"
+        >
 
-  {/* Status Filter Buttons */}
-  <div className="flex flex-wrap gap-2">
-    {(["all", "upcoming", "confirmed", "expired"] as const).map((status) => (
-      <button
-        key={status}
-        onClick={() => setFilter(status)}
-        className={`px-4 py-2 rounded-lg border font-medium transition ${
-          filter === status
-            ? "bg-primary text-white border-primary"
-            : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
-        }`}
-      >
-        {status.charAt(0).toUpperCase() + status.slice(1)}
-      </button>
-    ))}
-  </div>
-</motion.div>
+          <div className="flex flex-wrap gap-2">
+            {(["all", "upcoming", "confirmed", "expired"] as const).map((status) => (
+              <button
+                key={status}
+                onClick={() => {
+                  setFilter(status);
+                  setSelectedDate(""); 
+                }}
+                className={`px-4 py-2 rounded-lg border font-medium transition ${
+                  filter === status
+                    ? "bg-primary text-white border-primary"
+                    : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
+                }`}
+              >
+                {status.charAt(0).toUpperCase() + status.slice(1)}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <select
+              value={selectedService}
+              onChange={(e) =>
+                setSelectedService(e.target.value as UnifiedBooking["serviceType"] | "all")
+              }
+              className="border border-gray-300 rounded-lg px-4 py-2 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary w-full sm:w-auto"
+            >
+              <option value="all">All Services</option>
+              <option value="Tutoring">Tutoring</option>
+              <option value="Academic Advising">Academic Advising</option>
+              <option value="Study Workshop">Study Workshop</option>
+              <option value="Counseling">Counseling</option>
+              <option value="Psychology Counseling">Psychology Counseling</option>
+            </select>
+
+             
+           
+          </div>
+
+          
+        </motion.div>
+
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto items-start sm:items-center mb-3">
+  <label className="text-gray-700 text-md font-medium mb-1 sm:mb-0 sm:mr-2">
+    Pick a date to view bookings:
+  </label>
+  <input
+    type="date"
+    value={selectedDate}
+    onChange={(e) => setSelectedDate(e.target.value)}
+    className="border border-gray-300 rounded-lg px-4 py-2 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
+  />
+</div>
 
 
         {filteredBookings.length === 0 ? (
@@ -282,8 +303,8 @@ export default function MyBookingsPage() {
               No bookings found
             </h3>
             <p className="text-gray-500">
-              {filter !== "all" || selectedService !== "all"
-                ? "Try adjusting your filters"
+              {filter !== "all" || selectedService !== "all" || selectedDate
+                ? "Try adjusting your filters or date"
                 : "Book your first session to get started!"}
             </p>
           </motion.div>
@@ -364,7 +385,6 @@ export default function MyBookingsPage() {
           </div>
         )}
       </div>
-    </div>
     </div>
   );
 }

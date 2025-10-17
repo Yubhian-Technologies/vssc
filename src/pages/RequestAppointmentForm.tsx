@@ -2,6 +2,7 @@ import { useState } from "react";
 import { db } from "../firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { useAuth } from "../AuthContext";
+import { toastSuccess,toastError } from "@/components/ui/sonner";
 
 const RequestAppointmentForm = ({ faculty, onClose }: { faculty: any; onClose: () => void }) => {
   const { user } = useAuth();
@@ -11,7 +12,7 @@ const RequestAppointmentForm = ({ faculty, onClose }: { faculty: any; onClose: (
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!subject || !doubt) return alert("Please fill all fields");
+    if (!subject || !doubt) return toastError("Please fill all fields");
 
     try {
       setLoading(true);
@@ -27,11 +28,11 @@ const RequestAppointmentForm = ({ faculty, onClose }: { faculty: any; onClose: (
         status: "pending",
         createdAt: serverTimestamp(),
       });
-      alert("Request submitted successfully!");
+      toastSuccess("Request submitted successfully!");
       onClose();
     } catch (error) {
       console.error("Error submitting request:", error);
-      alert("Failed to submit request.");
+      toastError("Failed to submit request.");
     } finally {
       setLoading(false);
     }

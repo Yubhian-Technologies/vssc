@@ -4,6 +4,7 @@ import { doc, getDoc, setDoc, deleteDoc } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { signOut, deleteUser, updateProfile, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
+import { toastSuccess,toastError } from "@/components/ui/sonner";
 import {
   LogOut,
   User,
@@ -48,7 +49,7 @@ const AvatarPicker = ({
       onSelect(imageUrl);
     } catch (error) {
       console.error('Upload failed:', error);
-      alert('Failed to upload image. Please try again.');
+      toastError('Failed to upload image. Please try again.');
     } finally {
       setUploading(false);
     }
@@ -243,7 +244,7 @@ const AccountPage = () => {
       setShowAvatarPicker(false);
     } catch (error) {
       console.error("Profile update error:", error);
-      alert("Failed to update profile picture. Please try again.");
+      toastError("Failed to update profile picture. Please try again.");
     }
   };
 
@@ -252,7 +253,7 @@ const AccountPage = () => {
     if (!auth.currentUser) return;
 
     if (!editName.trim()) {
-      alert("Name cannot be empty.");
+      toastError("Name cannot be empty.");
       return;
     }
 
@@ -280,10 +281,10 @@ const AccountPage = () => {
 
       setUserData((prev) => prev && { ...prev, ...updates });
       setIsEditing(false);
-      alert("✅ Profile updated successfully!");
+      toastSuccess("✅ Profile updated successfully!");
     } catch (error) {
       console.error("Save profile error:", error);
-      alert("Failed to save changes. Please try again.");
+      toastError("Failed to save changes. Please try again.");
     }
   };
 
@@ -973,7 +974,7 @@ const handleDeleteReservation = (idx: number) => setReservations(reservations.fi
                 rows={4}
               />
               <button
-                onClick={() => alert("Feedback submitted!")}
+                onClick={() => ("Feedback submitted!")}
                 className="mt-3 w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
               >
                 Submit Feedback
@@ -1003,11 +1004,11 @@ const handleDeleteReservation = (idx: number) => setReservations(reservations.fi
                     await reauthenticateWithCredential(auth.currentUser, credential);
                     await deleteDoc(doc(db, "users", auth.currentUser.uid));
                     await deleteUser(auth.currentUser);
-                    alert("Account deleted successfully!");
+                    toastSuccess("Account deleted successfully!");
                     navigate("/auth");
                   } catch (error) {
                     console.error("Delete account error:", error);
-                    alert("Failed to delete account. Please check your password and try again.");
+                    toastError("Failed to delete account. Please check your password and try again.");
                   }
                 }}
                 className="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors font-medium"

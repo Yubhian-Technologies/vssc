@@ -4,6 +4,9 @@ import SearchFilter from "@/components/SearchFilter";
 import { db } from "../firebase";
 import green4 from "@/assets/green4.png";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
+import { toastSuccess,toastError } from "@/components/ui/sonner";
+
 import {
   collection,
   doc,
@@ -14,6 +17,11 @@ import {
   onSnapshot,
   serverTimestamp,
   getDoc,
+  query,
+  orderBy,
+  deleteDoc,
+  getDocs,
+  where,
 } from "firebase/firestore";
 import { useAuth } from "../AuthContext";
 import { Users, Clock, BookOpen, User as UserIcon } from "lucide-react";
@@ -66,6 +74,10 @@ export default function AcademicAdvisingPage() {
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [showDialog, setShowDialog] = useState(false);
   const [bookingInProgress, setBookingInProgress] = useState(false);
+
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [sessionToCancel, setSessionToCancel] = useState<AcademicAdvisingSession | null>(null);
+
   const collegesList = [
     { name: "Vishnu Institute of Technology", domain: "@vishnu.edu.in" },
     { name: "Vishnu Dental College", domain: "@vdc.edu.in" },
@@ -104,80 +116,79 @@ export default function AcademicAdvisingPage() {
   };
 
   // --- Fetch sessions in real-time ---
-  useEffect(() => {
-    if (!userCollege || !user) return;
+ useEffect(() => {
+  if (!userCollege || !user) return;
 
-    const q = collection(db, "academicadvising");
+  // 🔹 Updated query to fetch latest sessions first
+  const q = query(collection(db, "academicadvising"), orderBy("createdAt", "desc"));
 
-    const unsubscribe = onSnapshot(q, async (snapshot) => {
-      const allSessions: AcademicAdvisingSession[] = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...(doc.data() as AcademicAdvisingSession),
-      }));
+  const unsubscribe = onSnapshot(q, async (snapshot) => {
+    const allSessions: AcademicAdvisingSession[] = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...(doc.data() as AcademicAdvisingSession),
+    }));
 
-      let filtered: AcademicAdvisingSession[];
-      if (userData?.role === "admin") {
-        // Admin: show all sessions created by this admin, including expired ones
-        filtered = allSessions.filter((session) => session.createdBy === user.uid);
-      } else {
-        // Normal user: show only sessions for their college that are not expired
-        filtered = allSessions.filter(
-          (session) => session.colleges.includes(userCollege) && !isSessionExpired(session)
-        );
-      }
+    let filtered: AcademicAdvisingSession[];
+    if (userData?.role === "admin") {
+      filtered = allSessions.filter((session) => session.createdBy === user.uid);
+    } else {
+      filtered = allSessions.filter(
+        (session) => session.colleges.includes(userCollege) && !isSessionExpired(session)
+      );
+    }
 
-      const updatedSessions = await Promise.all(
-        filtered.map(async (session) => {
-          if (!session.isGroup && session.slotDuration && session.totalDuration && session.date) {
-            const slotCount = Math.floor(session.totalDuration / session.slotDuration);
+    const updatedSessions = await Promise.all(
+      filtered.map(async (session) => {
+        if (!session.isGroup && session.slotDuration && session.totalDuration && session.date) {
+          const slotCount = Math.floor(session.totalDuration / session.slotDuration);
 
-            if (!Array.isArray(session.bookedSlots)) {
-              const generatedSlots = Array.from({ length: slotCount }, (_, i) => {
-                const [hoursStr, minutesStrWithSuffix] = session.startTime!.split(":");
-                let hours = parseInt(hoursStr);
-                let minutesStr = minutesStrWithSuffix;
-                let suffix = "";
-                if (minutesStrWithSuffix.includes("AM") || minutesStrWithSuffix.includes("PM")) {
-                  suffix = minutesStrWithSuffix.slice(-2);
-                  minutesStr = minutesStrWithSuffix.slice(0, -2).trim();
-                }
-                const minutes = parseInt(minutesStr);
-                if (suffix.toLowerCase() === "pm" && hours < 12) hours += 12;
+          if (!Array.isArray(session.bookedSlots)) {
+            const generatedSlots = Array.from({ length: slotCount }, (_, i) => {
+              const [hoursStr, minutesStrWithSuffix] = session.startTime!.split(":");
+              let hours = parseInt(hoursStr);
+              let minutesStr = minutesStrWithSuffix;
+              let suffix = "";
+              if (minutesStrWithSuffix.includes("AM") || minutesStrWithSuffix.includes("PM")) {
+                suffix = minutesStrWithSuffix.slice(-2);
+                minutesStr = minutesStr.slice(0, -2).trim();
+              }
+              const minutes = parseInt(minutesStr);
+              if (suffix.toLowerCase() === "pm" && hours < 12) hours += 12;
 
-                const slotDate = new Date(session.date!);
-                slotDate.setHours(hours, minutes + i * session.slotDuration, 0, 0);
+              const slotDate = new Date(session.date!);
+              slotDate.setHours(hours, minutes + i * session.slotDuration, 0, 0);
 
-                const timeStr = `${slotDate.getHours().toString().padStart(2, "0")}:${slotDate
-                  .getMinutes()
-                  .toString()
-                  .padStart(2, "0")}`;
+              const timeStr = `${slotDate.getHours().toString().padStart(2, "0")}:${slotDate
+                .getMinutes()
+                .toString()
+                .padStart(2, "0")}`;
 
-                return { time: timeStr, booked: false, user: null };
-              });
+              return { time: timeStr, booked: false, user: null };
+            });
 
-              const sessionRef = doc(db, "academicadvising", session.id);
-              await updateDoc(sessionRef, {
-                bookedSlots: generatedSlots,
-                slotAvailable: generatedSlots.length,
-              });
+            const sessionRef = doc(db, "academicadvising", session.id);
+            await updateDoc(sessionRef, {
+              bookedSlots: generatedSlots,
+              slotAvailable: generatedSlots.length,
+            });
 
-              return { ...session, bookedSlots: generatedSlots, slotAvailable: generatedSlots.length };
-            }
-
-            const slotAvailable = session.bookedSlots.filter((s) => !s.booked).length;
-            return { ...session, slotAvailable };
+            return { ...session, bookedSlots: generatedSlots, slotAvailable: generatedSlots.length };
           }
 
-          return session;
-        })
-      );
+          const slotAvailable = session.bookedSlots.filter((s) => !s.booked).length;
+          return { ...session, slotAvailable };
+        }
 
-      setSessions(updatedSessions);
-      setFilteredSessions(updatedSessions);
-    });
+        return session;
+      })
+    );
 
-    return () => unsubscribe();
-  }, [userCollege, user, userData]);
+    setSessions(updatedSessions);
+    setFilteredSessions(updatedSessions);
+  });
+
+  return () => unsubscribe();
+}, [userCollege, user, userData]);
 
   // --- Helpers ---
   const parseDate = (dateStr: string) => {
@@ -228,118 +239,162 @@ export default function AcademicAdvisingPage() {
   };
 
   const confirmJoin = async () => {
-    if (bookingInProgress) return;
-    if (!user?.uid || !selectedSession || (!selectedSession.isGroup && !selectedSlot)) return;
+  if (bookingInProgress) return;
+  if (!user?.uid || !selectedSession || (!selectedSession.isGroup && !selectedSlot)) return;
 
-    setBookingInProgress(true);
-    const sessionRef = doc(db, "academicadvising", selectedSession.id);
+  setBookingInProgress(true);
+  const sessionRef = doc(db, "academicadvising", selectedSession.id);
 
-    try {
-      if (selectedSession.isGroup) {
-        if (!selectedSession.slots || selectedSession.slots <= 0) {
-          alert("No slots left.");
-          return;
-        }
-        if (selectedSession.participants?.includes(user.uid)) {
-          alert("You already joined this group session.");
-          return;
-        }
-        await updateDoc(sessionRef, {
-          participants: arrayUnion(user.uid),
-          slots: increment(-1),
-        });
-        setSessions((prev) =>
-          prev.map((s) =>
-            s.id === selectedSession.id
-              ? { ...s, participants: [...(s.participants || []), user.uid], slots: (s.slots || 1) - 1 }
-              : s
-          )
-        );
-        setFilteredSessions((prev) =>
-          prev.map((s) =>
-            s.id === selectedSession.id
-              ? { ...s, participants: [...(s.participants || []), user.uid], slots: (s.slots || 1) - 1 }
-              : s
-          )
-        );
-        alert("You joined the group session!");
-      } else {
-        await runTransaction(db, async (transaction) => {
-          const sessionSnap = await transaction.get(sessionRef);
-          if (!sessionSnap.exists()) throw new Error("Session not found");
-
-          const sessionData = sessionSnap.data() as AcademicAdvisingSession;
-          if (!sessionData.bookedSlots) throw new Error("Slots not initialized");
-
-          const alreadyBooked = sessionData.bookedSlots.some((s) => s.user === user.uid);
-          if (alreadyBooked) {
-            throw new Error("You already booked a slot in this session.");
-          }
-
-          const slotIndex = sessionData.bookedSlots.findIndex((s) => s.time === selectedSlot);
-          if (slotIndex < 0) throw new Error("Slot not found");
-
-          const slot = sessionData.bookedSlots[slotIndex];
-          if (slot.booked) {
-            throw new Error("Slot already booked by someone else.");
-          }
-
-          const updatedSlots = [...sessionData.bookedSlots];
-          updatedSlots[slotIndex] = { ...updatedSlots[slotIndex], booked: true, user: user.uid };
-
-          const updatedParticipants = sessionData.participants
-            ? [...sessionData.participants, user.uid]
-            : [user.uid];
-
-          transaction.update(sessionRef, {
-            bookedSlots: updatedSlots,
-            slotAvailable: updatedSlots.filter((s) => !s.booked).length,
-            participants: updatedParticipants,
-          });
-        });
-
-        setSessions((prev) =>
-          prev.map((s) =>
-            s.id === selectedSession.id
-              ? {
-                  ...s,
-                  bookedSlots: s.bookedSlots?.map((slot) =>
-                    slot.time === selectedSlot ? { ...slot, booked: true, user: user.uid } : slot
-                  ),
-                  slotAvailable: s.bookedSlots?.filter((slot) => !slot.booked).length,
-                  participants: [...(s.participants || []), user.uid],
-                }
-              : s
-          )
-        );
-        setFilteredSessions((prev) =>
-          prev.map((s) =>
-            s.id === selectedSession.id
-              ? {
-                  ...s,
-                  bookedSlots: s.bookedSlots?.map((slot) =>
-                    slot.time === selectedSlot ? { ...slot, booked: true, user: user.uid } : slot
-                  ),
-                  slotAvailable: s.bookedSlots?.filter((slot) => !slot.booked).length,
-                  participants: [...(s.participants || []), user.uid],
-                }
-              : s
-          )
-        );
-        alert(`You booked the slot at ${selectedSlot}`);
+  try {
+    if (selectedSession.isGroup) {
+      // --- GROUP SESSION ---
+      if (!selectedSession.slots || selectedSession.slots <= 0) {
+        toastError("No slots left.");
+        return;
       }
-    } catch (err: any) {
-      alert(err.message || "Booking failed. Try again.");
-    } finally {
-      setBookingInProgress(false);
-      setShowDialog(false);
-      setShowCalendar(false);
-      setSelectedSession(null);
-      setSelectedSlot(null);
-      setSelectedDate(null);
-      setAvailableSlots([]);
+      if (selectedSession.participants?.includes(user.uid)) {
+        toastSuccess("You already joined this group session.");
+        return;
+      }
+
+      // Update participants and decrement slots
+      await updateDoc(sessionRef, {
+        participants: arrayUnion(user.uid),
+        slots: increment(-1),
+      });
+
+      // Update local state
+      setSessions((prev) =>
+        prev.map((s) =>
+          s.id === selectedSession.id
+            ? {
+                ...s,
+                participants: [...(s.participants || []), user.uid],
+                slots: (s.slots || 1) - 1,
+              }
+            : s
+        )
+      );
+      setFilteredSessions((prev) =>
+        prev.map((s) =>
+          s.id === selectedSession.id
+            ? {
+                ...s,
+                participants: [...(s.participants || []), user.uid],
+                slots: (s.slots || 1) - 1,
+              }
+            : s
+        )
+      );
+
+      // --- Add to unified bookings ---
+      await addDoc(collection(db, "bookings"), {
+        userId: user.uid,
+        userName: user.displayName || "",
+        serviceType: "Academic Advising",
+        sessionId: selectedSession.id,
+        sessionTitle: selectedSession.title || "",
+        slotTime: "Group Session",
+        bookedAt: serverTimestamp(),
+      });
+
+      toastSuccess("You joined the group session!");
+    } else {
+      // --- 1-on-1 SESSION ---
+      await runTransaction(db, async (transaction) => {
+        const sessionSnap = await transaction.get(sessionRef);
+        if (!sessionSnap.exists()) throw new Error("Session not found");
+
+        const sessionData = sessionSnap.data() as AcademicAdvisingSession;
+        if (!sessionData.bookedSlots) throw new Error("Slots not initialized");
+
+        // Check if user already booked
+        const alreadyBooked = sessionData.bookedSlots.some((s) => s.user === user.uid);
+        if (alreadyBooked) {
+          throw new Error("You already booked a slot in this session.");
+        }
+
+        // Find the slot
+        const slotIndex = sessionData.bookedSlots.findIndex((s) => s.time === selectedSlot);
+        if (slotIndex < 0) throw new Error("Slot not found");
+
+        const slot = sessionData.bookedSlots[slotIndex];
+        if (slot.booked) {
+          throw new Error("Slot already booked by someone else.");
+        }
+
+        // Update slot
+        const updatedSlots = [...sessionData.bookedSlots];
+        updatedSlots[slotIndex] = { ...updatedSlots[slotIndex], booked: true, user: user.uid };
+
+        // Add user to participants array
+        const updatedParticipants = sessionData.participants
+          ? [...sessionData.participants, user.uid]
+          : [user.uid];
+
+        transaction.update(sessionRef, {
+          bookedSlots: updatedSlots,
+          slotAvailable: updatedSlots.filter((s) => !s.booked).length,
+          participants: updatedParticipants,
+        });
+      });
+
+      // Update local state
+      setSessions((prev) =>
+        prev.map((s) =>
+          s.id === selectedSession.id
+            ? {
+                ...s,
+                bookedSlots: s.bookedSlots?.map((slot) =>
+                  slot.time === selectedSlot ? { ...slot, booked: true, user: user.uid } : slot
+                ),
+                slotAvailable: s.bookedSlots?.filter((slot) => !slot.booked).length,
+                participants: [...(s.participants || []), user.uid],
+              }
+            : s
+        )
+      );
+      setFilteredSessions((prev) =>
+        prev.map((s) =>
+          s.id === selectedSession.id
+            ? {
+                ...s,
+                bookedSlots: s.bookedSlots?.map((slot) =>
+                  slot.time === selectedSlot ? { ...slot, booked: true, user: user.uid } : slot
+                ),
+                slotAvailable: s.bookedSlots?.filter((slot) => !slot.booked).length,
+                participants: [...(s.participants || []), user.uid],
+              }
+            : s
+        )
+      );
+
+      // --- Add to unified bookings ---
+      await addDoc(collection(db, "bookings"), {
+        userId: user.uid,
+        userName: user.displayName || "",
+        serviceType: "Academic Advising",
+        sessionId: selectedSession.id,
+        sessionTitle: selectedSession.title || "",
+        slotTime: selectedSlot,
+        bookedAt: serverTimestamp(),
+      });
+
+      toastSuccess(`You booked the slot at ${selectedSlot}`);
     }
-  };
+  } catch (err: any) {
+    toastError(err.message || "Booking failed. Try again.");
+  } finally {
+    setBookingInProgress(false);
+    setShowDialog(false);
+    setShowCalendar(false);
+    setSelectedSession(null);
+    setSelectedSlot(null);
+    setSelectedDate(null);
+    setAvailableSlots([]);
+  }
+};
+
 
   // --- Admin Features ---
   const handleAddSession = async () => {
@@ -355,9 +410,26 @@ export default function AcademicAdvisingPage() {
       !newSession.expiryDate ||
       !newSession.expiryTime
     ) {
-      alert("Please fill in all required fields (title, description, tutor name, skills, date, session type, expiry date, and expiry time). For 1-on-1, include start time, total duration, and slot duration. For group, include start time.");
+      toastError("Please fill in all required fields (title, description, tutor name, skills, date, session type, expiry date, and expiry time). For 1-on-1, include start time, total duration, and slot duration. For group, include start time.");
       return;
     }
+    try {
+  const sessionDate = new Date(newSession.date);
+  const [expiryYear, expiryMonth, expiryDay] = newSession.expiryDate.split("-").map(Number);
+  const [expiryHour, expiryMinute] = newSession.expiryTime.split(":").map(Number);
+  const expiryDateTime = new Date(expiryYear, expiryMonth - 1, expiryDay, expiryHour, expiryMinute);
+  
+  // Check if expiry datetime is before session start datetime
+  const sessionStartDateTime = new Date(newSession.date + 'T' + newSession.startTime + ':00');
+  
+  if (expiryDateTime <= sessionStartDateTime) {
+    toastError("Expiry date and time must be after the session start date and time.");
+    return; 
+  }
+} catch (error) {
+  toastError("Invalid date or time format. Please check your inputs.");
+  return;
+}
 
     try {
       const sessionData: any = {
@@ -431,13 +503,13 @@ export default function AcademicAdvisingPage() {
       });
     } catch (err) {
       console.error("Error adding session:", err);
-      alert("Failed to add session. Try again.");
+      toastError("Failed to add session. Try again.");
     }
   };
 
   const handleViewParticipants = async (participants: string[] = []) => {
     if (!participants || participants.length === 0) {
-      alert("No participants booked yet.");
+      toastError("No participants booked yet.");
       return;
     }
 
@@ -457,6 +529,33 @@ export default function AcademicAdvisingPage() {
     setSelectedParticipants(participantsData);
     setShowParticipants(true);
   };
+
+  const handleCancelSession = async () => {
+  if (!sessionToCancel) return;
+
+  try {
+    // Delete related bookings first (to avoid orphans)
+    const bookingsQuery = query(
+      collection(db, "bookings"),
+      where("sessionId", "==", sessionToCancel.id),
+      where("serviceType", "==", "Academic Advising")
+    );
+    const bookingsSnapshot = await getDocs(bookingsQuery);
+    const deleteBookingPromises = bookingsSnapshot.docs.map((d) => deleteDoc(d.ref));
+    await Promise.all(deleteBookingPromises);
+
+    // Delete the session
+    await deleteDoc(doc(db, "academicadvising", sessionToCancel.id));
+
+    toast.success("Session canceled and deleted successfully.");
+  } catch (err) {
+    console.error("Error canceling session:", err);
+    toast.error("Failed to cancel session. Try again.");
+  } finally {
+    setShowCancelDialog(false);
+    setSessionToCancel(null);
+  }
+};
 
   return (
 
@@ -581,16 +680,25 @@ export default function AcademicAdvisingPage() {
                     : "Full"}
                 </button>
 
-                {user?.uid === session.createdBy && (
-                  <div className="flex justify-end mt-2">
-                    <p
-                      className="text-blue-600 hover:underline cursor-pointer text-sm"
-                      onClick={() => handleViewParticipants(session.participants || [])}
-                    >
-                      View Participants
-                    </p>
-                  </div>
-                )}
+                {user?.uid === session.createdBy && userData?.role === "admin" && (
+  <div className="flex justify-between mt-2">
+    <p
+      className="text-blue-600 hover:underline cursor-pointer text-sm"
+      onClick={() => handleViewParticipants(session.participants || [])}
+    >
+      View Participants
+    </p>
+    <button
+      onClick={() => {
+        setSessionToCancel(session);
+        setShowCancelDialog(true);
+      }}
+      className="text-red-600 hover:underline cursor-pointer text-sm font-medium"
+    >
+      Cancel Session
+    </button>
+  </div>
+)}
               </div>
             ))}
           </div>
@@ -1039,6 +1147,32 @@ export default function AcademicAdvisingPage() {
           </div>
         )}
       </div>
+      {/* Cancel Session Dialog */}
+{showCancelDialog && sessionToCancel && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+    <div className="[background-color:hsl(60,100%,95%)] rounded-xl p-6 w-96">
+      <h2 className="text-xl font-bold text-red-600 mb-4">Cancel Session</h2>
+      <p className="mb-4 text-gray-700">
+        Are you sure you want to cancel <strong>{sessionToCancel.title}</strong>? 
+        This will delete the session and all related bookings.
+      </p>
+      <div className="flex justify-end gap-4">
+        <button
+          className="px-4 py-2 rounded-lg bg-gray-500 hover:bg-gray-600 text-white"
+          onClick={() => setShowCancelDialog(false)}
+        >
+          Cancel
+        </button>
+        <button
+          className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white"
+          onClick={handleCancelSession}
+        >
+          Delete Session
+        </button>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 }
