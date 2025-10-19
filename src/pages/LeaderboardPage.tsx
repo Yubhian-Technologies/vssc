@@ -85,7 +85,7 @@ const LeaderboardPage = () => {
   // Logo Screen
   if (loadingStage === 'logo') {
     return (
-      <div className="relative min-h-screen bg-gradient-to-br from-amber-300 via-yellow-200 to-orange-300 flex items-center justify-center overflow-hidden">
+      <div className="relative min-h-screen bg-gradient-to-br from-yellow-100 via-yellow-100 to-orange-100 flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
           {Array.from({ length: 20 }).map((_, i) => (
             <motion.div
@@ -205,7 +205,7 @@ const LeaderboardPage = () => {
   // Loading Screen
   if (loadingStage === 'loading') {
     return (
-      <div className="relative min-h-screen bg-gradient-to-br from-amber-400 via-yellow-500 to-orange-400 flex items-center justify-center overflow-hidden">
+      <div className="relative min-h-screen bg-gradient-to-br from-yellow-50  to-orange-50 flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
           <motion.div
             className="absolute inset-0 bg-gradient-to-r from-amber-300/15 to-yellow-300/15"
@@ -256,7 +256,7 @@ const LeaderboardPage = () => {
           </motion.div>
 
           <motion.h1
-            className="text-6xl font-black bg-gradient-to-r from-amber-300 via-yellow-200 to-orange-300 bg-clip-text text-transparent mb-8 drop-shadow-lg"
+            className="text-4xl sm:text-6xl font-black bg-gradient-to-r from-amber-700  to-orange-500 bg-clip-text text-transparent mb-8 drop-shadow-lg"
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.3, type: "spring" as const } as Transition}
@@ -265,7 +265,7 @@ const LeaderboardPage = () => {
           </motion.h1>
 
           <motion.p
-            className="text-2xl text-amber-100 font-bold tracking-wide"
+            className="text-md sm:text-2xl text-amber-500 font-bold tracking-wide"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 2.5 } as Transition}
@@ -302,7 +302,7 @@ const LeaderboardPage = () => {
 
   // Main Leaderboard
   return (
-    <div className="relative min-h-screen bg-gradient-to-br from-amber-50 via-white to-yellow-50 overflow-hidden">
+    <div className="relative min-h-screen bg-gradient-to-br from-yellow-50 to-yellow-100 overflow-hidden">
       <div className="absolute inset-0 opacity-20">
         <div className="absolute inset-0 bg-gradient-to-r from-amber-100/50 via-transparent to-yellow-100/50" />
         <div 

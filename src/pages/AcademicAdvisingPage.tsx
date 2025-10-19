@@ -547,10 +547,10 @@ export default function AcademicAdvisingPage() {
     // Delete the session
     await deleteDoc(doc(db, "academicadvising", sessionToCancel.id));
 
-    toast.success("Session canceled and deleted successfully.");
+    toastSuccess("Session canceled and deleted successfully.");
   } catch (err) {
     console.error("Error canceling session:", err);
-    toast.error("Failed to cancel session. Try again.");
+    toastError("Failed to cancel session. Try again.");
   } finally {
     setShowCancelDialog(false);
     setSessionToCancel(null);
