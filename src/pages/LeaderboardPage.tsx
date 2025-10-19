@@ -29,6 +29,7 @@ const formatPoints = (points: number) => {
 const LeaderboardPage = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loadingStage, setLoadingStage] = useState<LoadingStage>('logo');
+  const [showAll, setShowAll] = useState(false);
   const { width, height } = useWindowSize();
   const { state } = useLocation(); // Access navigation state
   const showArrow = state?.showArrow || false; // Check for showArrow
@@ -471,7 +472,7 @@ const LeaderboardPage = () => {
             
             <div className="divide-y divide-amber-50">
               <AnimatePresence>
-                {users.slice(3).map((user, index) => (
+                {users.slice(3, showAll ? users.length : 10).map((user, index) => (
                   <motion.div
                     key={user.uid}
                     className="px-6 py-4 hover:bg-amber-50 transition-colors duration-200 flex items-center justify-between group"
@@ -501,6 +502,27 @@ const LeaderboardPage = () => {
                 ))}
               </AnimatePresence>
             </div>
+            
+            {users.length > 10 && (
+              <div className="px-6 py-4 bg-amber-25 border-t border-amber-100">
+                <button
+                  onClick={() => setShowAll(!showAll)}
+                  className="w-full bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
+                >
+                  {showAll ? (
+                    <>
+                      <Users className="w-4 h-4" />
+                      Show Less
+                    </>
+                  ) : (
+                    <>
+                      <Users className="w-4 h-4" />
+                      View More ({users.length - 10} more)
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
           </div>
         </motion.section>
       </div>
