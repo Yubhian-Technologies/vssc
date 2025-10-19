@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
-export default function CongratsPopup({ onClose }: { onClose: () => void }) {
+interface CongratsPopupProps {
+  onClose: () => void;
+  message?: string;
+}
+
+export default function CongratsPopup({ onClose, message }: CongratsPopupProps) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -18,8 +23,12 @@ export default function CongratsPopup({ onClose }: { onClose: () => void }) {
       >
         <h2 className="text-2xl font-bold text-green-600">🎉 Congratulations!</h2>
         <p className="mt-3 text-gray-700">
-          You’ve successfully created your account and earned
-          <span className="font-semibold text-blue-600"> 10 points</span>.
+          {message || (
+            <>
+              You’ve successfully created your account and earned
+              <span className="font-semibold text-blue-600"> 10 points</span>.
+            </>
+          )}
         </p>
         <p className="mt-2 text-sm text-gray-600">
           Play daily games to earn more and climb the leaderboard!

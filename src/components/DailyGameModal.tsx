@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
-
-// Import all games
-
+import { auth, db } from "../firebase";
+import { doc, getDoc } from "firebase/firestore";
 import MemoryGame from "../components/games/MemoryGame";
 import SlidingPuzzle from "../components/games/SlidingPuzzle";
 import Sudoku from "../components/games/Sudoku";
@@ -13,6 +12,7 @@ import SimonMemoryGame from "../components/games/SimonMemoryGame";
 import NumberSequenceGame from "../components/games/NumberSequenceGame";
 import ReactionChainGame from "../components/games/ReactionChainGame";
 import SpotTheDifference from "../components/games/SpotTheDifference";
+
 interface DailyGameModalProps {
   onComplete: () => void;
   onClose?: () => void;
@@ -37,22 +37,55 @@ const DailyGameModal: React.FC<DailyGameModalProps> = ({ onComplete, onClose }) 
   const [selectedGame, setSelectedGame] = useState<typeof games[0] | null>(null);
 
   useEffect(() => {
-    const lastClaim = localStorage.getItem("dailyGameClaim");
-    const today = new Date().toDateString();
+    const checkEligibility = async () => {
+      const user = auth.currentUser;
+      if (!user) {
+        console.log("No user logged in for DailyGameModal");
+        setClaimedToday(true);
+        return;
+      }
 
-    if (lastClaim === today) {
-      setClaimedToday(true); // already claimed
-    } else {
-      const randomGame = games[Math.floor(Math.random() * games.length)];
-      setSelectedGame(randomGame);
-    }
+      const today = new Date().toDateString();
+      try {
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
+
+        if (userSnap.exists()) {
+          const data = userSnap.data();
+          const lastClaimed = data.lastDailyClaim?.toDate?.() || null;
+          const isEligible = !lastClaimed || lastClaimed.toDateString() !== today;
+
+          console.log("DailyGameModal Firestore check:", { isEligible, lastClaimed, today });
+
+          if (!isEligible) {
+            console.log("Game already claimed today (Firestore)");
+            setClaimedToday(true);
+            localStorage.setItem("dailyGameClaim", today);
+          } else {
+            // Clear localStorage if eligible to ensure consistency
+            localStorage.removeItem("dailyGameClaim");
+            const randomGame = games[Math.floor(Math.random() * games.length)];
+            setSelectedGame(randomGame);
+            console.log("Selected game:", randomGame.name);
+          }
+        } else {
+          console.error("User document not found in DailyGameModal");
+          setClaimedToday(true);
+        }
+      } catch (error) {
+        console.error("Error checking eligibility in DailyGameModal:", error);
+        setClaimedToday(true);
+      }
+    };
+
+    checkEligibility();
   }, []);
 
   const handleComplete = () => {
     const today = new Date().toDateString();
     localStorage.setItem("dailyGameClaim", today);
     setClaimedToday(true);
-    onComplete(); // award points
+    onComplete();
   };
 
   const handleSkip = () => {
@@ -65,14 +98,16 @@ const DailyGameModal: React.FC<DailyGameModalProps> = ({ onComplete, onClose }) 
     }
   };
 
-  if (claimedToday || !selectedGame) return null;
+  if (claimedToday || !selectedGame) {
+    console.log("DailyGameModal not rendering:", { claimedToday, selectedGame });
+    return null;
+  }
 
   const GameComponent = selectedGame.component;
 
   return (
     <div className="fixed inset-0 bg-black/70 flex justify-center items-center z-50">
       <div className="bg-white p-6 rounded-2xl shadow-xl max-w-md w-full text-center relative transition-transform transform scale-100">
-        {/* Skip / Close Button */}
         <button
           onClick={handleSkip}
           className="absolute top-2 right-3 text-gray-500 hover:text-red-500 text-lg font-bold"
@@ -81,18 +116,15 @@ const DailyGameModal: React.FC<DailyGameModalProps> = ({ onComplete, onClose }) 
           ✖
         </button>
 
-        {/* Title */}
         <h2 className="text-2xl font-bold mb-2 text-blue-600">
           🎮 {selectedGame.name}
         </h2>
         <p className="text-gray-700 mb-4">Solve this game to earn <b>5 points!</b></p>
 
-        {/* Game Area */}
         <div className="mt-4 flex justify-center">
           <GameComponent onSolve={handleComplete} />
         </div>
 
-        {/* Optional Close */}
         {onClose && (
           <button
             onClick={onClose}

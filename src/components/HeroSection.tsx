@@ -3,8 +3,7 @@ import heroStudent from "@/assets/hero-student.jpg";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import CongratsPopup from "../components/ui/CongratsPopup";
-import { useLocation, useNavigate } from "react-router-dom"; // ✅ added useNavigate
-import ArrowOverlay from "./ui/ArrowOverlay";
+import { useLocation, useNavigate } from "react-router-dom";
 import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "../firebase";
 import DailyGameModal from "./DailyGameModal";
@@ -23,43 +22,74 @@ const HeroSection = () => {
   const firstPart = "Learn. Grow.";
   const secondPart = " Prosper.";
   const location = useLocation();
-  const navigate = useNavigate(); // ✅ initialize navigate
+  const navigate = useNavigate();
 
   const [showCongrats, setShowCongrats] = useState(false);
-  const [showArrow, setShowArrow] = useState(false);
+  const [congratsMessage, setCongratsMessage] = useState<string | undefined>(undefined);
   const [points, setPoints] = useState(0);
+  const [shouldShowGameAfterCongrats, setShouldShowGameAfterCongrats] = useState(false);
+  const [isFirstGame, setIsFirstGame] = useState(false);
 
   useEffect(() => {
-    if (location.state?.showCongrats) {
-      setShowCongrats(true);
-      setShowArrow(true);
-      window.history.replaceState({}, document.title);
-    }
-  }, [location.state]);
-
-  useEffect(() => {
-    const checkDailyClaim = async () => {
-      const user = auth.currentUser;
-      if (!user) return;
-
-      const userRef = doc(db, "users", user.uid);
-      const userSnap = await getDoc(userRef);
-
-      if (userSnap.exists()) {
-        const data = userSnap.data();
-        const lastClaimed = data.lastDailyClaim?.toDate?.() || null;
-        const todayKey = new Date().toDateString();
-
-        setPoints(data.points || 0);
-
-        if (!lastClaimed || lastClaimed.toDateString() !== todayKey) {
-          setShowGame(true);
-        }
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (!user) {
+        console.log("No user logged in");
+        return;
       }
-    };
 
-    checkDailyClaim();
-  }, []);
+      const checkDailyClaim = async (retries = 3, delay = 1000) => {
+        try {
+          const userRef = doc(db, "users", user.uid);
+          const userSnap = await getDoc(userRef);
+
+          if (userSnap.exists()) {
+            const data = userSnap.data();
+            const lastClaimed = data.lastDailyClaim?.toDate?.() || null;
+            const todayKey = new Date().toDateString();
+            const newUser = data.isNewUser || false;
+
+            setPoints(data.points || 0);
+            setIsFirstGame(newUser || location.state?.showCongrats);
+
+            if (newUser || location.state?.showCongrats) {
+              console.log("New user detected: showing CongratsPopup");
+              setShowCongrats(true);
+              setCongratsMessage(undefined);
+              await updateDoc(userRef, { isNewUser: false });
+              console.log("Cleared isNewUser in Firestore");
+              window.history.replaceState({}, document.title);
+            }
+
+            const isEligible = !lastClaimed || lastClaimed.toDateString() !== todayKey;
+            console.log("Daily game eligibility:", { isEligible, lastClaimed, todayKey });
+
+            if (isEligible) {
+              if (newUser || location.state?.showCongrats) {
+                console.log("New user: delaying game");
+                setShouldShowGameAfterCongrats(true);
+              } else {
+                console.log("Showing game immediately");
+                setShowGame(true);
+              }
+            } else {
+              console.log("User already claimed daily game today");
+            }
+          } else if (retries > 0) {
+            console.log(`User document not found, retrying (${retries} attempts left)...`);
+            setTimeout(() => checkDailyClaim(retries - 1, delay * 2), delay);
+          } else {
+            console.error("User document not found after retries");
+          }
+        } catch (error) {
+          console.error("Error checking daily claim:", error);
+        }
+      };
+
+      checkDailyClaim();
+    });
+
+    return () => unsubscribe();
+  }, [location.state]);
 
   const handleGameComplete = async () => {
     const user = auth.currentUser;
@@ -77,11 +107,35 @@ const HeroSection = () => {
     });
 
     setPoints(currentPoints + 5);
-    setShowCongrats(true);
     setShowGame(false);
+    setCongratsMessage("You completed the daily game and earned 5 points! please click on fire button in header to navigate to leaderboard");
+    setShowCongrats(true);
   };
 
-  // ✅ handle Explore button click
+  const handleGameSkip = () => {
+    setShowGame(false);
+    if (isFirstGame) {
+      console.log("Navigating to leaderboard after game skip");
+      navigate("/leaderboard", { state: { showArrow: true } });
+      setIsFirstGame(false); // Prevent ArrowOverlay on future skips
+    }
+  };
+
+  const handleCongratsClose = () => {
+    console.log("handleCongratsClose:", { isFirstGame, congratsMessage });
+    if (shouldShowGameAfterCongrats) {
+      console.log("Showing game after congrats close");
+      setShouldShowGameAfterCongrats(false);
+      setShowGame(true);
+    } else if (isFirstGame && congratsMessage) {
+      console.log("Navigating to leaderboard with showArrow: true");
+      navigate("/leaderboard", { state: { showArrow: true } });
+      setIsFirstGame(false); 
+    }
+    setShowCongrats(false);
+    setCongratsMessage(undefined);
+  };
+
   const handleExploreClick = () => {
     navigate("/services");
   };
@@ -91,16 +145,27 @@ const HeroSection = () => {
       data-aos="fade-down"
       className="relative h-auto py-10 sm:py-14 [background-color:hsl(60,100%,95%)]"
     >
-      {showCongrats && <CongratsPopup onClose={() => setShowCongrats(false)} />}
-      {showArrow && <ArrowOverlay onClose={() => setShowArrow(false)} />}
-      {showGame && <DailyGameModal onComplete={handleGameComplete} />}
+      {showCongrats && <CongratsPopup onClose={handleCongratsClose} message={congratsMessage} />}
+      {showGame && <DailyGameModal onComplete={handleGameComplete} onClose={handleGameSkip} />}
 
-      <div className="container mx-auto px-2 py- sm:px-4 sm:py-10 md:py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-10 items-center">
-          {/* Left Content */}
-          <div className="space-y-4 sm:space-y-6 pl-2 sm:pl-6 md:pl-8">
-            <div className="space-y-2 sm:space-y-3">
-              {/* Typing animation for heading */}
+      <div className="container mx-auto px-4 py-10 sm:px-6 md:py-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+          <motion.div
+            className="relative z-10 order-1 md:order-2 flex justify-center"
+            initial={{ opacity: 0, y: 40, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 1, ease: "easeOut" }}
+            whileHover={{ scale: 1.05, rotate: 1 }}
+          >
+            <img
+              src={heroStudent}
+              alt="Student learning with Educve"
+              className="w-4/5 max-w-[280px] sm:max-w-sm md:max-w-md drop-shadow-2xl"
+            />
+          </motion.div>
+
+          <div className="order-2 md:order-1 flex flex-col items-center md:items-start text-center md:text-left space-y-4 sm:space-y-6 px-2 sm:px-4 md:px-8 mt-8 md:mt-0">
+            <div className="space-y-3 sm:space-y-4">
               <motion.h1
                 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight"
                 initial="hidden"
@@ -121,9 +186,7 @@ const HeroSection = () => {
                       visible: { opacity: 1, y: "0em" },
                     }}
                     transition={{ duration: 0.01 }}
-                    className={`text-yellow-500 ${
-                      char === " " ? "inline-block w-2" : ""
-                    }`}
+                    className={`text-yellow-500 ${char === " " ? "inline-block w-2" : ""}`}
                   >
                     {char}
                   </motion.span>
@@ -136,22 +199,19 @@ const HeroSection = () => {
                       visible: { opacity: 1, y: "0em" },
                     }}
                     transition={{ duration: 0.01 }}
-                    className={`text-primary ${
-                      char === " " ? "inline-block w-2" : ""
-                    }`}
+                    className={`text-primary ${char === " " ? "inline-block w-2" : ""}`}
                   >
                     {char}
                   </motion.span>
                 ))}
               </motion.h1>
 
-              <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-xs sm:max-w-md md:max-w-lg">
+              <p className="text-sm sm:text-base md:text-lg text-muted-foreground max-w-sm sm:max-w-md md:max-w-lg mx-auto md:mx-0">
                 The Vishnu Student Success Centre is dedicated to supporting and empowering students on their academic and personal journeys.
               </p>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-              {/* ✅ Navigate to Services page on click */}
               <Button
                 size="lg"
                 className="bg-primary hover:bg-black text-white px-6 sm:px-8"
@@ -161,25 +221,9 @@ const HeroSection = () => {
               </Button>
             </div>
           </div>
-
-          {/* Right Content */}
-          <motion.div
-            className="relative z-10"
-            initial={{ opacity: 0, y: 40, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 1, ease: "easeOut" }}
-            whileHover={{ scale: 1.05, rotate: 1 }}
-          >
-            <img
-              src={heroStudent}
-              alt="Student learning with Educve"
-              className="w-full max-w-xs sm:max-w-sm md:max-w-md mx-auto drop-shadow-2xl"
-            />
-          </motion.div>
         </div>
       </div>
 
-      {/* Stats Marquee */}
       <div className="relative mt-6 sm:mt-13 md:mt-13">
         <div className="absolute inset-x-0 bottom-0 bg-black origin-bottom-left rotate-[-3deg] z-20 translate-y-6 sm:translate-y-10 md:translate-y-12">
           <div className="marquee p-2 sm:p-3 md:p-4">
