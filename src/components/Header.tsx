@@ -102,32 +102,32 @@ const Header = () => {
   return (
     <header className="relative w-full bg-background border-b border-border z-[100]">
       {/* Decorative background */}
-      <div className="absolute top-0 right-0 h-full w-[350px] md:w-[500px] bg-primary z-0 [clip-path:polygon(20%_0,100%_0,100%_100%,0%_100%)] opacity-90 pointer-events-none"></div>
+      <div className="absolute top-0 right-0 h-full w-[250px] md:w-[500px] bg-primary z-0 [clip-path:polygon(20%_0,100%_0,100%_100%,0%_100%)] opacity-90 pointer-events-none"></div>
 
       {/* Header container */}
       <div className="container mx-auto px-4 sm:px-6 py-2 flex items-center justify-between relative z-20">
         {/* Logo section */}
         <div
-          className={`flex items-center transition-all duration-500 ${
-            isHome ? "translate-y-4" : ""
-          }`}
-          style={{ marginLeft: "0.75rem" }} // move logo slightly right
-        >
-          <Link
-            to="/"
-            className={`transition-all duration-500 flex items-center ${
-              isHome
-                ? "scale-[1.7] drop-shadow-[0_0_25px_rgba(255,200,0,0.8)]"
-                : "scale-100"
-            }`}
-          >
-            <img
-              src={VSSCLogo}
-              alt="VSSC Logo"
-              className="w-10 h-10 sm:w-14 sm:h-14 object-contain"
-            />
-          </Link>
-        </div>
+  className={`flex items-center transition-all duration-500 ${
+    isHome ? "translate-y-4" : ""
+  }`}
+  style={{ marginLeft: "0.75rem" }} // move logo slightly right
+>
+  <Link
+    to="/"
+    className={`transition-all duration-500 flex items-center ${
+      isHome
+        ? "scale-[1.7] drop-shadow-[0_0_25px_rgba(0,0,80,0.9)]"
+        : "scale-100"
+    }`}
+  >
+    <img
+      src={VSSCLogo}
+      alt="VSSC Logo"
+      className="w-10 h-10 sm:w-14 sm:h-14 object-contain"
+    />
+  </Link>
+</div>
 
         {/* Desktop Nav */}
         <nav className="hidden lg:flex items-center gap-8">
