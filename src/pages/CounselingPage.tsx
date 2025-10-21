@@ -5,7 +5,9 @@ import { db } from "../firebase";
 import green1 from "@/assets/green1.png";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import CompleteSessionButton from "@/components/ui/CompleteSessionButton";
 import { toastSuccess,toastError } from "@/components/ui/sonner";
+import SessionProof from "./SessionProofs";
 import {
   collection,
   doc,
@@ -689,8 +691,10 @@ export default function CounselingPage() {
     >
       Cancel Session
     </button>
+    <CompleteSessionButton session={session} collectionName="counseling" />
   </div>
 )}
+{userData?.role === "admin+" && <SessionProof collectionName="counseling" sessions={session} />}
               </div>
             ))}
           </div>

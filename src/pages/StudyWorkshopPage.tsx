@@ -6,6 +6,8 @@ import green2 from "@/assets/green2.png";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { toastSuccess,toastError } from "@/components/ui/sonner";
+import CompleteSessionButton from "@/components/ui/CompleteSessionButton";
+import SessionProof from "./SessionProofs";
 
 import {
   collection,
@@ -685,8 +687,10 @@ export default function StudyWorkshopPage() {
     >
       Cancel Session
     </button>
+    <CompleteSessionButton session={session} collectionName="studyworkshop" />
   </div>
 )}
+{userData?.role === "admin+" && <SessionProof collectionName="studyworkshop" sessions={session} />}
               </div>
             ))}
           </div>

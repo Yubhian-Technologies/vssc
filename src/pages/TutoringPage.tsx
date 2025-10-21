@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import TitleHeroSection from "@/components/TitleHeroSection";
 import SearchFilter from "@/components/SearchFilter";
 import { db } from "../firebase";
+import CompleteSessionButton from "@/components/ui/CompleteSessionButton";
+import SessionProof from "./SessionProofs";
 import {
   collection,
   doc,
@@ -671,8 +673,12 @@ try {
     >
       Cancel Session
     </button>
+    <CompleteSessionButton session={session} collectionName="tutoring" />
   </div>
 )}
+      {userData?.role === "admin+" && <SessionProof collectionName="tutoring" sessions={session} />}
+
+
             </div>
           ))}
         </div>

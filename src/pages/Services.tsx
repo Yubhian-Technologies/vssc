@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { db } from "../firebase";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { getAuth } from "firebase/auth";
+
 import green1 from "@/assets/green1.png";
 import green2 from "@/assets/green2.png";
 import green3 from "@/assets/green3.png";
 import green4 from "@/assets/green4.png";
 import green5 from "@/assets/green5.png";
-import filter21 from "@/assets/filter21.jpg"
 
 interface Service {
   id: string;
@@ -22,6 +23,8 @@ interface Service {
 
 const Services = () => {
   const navigate = useNavigate();
+  const auth = getAuth();
+
   const [services, setServices] = useState<Service[]>([
     {
       id: "tutoring",
@@ -75,24 +78,56 @@ const Services = () => {
 
   useEffect(() => {
     const fetchCounts = async () => {
-      const updated = await Promise.all(
-        services.map(async (service) => {
-          try {
-            const snapshot = await getDocs(collection(db, service.collectionName));
-            return { ...service, count: snapshot.size };
-          } catch (err) {
-            console.error(`Error fetching ${service.title}:`, err);
-            return service;
-          }
-        })
-      );
-      setServices(updated);
-      setFilteredServices(updated);
-    };
-    fetchCounts();
-  }, []);
+      try {
+        const currentUser = auth.currentUser;
+        if (!currentUser) return;
 
-  // Filter services based on search input
+        const userDocRef = doc(db, "users", currentUser.uid);
+        const userSnap = await getDoc(userDocRef);
+        if (!userSnap.exists()) return;
+
+        const userData = userSnap.data();
+        const userCollege = userData.college;
+        const isAdmin = userData.role === "admin" ? true : false;
+// check if user is admin
+
+        const updatedServices = await Promise.all(
+          services.map(async (service) => {
+            try {
+              const sessionSnapshot = await getDocs(
+                collection(db, service.collectionName)
+              );
+
+              const count = sessionSnapshot.docs.filter((sessionDoc) => {
+                const sessionData = sessionDoc.data();
+
+                if (isAdmin) {
+                  // Admin sees only sessions created by themselves
+                  return sessionData.createdBy === currentUser.uid;
+                } else {
+                  // Regular user sees sessions for their college
+                  return sessionData.colleges?.includes(userCollege);
+                }
+              }).length;
+
+              return { ...service, count };
+            } catch (err) {
+              console.error(`Error fetching ${service.title}:`, err);
+              return service;
+            }
+          })
+        );
+
+        setServices(updatedServices);
+        setFilteredServices(updatedServices);
+      } catch (err) {
+        console.error("Error fetching user or sessions:", err);
+      }
+    };
+
+    fetchCounts();
+  }, [auth.currentUser]);
+
   useEffect(() => {
     const filtered = services.filter((service) =>
       service.title.toLowerCase().includes(search.toLowerCase())
@@ -116,7 +151,7 @@ const Services = () => {
         />
       </div>
 
-      {/* Hero Section  */}
+      {/* Hero Section */}
       <div className="relative w-full h-72 md:h-96 lg:h-[28rem]">
         <img
           src={green5}
@@ -126,13 +161,13 @@ const Services = () => {
         <div className="absolute inset-0 bg-black bg-opacity-60"></div>
         <div className="absolute inset-0 flex flex-col justify-center items-center text-center text-white px-4">
           <motion.h1
-          className="text-3xl md:text-5xl font-bold text-white mb-6 drop-shadow-lg"
-          initial={{ opacity: 0, y: -40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7 }}
-        >
-          Empowering Students to Learn, Grow, and Succeed!
-        </motion.h1>
+            className="text-3xl md:text-5xl font-bold text-white mb-6 drop-shadow-lg"
+            initial={{ opacity: 0, y: -40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7 }}
+          >
+            Empowering Students to Learn, Grow, and Succeed!
+          </motion.h1>
           <p className="max-w-2xl text-lg">
             Learn more about our journey, mission, and vision for the future.
           </p>
@@ -165,8 +200,6 @@ const Services = () => {
             </ul>
           </div>
         </div>
-
-        
       </section>
 
       {/* Services Cards */}

@@ -3,6 +3,7 @@ import heroStudent from "@/assets/hero-student.jpg";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import CongratsPopup from "../components/ui/CongratsPopup";
+import GameCongratsPopup from "../components/ui/GameCongratsPopup";
 import { useLocation, useNavigate } from "react-router-dom";
 import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "../firebase";
@@ -19,23 +20,21 @@ const HeroSection = () => {
   ];
 
   const [showGame, setShowGame] = useState(false);
-  const firstPart = "Learn. Grow.";
-  const secondPart = " Prosper.";
-  const location = useLocation();
-  const navigate = useNavigate();
-
   const [showCongrats, setShowCongrats] = useState(false);
+  const [showGameCongrats, setShowGameCongrats] = useState(false); // New for GameCongratsPopup
   const [congratsMessage, setCongratsMessage] = useState<string | undefined>(undefined);
   const [points, setPoints] = useState(0);
   const [shouldShowGameAfterCongrats, setShouldShowGameAfterCongrats] = useState(false);
   const [isFirstGame, setIsFirstGame] = useState(false);
 
+  const firstPart = "Learn. Grow.";
+  const secondPart = " Prosper.";
+  const location = useLocation();
+  const navigate = useNavigate();
+
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (!user) {
-        console.log("No user logged in");
-        return;
-      }
+      if (!user) return;
 
       const checkDailyClaim = async (retries = 3, delay = 1000) => {
         try {
@@ -52,30 +51,22 @@ const HeroSection = () => {
             setIsFirstGame(newUser || location.state?.showCongrats);
 
             if (newUser || location.state?.showCongrats) {
-              console.log("New user detected: showing CongratsPopup");
               setShowCongrats(true);
               setCongratsMessage(undefined);
               await updateDoc(userRef, { isNewUser: false });
-              console.log("Cleared isNewUser in Firestore");
               window.history.replaceState({}, document.title);
             }
 
             const isEligible = !lastClaimed || lastClaimed.toDateString() !== todayKey;
-            console.log("Daily game eligibility:", { isEligible, lastClaimed, todayKey });
 
             if (isEligible) {
               if (newUser || location.state?.showCongrats) {
-                console.log("New user: delaying game");
                 setShouldShowGameAfterCongrats(true);
               } else {
-                console.log("Showing game immediately");
                 setShowGame(true);
               }
-            } else {
-              console.log("User already claimed daily game today");
             }
           } else if (retries > 0) {
-            console.log(`User document not found, retrying (${retries} attempts left)...`);
             setTimeout(() => checkDailyClaim(retries - 1, delay * 2), delay);
           } else {
             console.error("User document not found after retries");
@@ -108,29 +99,26 @@ const HeroSection = () => {
 
     setPoints(currentPoints + 5);
     setShowGame(false);
-    setCongratsMessage("You completed the daily game and earned 5 points! please click on fire button in header to navigate to leaderboard");
-    setShowCongrats(true);
+
+    // Show GameCongratsPopup
+    setShowGameCongrats(true);
   };
 
   const handleGameSkip = () => {
     setShowGame(false);
     if (isFirstGame) {
-      console.log("Navigating to leaderboard after game skip");
       navigate("/leaderboard", { state: { showArrow: true } });
-      setIsFirstGame(false); // Prevent ArrowOverlay on future skips
+      setIsFirstGame(false);
     }
   };
 
   const handleCongratsClose = () => {
-    console.log("handleCongratsClose:", { isFirstGame, congratsMessage });
     if (shouldShowGameAfterCongrats) {
-      console.log("Showing game after congrats close");
       setShouldShowGameAfterCongrats(false);
       setShowGame(true);
     } else if (isFirstGame && congratsMessage) {
-      console.log("Navigating to leaderboard with showArrow: true");
       navigate("/leaderboard", { state: { showArrow: true } });
-      setIsFirstGame(false); 
+      setIsFirstGame(false);
     }
     setShowCongrats(false);
     setCongratsMessage(undefined);
@@ -145,9 +133,17 @@ const HeroSection = () => {
       data-aos="fade-down"
       className="relative h-auto py-10 sm:py-14 [background-color:hsl(60,100%,95%)]"
     >
+      {/* Popups */}
       {showCongrats && <CongratsPopup onClose={handleCongratsClose} message={congratsMessage} />}
       {showGame && <DailyGameModal onComplete={handleGameComplete} onClose={handleGameSkip} />}
+      {showGameCongrats && (
+        <GameCongratsPopup
+          onClose={() => setShowGameCongrats(false)}
+          message="You completed the daily game and earned 5 points! Please click on the fire button in the header to navigate to the leaderboard."
+        />
+      )}
 
+      {/* Hero Content */}
       <div className="container mx-auto px-4 py-10 sm:px-6 md:py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
           <motion.div
@@ -172,10 +168,7 @@ const HeroSection = () => {
                 animate="visible"
                 variants={{
                   hidden: { opacity: 1 },
-                  visible: {
-                    opacity: 1,
-                    transition: { staggerChildren: 0.02 },
-                  },
+                  visible: { opacity: 1, transition: { staggerChildren: 0.02 } },
                 }}
               >
                 {firstPart.split("").map((char, index) => (
@@ -224,6 +217,7 @@ const HeroSection = () => {
         </div>
       </div>
 
+      {/* Marquee */}
       <div className="relative mt-6 sm:mt-13 md:mt-13">
         <div className="absolute inset-x-0 bottom-0 bg-black origin-bottom-left rotate-[-3deg] z-20 translate-y-6 sm:translate-y-10 md:translate-y-12">
           <div className="marquee p-2 sm:p-3 md:p-4">
