@@ -1,12 +1,9 @@
 import { useEffect, useState } from "react";
-import TitleHeroSection from "@/components/TitleHeroSection";
 import SearchFilter from "@/components/SearchFilter";
+import CompleteSessionButton from "@/components/ui/CompleteSessionButton";
 import { db } from "../firebase";
 import green1 from "@/assets/green1.png";
 import { motion } from "framer-motion";
-import { toast } from "sonner";
-import CompleteSessionButton from "@/components/ui/CompleteSessionButton";
-import { toastSuccess, toastError } from "@/components/ui/sonner";
 import { toastSuccess, toastError } from "@/components/ui/sonner";
 import SessionProof from "./SessionProofs";
 import {
@@ -39,7 +36,7 @@ interface CounselingSession {
   tutorName: string;
   colleges: string[];
   isGroup: boolean;
-  slots: number;
+  slots?: number;
   slotAvailable?: number;
   totalDuration?: number;
   slotDuration?: number;
@@ -47,11 +44,7 @@ interface CounselingSession {
   date?: string; // YYYY-MM-DD
   startTime?: string; // "10:00 PM"
   participants?: string[];
-  bookedSlots?: {
-    time: string;
-    booked: boolean;
-    user?: string | null;
-  }[];
+  bookedSlots?: { time: string; booked: boolean; user?: string | null }[];
   expiryDate?: string; // YYYY-MM-DD
   expiryTime?: string; // "23:59"
   validated?: boolean;
@@ -67,31 +60,27 @@ interface UserData {
 }
 
 export default function CounselingPage() {
-  const [sessions, setSessions] = useState<CounselingSession[]>([]);
-  const [filteredSessions, setFilteredSessions] = useState<CounselingSession[]>(
-    []
-  );
   const { user, userData } = useAuth();
   const userCollege = userData?.college;
 
-  const [selectedSession, setSelectedSession] =
-    useState<CounselingSession | null>(null);
+  const [sessions, setSessions] = useState<CounselingSession[]>([]);
+  const [filteredSessions, setFilteredSessions] = useState<CounselingSession[]>([]);
+  const [selectedSession, setSelectedSession] = useState<CounselingSession | null>(null);
   const [showCalendar, setShowCalendar] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [availableSlots, setAvailableSlots] = useState<
-    CounselingSession["bookedSlots"]
-  >([]);
+  const [availableSlots, setAvailableSlots] = useState<CounselingSession["bookedSlots"]>([]);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [showDialog, setShowDialog] = useState(false);
   const [bookingInProgress, setBookingInProgress] = useState(false);
-
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [sessionToCancel, setSessionToCancel] = useState<CounselingSession | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [showParticipants, setShowParticipants] = useState(false);
   const [selectedParticipants, setSelectedParticipants] = useState<UserData[]>([]);
   const [activeTab, setActiveTab] = useState<"validated" | "non-validated">("non-validated");
-   const [selectedCollege, setSelectedCollege] = useState<string>(userData?.role === "admin+" && userCollege ? userCollege : "all");
+  const [selectedCollege, setSelectedCollege] = useState<string>(
+    userData?.role === "admin+" && userCollege ? userCollege : "all"
+  );
   const [showProofsModal, setShowProofsModal] = useState(false);
   const [proofsToView, setProofsToView] = useState<string[]>([]);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
@@ -101,19 +90,13 @@ export default function CounselingPage() {
     { name: "Vishnu Dental College", domain: "@vdc.edu.in" },
     { name: "Shri Vishnu College of Pharmacy", domain: "@svcp.edu.in" },
     { name: "BV Raju Institute of Technology", domain: "@bvrit.ac.in" },
-    {
-      name: "BVRIT Hyderabad College of Engineering",
-      domain: "@bvrithyderabad.ac.in",
-    },
-    {
-      name: "Shri Vishnu Engineering College for Women",
-      domain: "@svecw.edu.in",
-    },
+    { name: "BVRIT Hyderabad College of Engineering", domain: "@bvrithyderabad.ac.in" },
+    { name: "Shri Vishnu Engineering College for Women", domain: "@svecw.edu.in" },
   ];
 
   const [newSession, setNewSession] = useState({
     title: "",
-    isGroup: undefined as boolean | undefined,
+    isGroup: false,
     date: "",
     startTime: "",
     totalDuration: 0,
@@ -126,8 +109,6 @@ export default function CounselingPage() {
     expiryDate: "",
     expiryTime: "",
   });
-  // const [showParticipants, setShowParticipants] = useState(false);
-  // const [selectedParticipants, setSelectedParticipants] = useState<UserData[]>([]);
 
   // --- Helper to check if session is expired ---
   const isSessionExpired = (session: CounselingSession) => {
@@ -141,10 +122,8 @@ export default function CounselingPage() {
   // --- Fetch sessions in real-time ---
   useEffect(() => {
     if (!userCollege || !user) return;
-    if (!userCollege || !user) return;
 
     const q = query(collection(db, "counseling"), orderBy("createdAt", "desc"));
-
     const unsubscribe = onSnapshot(q, async (snapshot) => {
       const allSessions: CounselingSession[] = snapshot.docs.map((doc) => ({
         id: doc.id,
@@ -153,23 +132,17 @@ export default function CounselingPage() {
       }));
 
       let filtered: CounselingSession[];
-
       if (userData?.role === "admin") {
         filtered = allSessions.filter((session) => session.createdBy === user.uid);
       } else if (userData?.role === "admin+") {
         filtered = allSessions.filter((session) => {
-          const matchesValidation =
-            activeTab === "validated" ? session.validated === true : session.validated !== true;
-          const matchesCollege =
-            selectedCollege === "all" || session.colleges.includes(selectedCollege);
+          const matchesValidation = activeTab === "validated" ? session.validated === true : session.validated !== true;
+          const matchesCollege = selectedCollege === "all" || session.colleges.includes(selectedCollege);
           return matchesValidation && matchesCollege;
         });
       } else {
         filtered = allSessions.filter(
-          (session) =>
-            session.colleges.includes(userCollege) &&
-            !isSessionExpired(session) &&
-            !session.validated
+          (session) => session.colleges.includes(userCollege) && !isSessionExpired(session) && !session.validated
         );
       }
 
@@ -198,38 +171,21 @@ export default function CounselingPage() {
                   .getMinutes()
                   .toString()
                   .padStart(2, "0")}`;
-
                 return { time: timeStr, booked: false, user: null };
               });
 
               const sessionRef = doc(db, "counseling", session.id);
-              await updateDoc(sessionRef, {
-                bookedSlots: generatedSlots,
-                slotAvailable: generatedSlots.length,
-              });
-              const sessionRef = doc(db, "counseling", session.id);
-              await updateDoc(sessionRef, {
-                bookedSlots: generatedSlots,
-                slotAvailable: generatedSlots.length,
-              });
-
+              await updateDoc(sessionRef, { bookedSlots: generatedSlots, slotAvailable: generatedSlots.length });
               return { ...session, bookedSlots: generatedSlots, slotAvailable: generatedSlots.length };
             }
 
             const slotAvailable = session.bookedSlots.filter((s) => !s.booked).length;
             return { ...session, slotAvailable };
           }
-
-          return session;
-        })
-      );
           return session;
         })
       );
 
-      setSessions(updatedSessions);
-      setFilteredSessions(updatedSessions);
-    });
       setSessions(updatedSessions);
       setFilteredSessions(updatedSessions);
     });
@@ -243,28 +199,14 @@ export default function CounselingPage() {
     return new Date(year, month - 1, day);
   };
 
-  const normalizeDate = (d: Date) =>
-    new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const normalizeDate = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
 
-  // only highlight dates for the currently selectedSession
   const tileClassName = ({ date }: any) => {
-    // no selected session -> no highlights
     if (!selectedSession || !selectedSession.date) return "";
-
-    // normalize both dates (remove time portion)
     const sessionDate = normalizeDate(parseDate(selectedSession.date));
     const currentDate = normalizeDate(date);
-
-    // check whether this selected session actually has any free slots
-    const hasAvailableSlot = selectedSession.bookedSlots?.some(
-      (s) => !s.booked
-    );
-
-    // only highlight if the calendar tile matches the selected session's date
-    if (sessionDate.getTime() === currentDate.getTime() && hasAvailableSlot) {
-      return "bg-green-300 rounded-full";
-    }
-    return "";
+    const hasAvailableSlot = selectedSession.bookedSlots?.some((s) => !s.booked);
+    return sessionDate.getTime() === currentDate.getTime() && hasAvailableSlot ? "bg-green-300 rounded-full" : "";
   };
 
   const handleDateClick = (date: Date) => {
@@ -283,10 +225,8 @@ export default function CounselingPage() {
   const handleBookSlot = (session: CounselingSession) => {
     setSelectedSession(session);
     if (session.isGroup) {
-      // Directly open confirm dialog for group sessions
       setShowDialog(true);
     } else {
-      // 1-on-1 session: open calendar to select date/slot
       setShowCalendar(true);
       setSelectedDate(null);
       setSelectedSlot(null);
@@ -300,19 +240,15 @@ export default function CounselingPage() {
   };
 
   const confirmJoin = async () => {
-    if (bookingInProgress) return;
-    if (!user?.uid || !selectedSession || (!selectedSession.isGroup && !selectedSlot)) return;
+    if (bookingInProgress || !user?.uid || !selectedSession || (!selectedSession.isGroup && !selectedSlot)) return;
 
-    setBookingInProgress(true);
-    const sessionRef = doc(db, "counseling", selectedSession.id);
     setBookingInProgress(true);
     const sessionRef = doc(db, "counseling", selectedSession.id);
 
     try {
       if (selectedSession.isGroup) {
         if (!selectedSession.slots || selectedSession.slots <= 0) {
-          toastError("No slots left.");
-          return;
+          throw new Error("No slots left.");
         }
         if (selectedSession.participants?.includes(user.uid)) {
           toastSuccess("You already joined this group session.");
@@ -323,25 +259,6 @@ export default function CounselingPage() {
           participants: arrayUnion(user.uid),
           slots: increment(-1),
         });
-        await updateDoc(sessionRef, {
-          participants: arrayUnion(user.uid),
-          slots: increment(-1),
-        });
-
-        setSessions((prev) =>
-          prev.map((s) =>
-            s.id === selectedSession.id
-              ? { ...s, participants: [...(s.participants || []), user.uid], slots: (s.slots || 1) - 1 }
-              : s
-          )
-        );
-        setFilteredSessions((prev) =>
-          prev.map((s) =>
-            s.id === selectedSession.id
-              ? { ...s, participants: [...(s.participants || []), user.uid], slots: (s.slots || 1) - 1 }
-              : s
-          )
-        );
 
         await addDoc(collection(db, "bookings"), {
           userId: user.uid,
@@ -363,17 +280,13 @@ export default function CounselingPage() {
           if (!sessionData.bookedSlots) throw new Error("Slots not initialized");
 
           const alreadyBooked = sessionData.bookedSlots.some((s) => s.user === user.uid);
-          if (alreadyBooked) {
-            throw new Error("You already booked a slot in this session.");
-          }
+          if (alreadyBooked) throw new Error("You already booked a slot in this session.");
 
           const slotIndex = sessionData.bookedSlots.findIndex((s) => s.time === selectedSlot);
           if (slotIndex < 0) throw new Error("Slot not found");
 
           const slot = sessionData.bookedSlots[slotIndex];
-          if (slot.booked) {
-            throw new Error("Slot already booked by someone else.");
-          }
+          if (slot.booked) throw new Error("Slot already booked by someone else.");
 
           const updatedSlots = [...sessionData.bookedSlots];
           updatedSlots[slotIndex] = { ...updatedSlots[slotIndex], booked: true, user: user.uid };
@@ -381,16 +294,7 @@ export default function CounselingPage() {
           const updatedParticipants = sessionData.participants
             ? [...sessionData.participants, user.uid]
             : [user.uid];
-          const updatedParticipants = sessionData.participants
-            ? [...sessionData.participants, user.uid]
-            : [user.uid];
 
-          transaction.update(sessionRef, {
-            bookedSlots: updatedSlots,
-            slotAvailable: updatedSlots.filter((s) => !s.booked).length,
-            participants: updatedParticipants,
-          });
-        });
           transaction.update(sessionRef, {
             bookedSlots: updatedSlots,
             slotAvailable: updatedSlots.filter((s) => !s.booked).length,
@@ -422,46 +326,34 @@ export default function CounselingPage() {
       setAvailableSlots([]);
     }
   };
-        toastSuccess(`You booked the slot at ${selectedSlot}`);
-      }
-    } catch (err: any) {
-      toastError(err.message || "Booking failed. Try again.");
-    } finally {
-      setBookingInProgress(false);
-      setShowDialog(false);
-      setShowCalendar(false);
-      setSelectedSession(null);
-      setSelectedSlot(null);
-      setSelectedDate(null);
-      setAvailableSlots([]);
-    }
-  };
 
   // --- Admin Features ---
   const handleAddSession = async () => {
-    if (!newSession.title || !newSession.date || newSession.isGroup === undefined || !newSession.expiryDate || !newSession.expiryTime) {
+    if (
+      !newSession.title ||
+      newSession.isGroup === undefined ||
+      !newSession.date ||
+      !newSession.startTime ||
+      !newSession.expiryDate ||
+      !newSession.expiryTime ||
+      (newSession.isGroup && (!newSession.slots || newSession.slots <= 0)) ||
+      (!newSession.isGroup && (!newSession.totalDuration || !newSession.slotDuration))
+    ) {
       toastError("Please fill in all required fields.");
       return;
     }
 
     try {
-      const sessionDate = new Date(newSession.date);
+      const sessionDateTime = new Date(`${newSession.date}T${newSession.startTime}:00`);
       const [expiryYear, expiryMonth, expiryDay] = newSession.expiryDate.split("-").map(Number);
       const [expiryHour, expiryMinute] = newSession.expiryTime.split(":").map(Number);
       const expiryDateTime = new Date(expiryYear, expiryMonth - 1, expiryDay, expiryHour, expiryMinute);
 
-      const sessionStartDateTime = new Date(newSession.date + 'T' + newSession.startTime + ':00');
-
-      if (expiryDateTime <= sessionStartDateTime) {
+      if (expiryDateTime <= sessionDateTime) {
         toastError("Expiry date and time must be after the session start date and time.");
         return;
       }
-    } catch (error) {
-      toastError("Invalid date or time format. Please check your inputs.");
-      return;
-    }
 
-    try {
       const sessionData: any = {
         title: newSession.title,
         createdBy: user?.uid,
@@ -471,6 +363,8 @@ export default function CounselingPage() {
         skills: newSession.skills || [],
         createdAt: serverTimestamp(),
         isGroup: newSession.isGroup,
+        date: newSession.date,
+        startTime: newSession.startTime,
         expiryDate: newSession.expiryDate,
         expiryTime: newSession.expiryTime,
         validated: false,
@@ -478,49 +372,30 @@ export default function CounselingPage() {
       };
 
       if (newSession.isGroup) {
-        // Group session fields
         sessionData.slots = newSession.slots || 1;
         sessionData.participants = [];
-        sessionData.date = newSession.date;
-        sessionData.totalDuration = newSession.totalDuration;
-        sessionData.startTime = newSession.startTime;
       } else {
-        // 1-on-1 session fields
-        sessionData.date = newSession.date;
-        sessionData.startTime = newSession.startTime;
         sessionData.totalDuration = newSession.totalDuration;
         sessionData.slotDuration = newSession.slotDuration;
-        sessionData.slotAvailable = Math.floor(
-          newSession.totalDuration / newSession.slotDuration
-        );
+        const slotCount = Math.floor(newSession.totalDuration / newSession.slotDuration);
+        sessionData.slotAvailable = slotCount;
         sessionData.participants = [];
 
-        // Generate bookedSlots dynamically
-        const [hoursStr, minutesStrWithSuffix] =
-          newSession.startTime!.split(":");
+        const [hoursStr, minutesStrWithSuffix] = newSession.startTime.split(":");
         let hours = parseInt(hoursStr);
         let minutesStr = minutesStrWithSuffix;
         let suffix = "";
-        if (
-          minutesStrWithSuffix.includes("AM") ||
-          minutesStrWithSuffix.includes("PM")
-        ) {
+        if (minutesStrWithSuffix.includes("AM") || minutesStrWithSuffix.includes("PM")) {
           suffix = minutesStrWithSuffix.slice(-2);
           minutesStr = minutesStrWithSuffix.slice(0, -2).trim();
         }
         const minutes = parseInt(minutesStr);
         if (suffix.toLowerCase() === "pm" && hours < 12) hours += 12;
 
-        const slotCount = Math.floor(
-          newSession.totalDuration / newSession.slotDuration
-        );
         const bookedSlots = Array.from({ length: slotCount }, (_, i) => {
-          const slotDate = new Date(newSession.date!);
+          const slotDate = new Date(newSession.date);
           slotDate.setHours(hours, minutes + i * newSession.slotDuration, 0, 0);
-          const timeStr = `${slotDate
-            .getHours()
-            .toString()
-            .padStart(2, "0")}:${slotDate
+          const timeStr = `${slotDate.getHours().toString().padStart(2, "0")}:${slotDate
             .getMinutes()
             .toString()
             .padStart(2, "0")}`;
@@ -535,12 +410,12 @@ export default function CounselingPage() {
       setShowForm(false);
       setNewSession({
         title: "",
+        isGroup: false,
         date: "",
-        isGroup: undefined,
-        slots: 1,
         startTime: "",
         totalDuration: 0,
         slotDuration: 0,
+        slots: 1,
         colleges: [],
         description: "",
         tutorName: "",
@@ -562,7 +437,6 @@ export default function CounselingPage() {
     }
 
     const participantsData: UserData[] = [];
-
     for (const uid of participants) {
       try {
         const userDoc = await getDoc(doc(db, "users", uid));
@@ -580,7 +454,6 @@ export default function CounselingPage() {
 
   const handleCancelSession = async () => {
     if (!sessionToCancel) return;
-    if (!sessionToCancel) return;
 
     try {
       const bookingsQuery = query(
@@ -593,7 +466,6 @@ export default function CounselingPage() {
       await Promise.all(deleteBookingPromises);
 
       await deleteDoc(doc(db, "counseling", sessionToCancel.id));
-
       toastSuccess("Session canceled and deleted successfully.");
     } catch (err) {
       console.error("Error canceling session:", err);
@@ -604,16 +476,15 @@ export default function CounselingPage() {
     }
   };
 
+  const handleCompleteSession = (session: CounselingSession) => {
+    console.log("Complete session:", session.id);
+  };
+
   const handleViewProofs = (session: CounselingSession) => {
     setSelectedSession(session);
     setProofsToView(session.proofs || []);
     setShowProofsModal(true);
   };
-
-  const handleCompleteSession = (session) => {
-  
-  console.log("Complete session:", session.id);
-};
 
   const handleValidateSession = async () => {
     if (!selectedSession) return;
@@ -634,11 +505,7 @@ export default function CounselingPage() {
   return (
     <div>
       <div className="relative w-full h-72 md:h-96 lg:h-[28rem]">
-        <img
-          src={green1}
-          alt="Counseling Banner"
-          className="w-full h-full object-contain object-top"
-        />
+        <img src={green1} alt="Counseling Banner" className="w-full h-full object-contain object-top" />
         <div className="absolute inset-0 bg-black bg-opacity-60"></div>
         <div className="absolute inset-0 flex flex-col justify-center items-center text-center text-white px-4">
           <motion.h1
@@ -649,21 +516,16 @@ export default function CounselingPage() {
           >
             Available Counseling Sessions
           </motion.h1>
-          <p className="max-w-2xl text-lg">
-            Book a session with your counselor to get guidance and support
-          </p>
+          <p className="max-w-2xl text-lg">Book a session with your counselor to get guidance and support</p>
         </div>
       </div>
       <div className="p-6 min-h-screen [background-color:hsl(60,100%,95%)]">
         {userData?.role === "admin+" && (
           <div className="flex flex-col sm:flex-row justify-between items-center mb-6 px-4 sm:px-6 gap-4 sm:gap-0">
             <div className="flex flex-wrap gap-4">
-              
               <button
                 className={`px-4 py-2 rounded-lg font-semibold transition ${
-                  activeTab === "non-validated"
-                    ? "bg-primary text-white"
-                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  activeTab === "non-validated" ? "bg-primary text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                 }`}
                 onClick={() => setActiveTab("non-validated")}
               >
@@ -671,9 +533,7 @@ export default function CounselingPage() {
               </button>
               <button
                 className={`px-4 py-2 rounded-lg font-semibold transition ${
-                  activeTab === "validated"
-                    ? "bg-primary text-white"
-                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  activeTab === "validated" ? "bg-primary text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                 }`}
                 onClick={() => setActiveTab("validated")}
               >
@@ -688,20 +548,15 @@ export default function CounselingPage() {
               >
                 <option value="all">All Colleges</option>
                 {collegesList.map((college) => (
-                  <option key={college.name} value={college.name}>
-                    {college.name}
-                  </option>
+                  <option key={college.name} value={college.name}>{college.name}</option>
                 ))}
               </select>
             </div>
           </div>
         )}
         <SearchFilter data={sessions} onFilteredData={setFilteredSessions} />
-
         {filteredSessions.length === 0 ? (
-          <p className="text-center text-gray-600">
-            No sessions available for your college.
-          </p>
+          <p className="text-center text-gray-600">No sessions available for your college.</p>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredSessions.map((session) => (
@@ -718,69 +573,46 @@ export default function CounselingPage() {
                     <span className="ml-2 bg-green-600 px-2 rounded">{session.validated ? "Validated" : "Non-Validated"}</span>
                   )}
                 </div>
-                <h2 className="text-xl font-bold text-gray-800 group-hover:text-primary transition">
-                  {session.title}
-                </h2>
-                <p className="text-gray-600 mt-2 flex-1">
-                  {session.description}
-                </p>
+                <h2 className="text-xl font-bold text-gray-800 group-hover:text-primary transition">{session.title}</h2>
+                <p className="text-gray-600 mt-2 flex-1">{session.description}</p>
                 <div className="mt-4 space-y-2 text-sm text-gray-700">
                   <p className="flex items-center gap-2">
                     <UserIcon className="w-4 h-4 text-primary" />
-                    <span>
-                      <strong>Counselor:</strong> {session.tutorName}
-                    </span>
+                    <span><strong>Counselor:</strong> {session.tutorName}</span>
                   </p>
                   <p className="flex items-center gap-2">
                     <BookOpen className="w-4 h-4 text-green-600" />
-                    <span>
-                      <strong>Skills:</strong> {session.skills.join(", ")}
-                    </span>
+                    <span><strong>Skills:</strong> {session.skills.join(", ")}</span>
                   </p>
                   <p className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-blue-600" />
-                    <span>
-                      <strong>Start:</strong> {session.date} {session.startTime}
-                    </span>
+                    <span><strong>Start:</strong> {session.date} {session.startTime}</span>
                   </p>
                   <p className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-red-600" />
-                    <span>
-                      <strong>Expiry:</strong> {session.expiryDate}{" "}
-                      {session.expiryTime}
-                    </span>
+                    <span><strong>Expiry:</strong> {session.expiryDate} {session.expiryTime}</span>
                   </p>
                   {session.isGroup ? (
                     <p className="flex items-center gap-2">
                       <Users className="w-4 h-4 text-pink-600" />
-                      <span>
-                        <strong>Slots Left:</strong> {session.slots}
-                      </span>
+                      <span><strong>Slots Left:</strong> {session.slots}</span>
                     </p>
                   ) : (
                     <p className="flex items-center gap-2">
                       <Clock className="w-4 h-4 text-purple-600" />
-                      <span>
-                        <strong>One-to-One Slots:</strong>{" "}
-                        {session.slotAvailable}
-                      </span>
+                      <span><strong>One-to-One Slots:</strong> {session.slotAvailable}</span>
                     </p>
                   )}
                 </div>
                 {!session.validated && userData?.role !== "admin" && userData?.role !== "admin+" && (
                   <button
-                    className={`mt-5 w-full py-2 rounded-lg font-semibold text-white transition 
-                      ${
-                        isSessionExpired(session)
-                          ? "bg-gray-400 cursor-not-allowed"
-                          : session.isGroup
-                          ? session.slots && session.slots > 0
-                            ? "bg-gradient-to-r from-primary to-indigo-800 hover:from-indigo-800 hover:to-blue-600"
-                            : "bg-gray-400 cursor-not-allowed"
-                          : session.slotAvailable && session.slotAvailable > 0
-                          ? "bg-gradient-to-r from-primary to-indigo-800 hover:from-indigo-800 hover:to-blue-600"
-                          : "bg-gray-400 cursor-not-allowed"
-                      }`}
+                    className={`mt-5 w-full py-2 rounded-lg font-semibold text-white transition ${
+                      isSessionExpired(session) ||
+                      (session.isGroup && (!session.slots || session.slots <= 0)) ||
+                      (!session.isGroup && (!session.slotAvailable || session.slotAvailable <= 0))
+                        ? "bg-gray-400 cursor-not-allowed"
+                        : "bg-gradient-to-r from-primary to-indigo-800 hover:from-indigo-800 hover:to-blue-600"
+                    }`}
                     onClick={() => handleBookSlot(session)}
                     disabled={
                       isSessionExpired(session) ||
@@ -797,16 +629,15 @@ export default function CounselingPage() {
                       : "Full"}
                   </button>
                 )}
-                  {(userData?.role === "admin" || userData?.role === "admin+") && (
-                  <div className="absolute top-3 right-3 mt-4">
+                {(userData?.role === "admin" || userData?.role === "admin+") && (
+                  <div className="absolute top-3 right-3">
                     <div className="relative">
                       <button
                         onClick={() => setOpenMenuId(openMenuId === session.id ? null : session.id)}
-                        className="text-white font-bold  bg-primary rounded-full p-2 shadow-sm hover:bg-blue-900 transition"
+                        className="text-white font-bold bg-primary rounded-full p-2 shadow-sm hover:bg-blue-900 transition"
                       >
                         ⋮
                       </button>
-                
                       {openMenuId === session.id && (
                         <div className="absolute right-0 mt-2 w-44 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
                           <p
@@ -818,7 +649,6 @@ export default function CounselingPage() {
                           >
                             View Participants
                           </p>
-                
                           {userData?.role === "admin" && !session.validated && (
                             <>
                               <p
@@ -831,13 +661,8 @@ export default function CounselingPage() {
                               >
                                 Cancel Session
                               </p>
-                
-                              
                               <div className="px-4 py-1">
-                                <CompleteSessionButton
-                                  session={session}
-                                  collectionName="counseling"
-                                />
+                                <CompleteSessionButton session={session} collectionName="counseling" />
                               </div>
                             </>
                           )}
@@ -863,7 +688,6 @@ export default function CounselingPage() {
             ))}
           </div>
         )}
-        {/* Floating Add Session Button */}
         {userData?.role === "admin" && (
           <button
             onClick={() => setShowForm(true)}
@@ -872,8 +696,6 @@ export default function CounselingPage() {
             +
           </button>
         )}
-
-        {/* Add Session Modal */}
         {showForm && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4 overflow-y-auto backdrop-blur-sm">
             <div className="bg-[hsl(60,100%,95%)] rounded-2xl p-8 w-full max-w-lg space-y-6 max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100">
@@ -885,110 +707,79 @@ export default function CounselingPage() {
               </div>
               <form className="space-y-6">
                 <div className="space-y-2">
-                  <label htmlFor="title" className="flex items-center gap-2 font-semibold text-gray-700">
-                    Title
-                  </label>
+                  <label htmlFor="title" className="flex items-center gap-2 font-semibold text-gray-700">Title</label>
                   <input
                     type="text"
                     name="title"
                     id="title"
                     placeholder="Enter session title"
                     className="w-full p-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
-                    value={newSession.title || ""}
+                    value={newSession.title}
                     onChange={(e) => setNewSession({ ...newSession, title: e.target.value })}
                   />
                 </div>
                 <div className="space-y-2">
-                  <label htmlFor="description" className="flex items-center gap-2 font-semibold text-gray-700">
-                    Description
-                  </label>
+                  <label htmlFor="description" className="flex items-center gap-2 font-semibold text-gray-700">Description</label>
                   <textarea
                     name="description"
                     id="description"
                     placeholder="Enter session description"
                     rows={2}
                     className="w-full p-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 resize-none bg-gray-50 hover:bg-white"
-                    value={newSession.description || ""}
+                    value={newSession.description}
                     onChange={(e) => setNewSession({ ...newSession, description: e.target.value })}
                   />
                 </div>
                 <div className="space-y-2">
-                  <label htmlFor="tutorName" className="flex items-center gap-2 font-semibold text-gray-700">
-                    Counselor Name
-                  </label>
+                  <label htmlFor="tutorName" className="flex items-center gap-2 font-semibold text-gray-700">Counselor Name</label>
                   <input
                     type="text"
                     name="tutorName"
                     id="tutorName"
                     placeholder="Enter counselor name"
                     className="w-full p-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
-                    value={newSession.tutorName || ""}
+                    value={newSession.tutorName}
                     onChange={(e) => setNewSession({ ...newSession, tutorName: e.target.value })}
                   />
                 </div>
                 <div className="space-y-2">
-                  <label htmlFor="skills" className="flex items-center gap-2 font-semibold text-gray-700">
-                    Skills
-                  </label>
+                  <label htmlFor="skills" className="flex items-center gap-2 font-semibold text-gray-700">Skills</label>
                   <input
                     type="text"
                     name="skills"
                     id="skills"
                     placeholder="Enter skills separated by commas"
                     className="w-full p-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
-                    value={newSession.skills?.join(", ") || ""}
+                    value={newSession.skills.join(", ")}
                     onChange={(e) =>
-                      setNewSession({
-                        ...newSession,
-                        skills: e.target.value.split(",").map((s) => s.trim()),
-                      })
+                      setNewSession({ ...newSession, skills: e.target.value.split(",").map((s) => s.trim()).filter((s) => s) })
                     }
                   />
-                  <p className="text-xs text-gray-500 flex items-center gap-1">
-                    Separate multiple skills with commas
-                  </p>
+                  <p className="text-xs text-gray-500 flex items-center gap-1">Separate multiple skills with commas</p>
                 </div>
                 <div className="space-y-3">
-                  <label htmlFor="colleges" className="flex items-center gap-2 font-semibold text-gray-700">
-                    Colleges
-                  </label>
+                  <label htmlFor="colleges" className="flex items-center gap-2 font-semibold text-gray-700">Colleges</label>
                   <select
                     name="colleges"
                     id="colleges"
                     className="w-full p-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white h-40"
                     multiple
-                    value={newSession.colleges && newSession.colleges.length > 0 ? newSession.colleges : []}
+                    value={newSession.colleges}
                     onChange={(e) =>
-                      setNewSession({
-                        ...newSession,
-                        colleges: Array.from(e.target.selectedOptions, (option) => option.value),
-                      })
+                      setNewSession({ ...newSession, colleges: Array.from(e.target.selectedOptions, (option) => option.value) })
                     }
                   >
-                    <option value="" disabled hidden>
-                      Select College(s)
-                    </option>
-                    <option value="Vishnu Institute of Technology">Vishnu Institute of Technology</option>
-                    <option value="Vishnu Dental College">Vishnu Dental College</option>
-                    <option value="Shri Vishnu College of Pharmacy">Shri Vishnu College of Pharmacy</option>
-                    <option value="BV Raju Institute of Technology">BV Raju Institute of Technology</option>
-                    <option value="BVRIT Hyderabad College of Engineering">
-                      BVRIT Hyderabad College of Engineering
-                    </option>
-                    <option value="Shri Vishnu Engineering College for Women">
-                      Shri Vishnu Engineering College for Women
-                    </option>
+                    <option value="" disabled hidden>Select College(s)</option>
+                    {collegesList.map((college) => (
+                      <option key={college.name} value={college.name}>{college.name}</option>
+                    ))}
                   </select>
-                  <p className="text-xs text-gray-500 flex items-center gap-1">
-                    Hold Ctrl (Cmd on Mac) to select multiple colleges
-                  </p>
+                  <p className="text-xs text-gray-500 flex items-center gap-1">Hold Ctrl (Cmd on Mac) to select multiple colleges</p>
                 </div>
                 <div className="space-y-3">
-                  <label className="flex items-center gap-2 font-semibold text-gray-700">
-                    Session Type
-                  </label>
-                  <div className="flex items-center gap-6 bg-[hsl(60,100%,95%)] border-2 p-2 rounded-xl">
-                    {/* <label className="flex items-center gap-2 cursor-pointer">
+                  <label className="flex items-center gap-2 font-semibold text-gray-700">Session Type</label>
+                  <div className="flex items-center gap-6 bg-[hsl(60,100%,95%)] border-2 p-2 rounded-xl border-green-100">
+                    <label className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="radio"
                         name="isGroup"
@@ -997,7 +788,7 @@ export default function CounselingPage() {
                         onChange={() => setNewSession({ ...newSession, isGroup: true })}
                       />
                       <span className="font-medium text-gray-700">Group Session</span>
-                    </label> */}
+                    </label>
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="radio"
@@ -1010,11 +801,9 @@ export default function CounselingPage() {
                     </label>
                   </div>
                 </div>
-                {/* {newSession.isGroup && (
+                {newSession.isGroup ? (
                   <div className="space-y-4 p-2 bg-blue-50 rounded-xl border border-blue-100">
-                    <h3 className="font-semibold text-blue-800 flex items-center gap-2">
-                      Group Session Details
-                    </h3>
+                    <h3 className="font-semibold text-blue-800 flex items-center gap-2">Group Session Details</h3>
                     <div className="grid grid-cols-1 gap-2">
                       <div className="space-y-2">
                         <label htmlFor="date" className="font-semibold text-gray-700 text-sm">Date</label>
@@ -1023,7 +812,7 @@ export default function CounselingPage() {
                           name="date"
                           id="date"
                           className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white"
-                          value={newSession.date || ""}
+                          value={newSession.date}
                           onChange={(e) => setNewSession({ ...newSession, date: e.target.value })}
                         />
                       </div>
@@ -1034,7 +823,7 @@ export default function CounselingPage() {
                           name="startTime"
                           id="startTime"
                           className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white"
-                          value={newSession.startTime || ""}
+                          value={newSession.startTime}
                           onChange={(e) => setNewSession({ ...newSession, startTime: e.target.value })}
                         />
                       </div>
@@ -1046,18 +835,15 @@ export default function CounselingPage() {
                           id="slots"
                           placeholder="Enter number of slots"
                           className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white"
-                          value={newSession.slots || ""}
-                          onChange={(e) => setNewSession({ ...newSession, slots: parseInt(e.target.value) })}
+                          value={newSession.slots}
+                          onChange={(e) => setNewSession({ ...newSession, slots: parseInt(e.target.value) || 1 })}
                         />
                       </div>
                     </div>
                   </div>
-                )} */}
-                {newSession.isGroup === false && (
+                ) : (
                   <div className="space-y-4 p-2 bg-green-50 rounded-xl border border-green-100">
-                    <h3 className="font-semibold text-green-800 flex items-center gap-2">
-                      1-on-1 Session Details
-                    </h3>
+                    <h3 className="font-semibold text-green-800 flex items-center gap-2">1-on-1 Session Details</h3>
                     <div className="grid grid-cols-1 gap-4">
                       <div className="space-y-2">
                         <label htmlFor="date" className="font-semibold text-gray-700 text-sm">Date</label>
@@ -1066,7 +852,7 @@ export default function CounselingPage() {
                           name="date"
                           id="date"
                           className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white"
-                          value={newSession.date || ""}
+                          value={newSession.date}
                           onChange={(e) => setNewSession({ ...newSession, date: e.target.value })}
                         />
                       </div>
@@ -1077,7 +863,7 @@ export default function CounselingPage() {
                           name="startTime"
                           id="startTime"
                           className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white"
-                          value={newSession.startTime || ""}
+                          value={newSession.startTime}
                           onChange={(e) => setNewSession({ ...newSession, startTime: e.target.value })}
                         />
                       </div>
@@ -1090,9 +876,7 @@ export default function CounselingPage() {
                           placeholder="Enter total duration"
                           className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white"
                           value={newSession.totalDuration || ""}
-                          onChange={(e) =>
-                            setNewSession({ ...newSession, totalDuration: parseInt(e.target.value) })
-                          }
+                          onChange={(e) => setNewSession({ ...newSession, totalDuration: parseInt(e.target.value) || 0 })}
                         />
                       </div>
                       <div className="space-y-2">
@@ -1104,9 +888,7 @@ export default function CounselingPage() {
                           placeholder="Enter slot duration"
                           className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white"
                           value={newSession.slotDuration || ""}
-                          onChange={(e) =>
-                            setNewSession({ ...newSession, slotDuration: parseInt(e.target.value) })
-                          }
+                          onChange={(e) => setNewSession({ ...newSession, slotDuration: parseInt(e.target.value) || 0 })}
                         />
                       </div>
                     </div>
@@ -1114,28 +896,24 @@ export default function CounselingPage() {
                 )}
                 <div className="grid grid-cols-1 gap-4">
                   <div className="space-y-2">
-                    <label htmlFor="expiryDate" className="flex items-center gap-2 font-semibold text-gray-700">
-                      Expiry Date
-                    </label>
+                    <label htmlFor="expiryDate" className="flex items-center gap-2 font-semibold text-gray-700">Expiry Date</label>
                     <input
                       type="date"
                       name="expiryDate"
                       id="expiryDate"
                       className="w-full p-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
-                      value={newSession.expiryDate || ""}
+                      value={newSession.expiryDate}
                       onChange={(e) => setNewSession({ ...newSession, expiryDate: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2">
-                    <label htmlFor="expiryTime" className="flex items-center gap-2 font-semibold text-gray-700">
-                      Expiry Time
-                    </label>
+                    <label htmlFor="expiryTime" className="flex items-center gap-2 font-semibold text-gray-700">Expiry Time</label>
                     <input
                       type="time"
                       name="expiryTime"
                       id="expiryTime"
                       className="w-full p-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
-                      value={newSession.expiryTime || ""}
+                      value={newSession.expiryTime}
                       onChange={(e) => setNewSession({ ...newSession, expiryTime: e.target.value })}
                     />
                   </div>
@@ -1161,7 +939,7 @@ export default function CounselingPage() {
           </div>
         )}
         {showParticipants && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-[hsl(60,100%,95%)] p-6 rounded-lg shadow-lg w-[450px]">
               <h3 className="text-lg font-bold mb-4">Participants</h3>
               {selectedParticipants.length === 0 ? (
@@ -1170,9 +948,7 @@ export default function CounselingPage() {
                 <ul className="list-disc pl-5 space-y-2">
                   {selectedParticipants.map((user) => (
                     <li key={user.id}>
-                      <span className="font-medium">{user.name || "N/A"}</span>{" "}
-                      - {user.email || "No email"} (
-                      {user.college || "No college"})
+                      <span className="font-medium">{user.name || "N/A"}</span> - {user.email || "No email"} ({user.college || "No college"})
                     </li>
                   ))}
                 </ul>
@@ -1189,125 +965,105 @@ export default function CounselingPage() {
           </div>
         )}
         {showProofsModal && selectedSession && (
-  <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4 sm:p-0">
-    <div className="bg-[hsl(60,100%,95%)] rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-lg">
-      
-      {/* Heading */}
-      <h2 className="text-xl sm:text-2xl font-bold mb-4 text-center text-gray-800">
-        {selectedSession.validated ? "View Proofs" : "View and Validate Proofs"}
-      </h2>
-
-      {/* Session Details */}
-      <div className="mb-4 p-4 bg-yellow-100 rounded-lg border border-yellow-200 text-sm sm:text-base">
-        <p className="font-semibold text-gray-800 break-words">
-          Session: <span className="font-normal">{selectedSession.title}</span>
-        </p>
-        <p className="text-gray-700 break-words">
-          Tutor: <span className="font-normal">{selectedSession.tutorName}</span>
-        </p>
-        <p className="text-gray-700">
-          Date:{" "}
-          <span className="font-normal">
-            {selectedSession.date} {selectedSession.startTime}
-          </span>
-        </p>
-      </div>
-
-      {/* Proofs Display */}
-      {proofsToView.length === 0 ? (
-        <p className="text-sm text-gray-500 text-center">No proofs available</p>
-      ) : (
-        <div className="space-y-4">
-          {proofsToView.map((proof, index) => (
-            <div
-              key={index}
-              className="border p-2 rounded-lg bg-yellow-100 flex flex-col items-center"
-            >
-              {proof.match(/\.(jpg|jpeg|png)$/i) ? (
-                <img
-                  src={proof}
-                  alt={`Proof ${index + 1}`}
-                  className="w-full max-h-56 sm:max-h-64 object-contain rounded transition-transform duration-200 hover:scale-105"
-                />
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4 sm:p-0">
+            <div className="bg-[hsl(60,100%,95%)] rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-xl">
+              <h2 className="text-xl sm:text-2xl font-bold mb-4 text-center text-gray-800">
+                {selectedSession.validated ? "View Proofs" : "View and Validate Proofs"}
+              </h2>
+              <div className="mb-4 p-4 bg-yellow-100 rounded-lg border border-yellow-200 text-sm sm:text-base">
+                <p className="font-semibold text-gray-800 break-words">
+                  Session: <span className="font-normal">{selectedSession.title}</span>
+                </p>
+                <p className="text-gray-700 break-words">
+                  Counselor: <span className="font-normal">{selectedSession.tutorName}</span>
+                </p>
+                <p className="text-gray-700">
+                  Date: <span className="font-normal">{selectedSession.date} {selectedSession.startTime}</span>
+                </p>
+              </div>
+              {proofsToView.length === 0 ? (
+                <p className="text-sm text-gray-500 text-center">No proofs available</p>
               ) : (
-                <a
-                  href={proof}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:text-blue-800 hover:underline break-words text-center"
-                >
-                  View Proof {index + 1}
-                </a>
+                <div className="space-y-4">
+                  {proofsToView.map((proof, index) => (
+                    <div key={index} className="border p-2 rounded-lg bg-yellow-100 flex flex-col items-center">
+                      {proof.match(/\.(jpg|jpeg|png)$/i) ? (
+                        <img
+                          src={proof}
+                          alt={`Proof ${index + 1}`}
+                          className="w-full max-h-56 sm:max-h-64 object-contain rounded transition-transform duration-200 hover:scale-105"
+                        />
+                      ) : (
+                        <a
+                          href={proof}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 hover:underline break-words text-center"
+                        >
+                          View Proof {index + 1}
+                        </a>
+                      )}
+                    </div>
+                  ))}
+                </div>
               )}
+              <div className="flex flex-col sm:flex-row justify-end gap-3 mt-6">
+                <button
+                  className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-800 text-white w-full sm:w-auto"
+                  onClick={() => {
+                    setShowProofsModal(false);
+                    setSelectedSession(null);
+                    setProofsToView([]);
+                  }}
+                >
+                  Close
+                </button>
+                {!selectedSession.validated && proofsToView.length > 0 && (
+                  <button
+                    className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-900 text-white w-full sm:w-auto"
+                    onClick={handleValidateSession}
+                  >
+                    Confirm Validation
+                  </button>
+                )}
+              </div>
             </div>
-          ))}
-        </div>
-      )}
-
-      {/* Buttons */}
-      <div className="flex flex-col sm:flex-row justify-end gap-3 mt-6">
-        <button
-          className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-800 text-white w-full sm:w-auto"
-          onClick={() => {
-            setShowProofsModal(false);
-            setSelectedSession(null);
-            setProofsToView([]);
-          }}
-        >
-          Close
-        </button>
-
-        {!selectedSession.validated && proofsToView.length > 0 && (
-          <button
-            className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-900 text-white w-full sm:w-auto"
-            onClick={handleValidateSession}
-          >
-            Confirm Validation
-          </button>
+          </div>
         )}
-      </div>
-    </div>
-  </div>
-)}
-
         {showCalendar && selectedSession && !selectedSession.isGroup && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
-            <div className="bg-background rounded-xl p-6 w-full max-w-md">
+            <div className="[background-color:hsl(60,100%,95%)] rounded-xl p-6 w-full max-w-md">
               <h2 className="text-xl font-bold mb-4">{selectedSession.title} - Select Date</h2>
-              <Calendar className="[background-color:hsl(60,100%,95%)] mb-3" onClickDay={handleDateClick} tileClassName={tileClassName} />
+              <Calendar className="[background-color:hsl(60,100%,95%)]" onClickDay={handleDateClick} tileClassName={tileClassName} />
               {selectedDate && availableSlots.length > 0 && (
                 <div className="mt-4">
-                  <p className="mb-2 font-semibold">
-                    Available Slots on {selectedDate.toDateString()}:
-                  </p>
+                  <p className="mb-2 font-semibold">Available Slots on {selectedDate.toDateString()}:</p>
                   <div className="grid grid-cols-2 gap-2 mb-4">
                     {availableSlots.map((slot) => {
                       const isUserSlot = slot.user === user?.uid;
-
                       return (
                         <button
                           key={slot.time}
-                          className={`py-2 rounded-lg text-sm font-semibold text-white transition
-                            ${slot.booked ? (isUserSlot ? "bg-green-600" : "bg-gray-400") : "bg-primary"}`}
+                          className={`py-2 rounded-lg text-sm font-semibold text-white transition ${
+                            slot.booked
+                              ? isUserSlot
+                                ? "bg-green-600"
+                                : "bg-gray-400"
+                              : "bg-gradient-to-r from-primary to-indigo-800 hover:from-indigo-800 hover:to-blue-600"
+                          }`}
                           onClick={() => handleSlotSelect(slot.time)}
                           disabled={slot.booked}
                         >
-                          {slot.time}{" "}
-                          {slot.booked
-                            ? isUserSlot
-                              ? "(Your Booking)"
-                              : "(Booked)"
-                            : ""}
+                          {slot.time} {slot.booked ? (isUserSlot ? "(Your Booking)" : "(Booked)") : ""}
                         </button>
                       );
                     })}
                   </div>
                 </div>
               )}
-
               <div className="flex justify-center items-center">
                 <button
-                  className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-800 text-white justify-center items-center"
+                  className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-800 text-white"
                   onClick={() => setShowCalendar(false)}
                 >
                   Close
@@ -1316,15 +1072,12 @@ export default function CounselingPage() {
             </div>
           </div>
         )}
-
-        {/* Confirm Dialog */}
         {showDialog && selectedSession && (selectedSession.isGroup || selectedSlot) && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
             <div className="[background-color:hsl(60,100%,95%)] rounded-xl p-6 w-96">
               <h2 className="text-xl font-bold mb-4">Confirm Booking</h2>
               <p className="mb-4">
-                Are you sure you want to {selectedSession.isGroup ? "join" : "book"}{" "}
-                <strong>{selectedSession.title}</strong>
+                Are you sure you want to {selectedSession.isGroup ? "join" : "book"} <strong>{selectedSession.title}</strong>
                 {!selectedSession.isGroup && selectedSlot ? ` at ${selectedSlot}` : ""}?
               </p>
               <div className="flex justify-end gap-4">
@@ -1350,8 +1103,7 @@ export default function CounselingPage() {
             <div className="[background-color:hsl(60,100%,95%)] rounded-xl p-6 w-96">
               <h2 className="text-xl font-bold text-red-600 mb-4">Cancel Counseling Session</h2>
               <p className="mb-4 text-gray-700">
-                Are you sure you want to cancel <strong>{sessionToCancel.title}</strong>? 
-                This will delete the counseling session and all related bookings.
+                Are you sure you want to cancel <strong>{sessionToCancel.title}</strong>? This will delete the counseling session and all related bookings.
               </p>
               <div className="flex justify-end gap-4">
                 <button
