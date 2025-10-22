@@ -6,7 +6,7 @@ import green1 from "@/assets/green1.png";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import CompleteSessionButton from "@/components/ui/CompleteSessionButton";
-import { toastSuccess,toastError } from "@/components/ui/sonner";
+import { toastSuccess, toastError } from "@/components/ui/sonner";
 import SessionProof from "./SessionProofs";
 import {
   collection,
@@ -53,6 +53,8 @@ interface CounselingSession {
   }[];
   expiryDate?: string; // YYYY-MM-DD
   expiryTime?: string; // "23:59"
+  validated?: boolean;
+  proofs?: string[];
 }
 
 interface UserData {
@@ -60,6 +62,7 @@ interface UserData {
   name?: string;
   email?: string;
   college?: string;
+  role?: string;
 }
 
 export default function CounselingPage() {
@@ -78,6 +81,14 @@ export default function CounselingPage() {
 
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [sessionToCancel, setSessionToCancel] = useState<CounselingSession | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [showParticipants, setShowParticipants] = useState(false);
+  const [selectedParticipants, setSelectedParticipants] = useState<UserData[]>([]);
+  const [activeTab, setActiveTab] = useState<"validated" | "non-validated">("non-validated");
+   const [selectedCollege, setSelectedCollege] = useState<string>(userData?.role === "admin+" && userCollege ? userCollege : "all");
+  const [showProofsModal, setShowProofsModal] = useState(false);
+  const [proofsToView, setProofsToView] = useState<string[]>([]);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   const collegesList = [
     { name: "Vishnu Institute of Technology", domain: "@vishnu.edu.in" },
@@ -87,8 +98,7 @@ export default function CounselingPage() {
     { name: "BVRIT Hyderabad College of Engineering", domain: "@bvrithyderabad.ac.in" },
     { name: "Shri Vishnu Engineering College for Women", domain: "@svecw.edu.in" },
   ];
-  // admin states
-  const [showForm, setShowForm] = useState(false);
+
   const [newSession, setNewSession] = useState({
     title: "",
     isGroup: undefined as boolean | undefined,
@@ -101,11 +111,11 @@ export default function CounselingPage() {
     description: "",
     tutorName: "",
     skills: [] as string[],
-    expiryDate: "", // YYYY-MM-DD
-    expiryTime: "", // "23:59"
+    expiryDate: "",
+    expiryTime: "",
   });
-  const [showParticipants, setShowParticipants] = useState(false);
-  const [selectedParticipants, setSelectedParticipants] = useState<UserData[]>([]);
+  // const [showParticipants, setShowParticipants] = useState(false);
+  // const [selectedParticipants, setSelectedParticipants] = useState<UserData[]>([]);
 
   // --- Helper to check if session is expired ---
   const isSessionExpired = (session: CounselingSession) => {
@@ -118,78 +128,90 @@ export default function CounselingPage() {
 
   // --- Fetch sessions in real-time ---
   useEffect(() => {
-  if (!userCollege || !user) return;
+    if (!userCollege || !user) return;
 
-  // 🔹 Order by createdAt descending so latest sessions appear first
-  const q = query(collection(db, "counseling"), orderBy("createdAt", "desc"));
+    const q = query(collection(db, "counseling"), orderBy("createdAt", "desc"));
 
-  const unsubscribe = onSnapshot(q, async (snapshot) => {
-    const allSessions: CounselingSession[] = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...(doc.data() as CounselingSession),
-    }));
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
+      const allSessions: CounselingSession[] = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...(doc.data() as CounselingSession),
+        proofs: doc.data().proofs || [],
+      }));
 
-    let filtered: CounselingSession[];
-    if (userData?.role === "admin") {
-      filtered = allSessions.filter((session) => session.createdBy === user.uid);
-    } else {
-      filtered = allSessions.filter(
-        (session) => session.colleges.includes(userCollege) && !isSessionExpired(session)
-      );
-    }
+      let filtered: CounselingSession[];
 
-    const updatedSessions = await Promise.all(
-      filtered.map(async (session) => {
-        if (!session.isGroup && session.slotDuration && session.totalDuration && session.date) {
-          const slotCount = Math.floor(session.totalDuration / session.slotDuration);
+      if (userData?.role === "admin") {
+        filtered = allSessions.filter((session) => session.createdBy === user.uid);
+      } else if (userData?.role === "admin+") {
+        filtered = allSessions.filter((session) => {
+          const matchesValidation =
+            activeTab === "validated" ? session.validated === true : session.validated !== true;
+          const matchesCollege =
+            selectedCollege === "all" || session.colleges.includes(selectedCollege);
+          return matchesValidation && matchesCollege;
+        });
+      } else {
+        filtered = allSessions.filter(
+          (session) =>
+            session.colleges.includes(userCollege) &&
+            !isSessionExpired(session) &&
+            !session.validated
+        );
+      }
 
-          if (!Array.isArray(session.bookedSlots)) {
-            const generatedSlots = Array.from({ length: slotCount }, (_, i) => {
-              const [hoursStr, minutesStrWithSuffix] = session.startTime!.split(":");
-              let hours = parseInt(hoursStr);
-              let minutesStr = minutesStrWithSuffix;
-              let suffix = "";
-              if (minutesStrWithSuffix.includes("AM") || minutesStrWithSuffix.includes("PM")) {
-                suffix = minutesStrWithSuffix.slice(-2);
-                minutesStr = minutesStr.slice(0, -2).trim();
-              }
-              const minutes = parseInt(minutesStr);
-              if (suffix.toLowerCase() === "pm" && hours < 12) hours += 12;
+      const updatedSessions = await Promise.all(
+        filtered.map(async (session) => {
+          if (!session.isGroup && session.slotDuration && session.totalDuration && session.date) {
+            const slotCount = Math.floor(session.totalDuration / session.slotDuration);
 
-              const slotDate = new Date(session.date!);
-              slotDate.setHours(hours, minutes + i * session.slotDuration, 0, 0);
+            if (!Array.isArray(session.bookedSlots)) {
+              const generatedSlots = Array.from({ length: slotCount }, (_, i) => {
+                const [hoursStr, minutesStrWithSuffix] = session.startTime!.split(":");
+                let hours = parseInt(hoursStr);
+                let minutesStr = minutesStrWithSuffix;
+                let suffix = "";
+                if (minutesStrWithSuffix.includes("AM") || minutesStrWithSuffix.includes("PM")) {
+                  suffix = minutesStrWithSuffix.slice(-2);
+                  minutesStr = minutesStrWithSuffix.slice(0, -2).trim();
+                }
+                const minutes = parseInt(minutesStr);
+                if (suffix.toLowerCase() === "pm" && hours < 12) hours += 12;
 
-              const timeStr = `${slotDate.getHours().toString().padStart(2, "0")}:${slotDate
-                .getMinutes()
-                .toString()
-                .padStart(2, "0")}`;
+                const slotDate = new Date(session.date!);
+                slotDate.setHours(hours, minutes + i * session.slotDuration, 0, 0);
 
-              return { time: timeStr, booked: false, user: null };
-            });
+                const timeStr = `${slotDate.getHours().toString().padStart(2, "0")}:${slotDate
+                  .getMinutes()
+                  .toString()
+                  .padStart(2, "0")}`;
 
-            const sessionRef = doc(db, "counseling", session.id);
-            await updateDoc(sessionRef, {
-              bookedSlots: generatedSlots,
-              slotAvailable: generatedSlots.length,
-            });
+                return { time: timeStr, booked: false, user: null };
+              });
 
-            return { ...session, bookedSlots: generatedSlots, slotAvailable: generatedSlots.length };
+              const sessionRef = doc(db, "counseling", session.id);
+              await updateDoc(sessionRef, {
+                bookedSlots: generatedSlots,
+                slotAvailable: generatedSlots.length,
+              });
+
+              return { ...session, bookedSlots: generatedSlots, slotAvailable: generatedSlots.length };
+            }
+
+            const slotAvailable = session.bookedSlots.filter((s) => !s.booked).length;
+            return { ...session, slotAvailable };
           }
 
-          const slotAvailable = session.bookedSlots.filter((s) => !s.booked).length;
-          return { ...session, slotAvailable };
-        }
+          return session;
+        })
+      );
 
-        return session;
-      })
-    );
+      setSessions(updatedSessions);
+      setFilteredSessions(updatedSessions);
+    });
 
-    setSessions(updatedSessions);
-    setFilteredSessions(updatedSessions);
-  });
-
-  return () => unsubscribe();
-}, [userCollege, user, userData]);
+    return () => unsubscribe();
+  }, [userCollege, user, userData, activeTab, selectedCollege]);
 
   // --- Helpers ---
   const parseDate = (dateStr: string) => {
@@ -251,191 +273,152 @@ export default function CounselingPage() {
   };
 
   const confirmJoin = async () => {
-  if (bookingInProgress) return;
-  if (!user?.uid || !selectedSession || (!selectedSession.isGroup && !selectedSlot)) return;
+    if (bookingInProgress) return;
+    if (!user?.uid || !selectedSession || (!selectedSession.isGroup && !selectedSlot)) return;
 
-  setBookingInProgress(true);
-  const sessionRef = doc(db, "counseling", selectedSession.id);
+    setBookingInProgress(true);
+    const sessionRef = doc(db, "counseling", selectedSession.id);
 
-  try {
-    if (selectedSession.isGroup) {
-      // --- GROUP SESSION ---
-      if (!selectedSession.slots || selectedSession.slots <= 0) {
-        toastError("No slots left.");
-        return;
-      }
-      if (selectedSession.participants?.includes(user.uid)) {
-        toastSuccess("You already joined this group session.");
-        return;
-      }
+    try {
+      if (selectedSession.isGroup) {
+        if (!selectedSession.slots || selectedSession.slots <= 0) {
+          toastError("No slots left.");
+          return;
+        }
+        if (selectedSession.participants?.includes(user.uid)) {
+          toastSuccess("You already joined this group session.");
+          return;
+        }
 
-      await updateDoc(sessionRef, {
-        participants: arrayUnion(user.uid),
-        slots: increment(-1),
-      });
-
-      setSessions((prev) =>
-        prev.map((s) =>
-          s.id === selectedSession.id
-            ? { ...s, participants: [...(s.participants || []), user.uid], slots: (s.slots || 1) - 1 }
-            : s
-        )
-      );
-      setFilteredSessions((prev) =>
-        prev.map((s) =>
-          s.id === selectedSession.id
-            ? { ...s, participants: [...(s.participants || []), user.uid], slots: (s.slots || 1) - 1 }
-            : s
-        )
-      );
-
-      // --- Add to unified bookings ---
-      await addDoc(collection(db, "bookings"), {
-        userId: user.uid,
-        userName: user.displayName || "",
-        serviceType: "Counseling",
-        sessionId: selectedSession.id,
-        sessionTitle: selectedSession.title || "",
-        slotTime: "Group Session",
-        bookedAt: serverTimestamp(),
-      });
-
-      toastSuccess("You joined the group session!");
-    } else {
-      // --- 1-on-1 SESSION ---
-      await runTransaction(db, async (transaction) => {
-        const sessionSnap = await transaction.get(sessionRef);
-        if (!sessionSnap.exists()) throw new Error("Session not found");
-
-        const sessionData = sessionSnap.data() as CounselingSession;
-        if (!sessionData.bookedSlots) throw new Error("Slots not initialized");
-
-        const alreadyBooked = sessionData.bookedSlots.some((s) => s.user === user.uid);
-        if (alreadyBooked) throw new Error("You already booked a slot in this session.");
-
-        const slotIndex = sessionData.bookedSlots.findIndex((s) => s.time === selectedSlot);
-        if (slotIndex < 0) throw new Error("Slot not found");
-
-        const slot = sessionData.bookedSlots[slotIndex];
-        if (slot.booked) throw new Error("Slot already booked by someone else.");
-
-        const updatedSlots = [...sessionData.bookedSlots];
-        updatedSlots[slotIndex] = { ...updatedSlots[slotIndex], booked: true, user: user.uid };
-
-        const updatedParticipants = sessionData.participants
-          ? [...sessionData.participants, user.uid]
-          : [user.uid];
-
-        transaction.update(sessionRef, {
-          bookedSlots: updatedSlots,
-          slotAvailable: updatedSlots.filter((s) => !s.booked).length,
-          participants: updatedParticipants,
+        await updateDoc(sessionRef, {
+          participants: arrayUnion(user.uid),
+          slots: increment(-1),
         });
-      });
 
-      setSessions((prev) =>
-        prev.map((s) =>
-          s.id === selectedSession.id
-            ? {
-                ...s,
-                bookedSlots: s.bookedSlots?.map((slot) =>
-                  slot.time === selectedSlot ? { ...slot, booked: true, user: user.uid } : slot
-                ),
-                slotAvailable: s.bookedSlots?.filter((slot) => !slot.booked).length,
-                participants: [...(s.participants || []), user.uid],
-              }
-            : s
-        )
-      );
-      setFilteredSessions((prev) =>
-        prev.map((s) =>
-          s.id === selectedSession.id
-            ? {
-                ...s,
-                bookedSlots: s.bookedSlots?.map((slot) =>
-                  slot.time === selectedSlot ? { ...slot, booked: true, user: user.uid } : slot
-                ),
-                slotAvailable: s.bookedSlots?.filter((slot) => !slot.booked).length,
-                participants: [...(s.participants || []), user.uid],
-              }
-            : s
-        )
-      );
+        setSessions((prev) =>
+          prev.map((s) =>
+            s.id === selectedSession.id
+              ? { ...s, participants: [...(s.participants || []), user.uid], slots: (s.slots || 1) - 1 }
+              : s
+          )
+        );
+        setFilteredSessions((prev) =>
+          prev.map((s) =>
+            s.id === selectedSession.id
+              ? { ...s, participants: [...(s.participants || []), user.uid], slots: (s.slots || 1) - 1 }
+              : s
+          )
+        );
 
-      // --- Add to unified bookings ---
-      await addDoc(collection(db, "bookings"), {
-        userId: user.uid,
-        userName: user.displayName || "",
-        serviceType: "Counseling",
-        sessionId: selectedSession.id,
-        sessionTitle: selectedSession.title || "",
-        slotTime: selectedSlot,
-        bookedAt: serverTimestamp(),
-      });
+        await addDoc(collection(db, "bookings"), {
+          userId: user.uid,
+          userName: user.displayName || "",
+          serviceType: "Counseling",
+          sessionId: selectedSession.id,
+          sessionTitle: selectedSession.title || "",
+          slotTime: "Group Session",
+          bookedAt: serverTimestamp(),
+        });
 
-      toastSuccess(`You booked the slot at ${selectedSlot}`);
+        toastSuccess("You joined the group session!");
+      } else {
+        await runTransaction(db, async (transaction) => {
+          const sessionSnap = await transaction.get(sessionRef);
+          if (!sessionSnap.exists()) throw new Error("Session not found");
+
+          const sessionData = sessionSnap.data() as CounselingSession;
+          if (!sessionData.bookedSlots) throw new Error("Slots not initialized");
+
+          const alreadyBooked = sessionData.bookedSlots.some((s) => s.user === user.uid);
+          if (alreadyBooked) {
+            throw new Error("You already booked a slot in this session.");
+          }
+
+          const slotIndex = sessionData.bookedSlots.findIndex((s) => s.time === selectedSlot);
+          if (slotIndex < 0) throw new Error("Slot not found");
+
+          const slot = sessionData.bookedSlots[slotIndex];
+          if (slot.booked) {
+            throw new Error("Slot already booked by someone else.");
+          }
+
+          const updatedSlots = [...sessionData.bookedSlots];
+          updatedSlots[slotIndex] = { ...updatedSlots[slotIndex], booked: true, user: user.uid };
+
+          const updatedParticipants = sessionData.participants
+            ? [...sessionData.participants, user.uid]
+            : [user.uid];
+
+          transaction.update(sessionRef, {
+            bookedSlots: updatedSlots,
+            slotAvailable: updatedSlots.filter((s) => !s.booked).length,
+            participants: updatedParticipants,
+          });
+        });
+
+        await addDoc(collection(db, "bookings"), {
+          userId: user.uid,
+          userName: user.displayName || "",
+          serviceType: "Counseling",
+          sessionId: selectedSession.id,
+          sessionTitle: selectedSession.title || "",
+          slotTime: selectedSlot || null,
+          bookedAt: serverTimestamp(),
+        });
+
+        toastSuccess(`You booked the slot at ${selectedSlot}`);
+      }
+    } catch (err: any) {
+      toastError(err.message || "Booking failed. Try again.");
+    } finally {
+      setBookingInProgress(false);
+      setShowDialog(false);
+      setShowCalendar(false);
+      setSelectedSession(null);
+      setSelectedSlot(null);
+      setSelectedDate(null);
+      setAvailableSlots([]);
     }
-  } catch (err: any) {
-    toastError(err.message || "Booking failed. Try again.");
-  } finally {
-    setBookingInProgress(false);
-    setShowDialog(false);
-    setShowCalendar(false);
-    setSelectedSession(null);
-    setSelectedSlot(null);
-    setSelectedDate(null);
-    setAvailableSlots([]);
-  }
-};
-
+  };
 
   // --- Admin Features ---
   const handleAddSession = async () => {
-    if (
-      !newSession.title ||
-      !newSession.description ||
-      !newSession.tutorName ||
-      !newSession.skills.length ||
-      !newSession.date ||
-      newSession.isGroup === undefined ||
-      (!newSession.isGroup && (!newSession.startTime || !newSession.totalDuration || !newSession.slotDuration)) ||
-      (newSession.isGroup && !newSession.startTime) ||
-      !newSession.expiryDate ||
-      !newSession.expiryTime
-    ) {
-      toastError("Please fill in all required fields (title, description, counselor name, skills, date, start time, expiry date, expiry time, and session type). For 1-on-1, include total duration and slot duration.");
+    if (!newSession.title || !newSession.date || newSession.isGroup === undefined || !newSession.expiryDate || !newSession.expiryTime) {
+      toastError("Please fill in all required fields.");
       return;
     }
+
     try {
-  const sessionDate = new Date(newSession.date);
-  const [expiryYear, expiryMonth, expiryDay] = newSession.expiryDate.split("-").map(Number);
-  const [expiryHour, expiryMinute] = newSession.expiryTime.split(":").map(Number);
-  const expiryDateTime = new Date(expiryYear, expiryMonth - 1, expiryDay, expiryHour, expiryMinute);
-  
-  // Check if expiry datetime is before session start datetime
-  const sessionStartDateTime = new Date(newSession.date + 'T' + newSession.startTime + ':00');
-  
-  if (expiryDateTime <= sessionStartDateTime) {
-    toastError("Expiry date and time must be after the session start date and time.");
-    return; 
-  }
-} catch (error) {
-  toastError("Invalid date or time format. Please check your inputs.");
-  return;
-}
+      const sessionDate = new Date(newSession.date);
+      const [expiryYear, expiryMonth, expiryDay] = newSession.expiryDate.split("-").map(Number);
+      const [expiryHour, expiryMinute] = newSession.expiryTime.split(":").map(Number);
+      const expiryDateTime = new Date(expiryYear, expiryMonth - 1, expiryDay, expiryHour, expiryMinute);
+
+      const sessionStartDateTime = new Date(newSession.date + 'T' + newSession.startTime + ':00');
+
+      if (expiryDateTime <= sessionStartDateTime) {
+        toastError("Expiry date and time must be after the session start date and time.");
+        return;
+      }
+    } catch (error) {
+      toastError("Invalid date or time format. Please check your inputs.");
+      return;
+    }
 
     try {
       const sessionData: any = {
         title: newSession.title,
         createdBy: user?.uid,
         colleges: newSession.colleges || [],
-        description: newSession.description,
-        tutorName: newSession.tutorName,
-        skills: newSession.skills,
+        description: newSession.description || "",
+        tutorName: newSession.tutorName || "",
+        skills: newSession.skills || [],
         createdAt: serverTimestamp(),
         isGroup: newSession.isGroup,
         expiryDate: newSession.expiryDate,
         expiryTime: newSession.expiryTime,
+        validated: false,
+        proofs: [],
       };
 
       if (newSession.isGroup) {
@@ -443,6 +426,7 @@ export default function CounselingPage() {
         sessionData.slots = newSession.slots || 1;
         sessionData.participants = [];
         sessionData.date = newSession.date;
+        sessionData.totalDuration = newSession.totalDuration;
         sessionData.startTime = newSession.startTime;
       } else {
         // 1-on-1 session fields
@@ -497,6 +481,7 @@ export default function CounselingPage() {
         expiryDate: "",
         expiryTime: "",
       });
+      toastSuccess("Session Added Successfully");
     } catch (err) {
       console.error("Error adding session:", err);
       toastError("Failed to add session. Try again.");
@@ -527,38 +512,63 @@ export default function CounselingPage() {
   };
 
   const handleCancelSession = async () => {
-  if (!sessionToCancel) return;
+    if (!sessionToCancel) return;
 
-  try {
-    // Delete related bookings first (to avoid orphans)
-    const bookingsQuery = query(
-      collection(db, "bookings"),
-      where("sessionId", "==", sessionToCancel.id),
-      where("serviceType", "==", "Counseling") // 👈 Service type for counseling
-    );
-    const bookingsSnapshot = await getDocs(bookingsQuery);
-    const deleteBookingPromises = bookingsSnapshot.docs.map((d) => deleteDoc(d.ref));
-    await Promise.all(deleteBookingPromises);
+    try {
+      const bookingsQuery = query(
+        collection(db, "bookings"),
+        where("sessionId", "==", sessionToCancel.id),
+        where("serviceType", "==", "Counseling")
+      );
+      const bookingsSnapshot = await getDocs(bookingsQuery);
+      const deleteBookingPromises = bookingsSnapshot.docs.map((d) => deleteDoc(d.ref));
+      await Promise.all(deleteBookingPromises);
 
-    // Delete the session
-    await deleteDoc(doc(db, "counseling", sessionToCancel.id)); // 👈 Collection name
+      await deleteDoc(doc(db, "counseling", sessionToCancel.id));
 
-    toast.success("Counseling session canceled and deleted successfully.");
-  } catch (err) {
-    console.error("Error canceling session:", err);
-    toast.error("Failed to cancel session. Try again.");
-  } finally {
-    setShowCancelDialog(false);
-    setSessionToCancel(null);
-  }
+      toastSuccess("Session canceled and deleted successfully.");
+    } catch (err) {
+      console.error("Error canceling session:", err);
+      toastError("Failed to cancel session. Try again.");
+    } finally {
+      setShowCancelDialog(false);
+      setSessionToCancel(null);
+    }
+  };
+
+  const handleViewProofs = (session: CounselingSession) => {
+    setSelectedSession(session);
+    setProofsToView(session.proofs || []);
+    setShowProofsModal(true);
+  };
+
+  const handleCompleteSession = (session) => {
+  
+  console.log("Complete session:", session.id);
 };
+
+  const handleValidateSession = async () => {
+    if (!selectedSession) return;
+
+    const sessionRef = doc(db, "counseling", selectedSession.id);
+    try {
+      await updateDoc(sessionRef, { validated: true });
+      toastSuccess("Session validated successfully!");
+      setShowProofsModal(false);
+      setSelectedSession(null);
+      setProofsToView([]);
+    } catch (err) {
+      console.error("Error validating session:", err);
+      toastError("Failed to validate session.");
+    }
+  };
 
   return (
     <div>
       <div className="relative w-full h-72 md:h-96 lg:h-[28rem]">
         <img
           src={green1}
-          alt="About Banner"
+          alt="Counseling Banner"
           className="w-full h-full object-contain object-top"
         />
         <div className="absolute inset-0 bg-black bg-opacity-60"></div>
@@ -572,16 +582,52 @@ export default function CounselingPage() {
             Available Counseling Sessions
           </motion.h1>
           <p className="max-w-2xl text-lg">
-            Book a session with your advisor to get guidance and support
+            Book a session with your counselor to get guidance and support
           </p>
         </div>
       </div>
       <div className="p-6 min-h-screen [background-color:hsl(60,100%,95%)]">
-        {/* <TitleHeroSection
-          title="Available Counseling Sessions"
-          subtitle="Book a session with a counselor to get guidance and support"
-        /> */}
-
+        {userData?.role === "admin+" && (
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-6 px-4 sm:px-6 gap-4 sm:gap-0">
+            <div className="flex flex-wrap gap-4">
+              
+              <button
+                className={`px-4 py-2 rounded-lg font-semibold transition ${
+                  activeTab === "non-validated"
+                    ? "bg-primary text-white"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                }`}
+                onClick={() => setActiveTab("non-validated")}
+              >
+                Non-Validated
+              </button>
+              <button
+                className={`px-4 py-2 rounded-lg font-semibold transition ${
+                  activeTab === "validated"
+                    ? "bg-primary text-white"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                }`}
+                onClick={() => setActiveTab("validated")}
+              >
+                Validated
+              </button>
+            </div>
+            <div className="w-full sm:w-auto">
+              <select
+                className="w-full sm:w-auto px-4 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                value={selectedCollege}
+                onChange={(e) => setSelectedCollege(e.target.value)}
+              >
+                <option value="all">All Colleges</option>
+                {collegesList.map((college) => (
+                  <option key={college.name} value={college.name}>
+                    {college.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        )}
         <SearchFilter data={sessions} onFilteredData={setFilteredSessions} />
 
         {filteredSessions.length === 0 ? (
@@ -595,8 +641,11 @@ export default function CounselingPage() {
               >
                 <div className="absolute top-0 right-0 px-3 py-1 text-xs font-semibold bg-primary text-white rounded-bl-lg">
                   {session.isGroup ? "Group" : "1-on-1"}
-                  {userData?.role === "admin" && isSessionExpired(session) && (
+                  {(userData?.role === "admin" || userData?.role === "admin+") && isSessionExpired(session) && (
                     <span className="ml-2 bg-red-600 px-2 rounded">Expired</span>
+                  )}
+                  {(userData?.role === "admin" || userData?.role === "admin+") && (
+                    <span className="ml-2 bg-green-600 px-2 rounded">{session.validated ? "Validated" : "Non-Validated"}</span>
                   )}
                 </div>
                 <h2 className="text-xl font-bold text-gray-800 group-hover:text-primary transition">
@@ -604,39 +653,39 @@ export default function CounselingPage() {
                 </h2>
                 <p className="text-gray-600 mt-2 flex-1">{session.description}</p>
                 <div className="mt-4 space-y-2 text-sm text-gray-700">
-                  <p className="flex items-center gap-2 ">
+                  <p className="flex items-center gap-2">
                     <UserIcon className="w-4 h-4 text-primary" />
                     <span>
                       <strong>Counselor:</strong> {session.tutorName}
                     </span>
                   </p>
-                  <p className="flex items-center gap-2 ">
+                  <p className="flex items-center gap-2">
                     <BookOpen className="w-4 h-4 text-green-600" />
                     <span>
                       <strong>Skills:</strong> {session.skills.join(", ")}
                     </span>
                   </p>
-                  <p className="flex items-center gap-2 ">
+                  <p className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-blue-600" />
                     <span>
                       <strong>Start:</strong> {session.date} {session.startTime}
                     </span>
                   </p>
-                  <p className="flex items-center gap-2 ">
+                  <p className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-red-600" />
                     <span>
                       <strong>Expiry:</strong> {session.expiryDate} {session.expiryTime}
                     </span>
                   </p>
                   {session.isGroup ? (
-                    <p className="flex items-center gap-2 ">
+                    <p className="flex items-center gap-2">
                       <Users className="w-4 h-4 text-pink-600" />
                       <span>
                         <strong>Slots Left:</strong> {session.slots}
                       </span>
                     </p>
                   ) : (
-                    <p className="flex items-center gap-2 ">
+                    <p className="flex items-center gap-2">
                       <Clock className="w-4 h-4 text-purple-600" />
                       <span>
                         <strong>One-to-One Slots:</strong> {session.slotAvailable}
@@ -644,57 +693,98 @@ export default function CounselingPage() {
                     </p>
                   )}
                 </div>
-                <button
-                  className={`mt-5 w-full py-2 rounded-lg font-semibold text-white transition 
-                  ${
-                    userData?.role === "admin" || isSessionExpired(session)
-                      ? "bg-gray-400 cursor-not-allowed"
-                      : session.isGroup
+                {!session.validated && userData?.role !== "admin" && userData?.role !== "admin+" && (
+                  <button
+                    className={`mt-5 w-full py-2 rounded-lg font-semibold text-white transition 
+                      ${
+                        isSessionExpired(session)
+                          ? "bg-gray-400 cursor-not-allowed"
+                          : session.isGroup
+                          ? session.slots && session.slots > 0
+                            ? "bg-gradient-to-r from-primary to-indigo-800 hover:from-indigo-800 hover:to-blue-600"
+                            : "bg-gray-400 cursor-not-allowed"
+                          : session.slotAvailable && session.slotAvailable > 0
+                          ? "bg-gradient-to-r from-primary to-indigo-800 hover:from-indigo-800 hover:to-blue-600"
+                          : "bg-gray-400 cursor-not-allowed"
+                      }`}
+                    onClick={() => handleBookSlot(session)}
+                    disabled={
+                      isSessionExpired(session) ||
+                      (session.isGroup && (!session.slots || session.slots <= 0)) ||
+                      (!session.isGroup && (!session.slotAvailable || session.slotAvailable <= 0))
+                    }
+                  >
+                    {session.isGroup
                       ? session.slots && session.slots > 0
+                        ? "Join Session"
+                        : "Full"
+                      : session.slotAvailable && session.slotAvailable > 0
+                      ? "Book a Slot"
+                      : "Full"}
+                  </button>
+                )}
+                  {(userData?.role === "admin" || userData?.role === "admin+") && (
+                  <div className="absolute top-3 right-3 mt-4">
+                    <div className="relative">
+                      <button
+                        onClick={() => setOpenMenuId(openMenuId === session.id ? null : session.id)}
+                        className="text-white font-bold  bg-primary rounded-full p-2 shadow-sm hover:bg-blue-900 transition"
+                      >
+                        ⋮
+                      </button>
+                
+                      {openMenuId === session.id && (
+                        <div className="absolute right-0 mt-2 w-44 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                          <p
+                            onClick={() => {
+                              handleViewParticipants(session.participants || []);
+                              setOpenMenuId(null);
+                            }}
+                            className="px-4 py-2 text-sm hover:bg-gray-100 cursor-pointer"
+                          >
+                            View Participants
+                          </p>
+                
+                          {userData?.role === "admin" && !session.validated && (
+                            <>
+                              <p
+                                onClick={() => {
+                                  setSessionToCancel(session);
+                                  setShowCancelDialog(true);
+                                  setOpenMenuId(null);
+                                }}
+                                className="px-4 py-2 text-sm hover:bg-gray-100 cursor-pointer text-red-600"
+                              >
+                                Cancel Session
+                              </p>
+                
+                              
+                              <div className="px-4 py-1">
+                                <CompleteSessionButton
+                                  session={session}
+                                  collectionName="counseling"
+                                />
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+                {userData?.role === "admin+" && (
+                  <button
+                    className={`mt-2 w-full py-2 rounded-lg font-semibold text-white transition ${
+                      session.proofs && session.proofs.length > 0
                         ? "bg-gradient-to-r from-primary to-indigo-800 hover:from-indigo-800 hover:to-blue-600"
                         : "bg-gray-400 cursor-not-allowed"
-                      : session.slotAvailable && session.slotAvailable > 0
-                      ? "bg-gradient-to-r from-primary to-indigo-800 hover:from-indigo-800 hover:to-blue-600"
-                      : "bg-gray-400 cursor-not-allowed"
-                  }`}
-                  onClick={() => handleBookSlot(session)}
-                  disabled={
-                    userData?.role === "admin" ||
-                    isSessionExpired(session) ||
-                    (session.isGroup && (!session.slots || session.slots <= 0)) ||
-                    (!session.isGroup && (!session.slotAvailable || session.slotAvailable <= 0))
-                  }
-                >
-                  {session.isGroup
-                    ? session.slots && session.slots > 0
-                      ? "Enroll Now"
-                      : "Full"
-                    : session.slotAvailable && session.slotAvailable > 0
-                    ? "Book a Slot"
-                    : "Full"}
-                </button>
-
-                {user?.uid === session.createdBy && userData?.role === "admin" && (
-  <div className="flex justify-between mt-2">
-    <p
-      className="text-blue-600 hover:underline cursor-pointer text-sm"
-      onClick={() => handleViewParticipants(session.participants || [])}
-    >
-      View Participants
-    </p>
-    <button
-      onClick={() => {
-        setSessionToCancel(session);
-        setShowCancelDialog(true);
-      }}
-      className="text-red-600 hover:underline cursor-pointer text-sm font-medium"
-    >
-      Cancel Session
-    </button>
-    <CompleteSessionButton session={session} collectionName="counseling" />
-  </div>
-)}
-{userData?.role === "admin+" && <SessionProof collectionName="counseling" sessions={session} />}
+                    }`}
+                    onClick={() => handleViewProofs(session)}
+                    disabled={!session.proofs || session.proofs.length === 0}
+                  >
+                    View {session.validated ? "Proofs" : "and Validate"}
+                  </button>
+                )}
               </div>
             ))}
           </div>
@@ -711,279 +801,291 @@ export default function CounselingPage() {
 
         {/* Add Session Modal */}
         {showForm && (
-  <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-2 overflow-y-auto backdrop-blur-sm">
-    <div className="bg-[hsl(60,100%,95%)] rounded-2xl p-8 w-full max-w-lg space-y-6 max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100">
-      {/* Header */}
-      <div className="text-center border-b border-gray-100 pb-4">
-        <h2 className="text-2xl text-primary font-bold bg-gradient-to-r from-primary to-blue-600 bg-clip-text ">
-          Add New Counseling Session
-        </h2>
-        <p className="text-gray-500 text-sm mt-1">Create a personalized 1-on-1 counseling session</p>
-      </div>
-
-      {/* Form Container */}
-      <form className="space-y-6">
-        {/* Session Title */}
-        <div className="space-y-2">
-          <label htmlFor="title" className="flex items-center gap-2  font-semibold text-gray-700">
-           
-            Title
-          </label>
-          <input
-            type="text"
-            name="title"
-            id="title"
-            placeholder="Enter session title"
-            className="w-full p-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
-            value={newSession.title || ""}
-            onChange={(e) => setNewSession({ ...newSession, title: e.target.value })}
-          />
-        </div>
-
-        {/* Description */}
-        <div className="space-y-2">
-          <label htmlFor="description" className="flex items-center gap-2  font-semibold text-gray-700">
-            
-            Description
-          </label>
-          <textarea
-            name="description"
-            id="description"
-            placeholder="Enter session description"
-            rows={2}
-            className="w-full p-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 resize-none bg-gray-50 hover:bg-white"
-            value={newSession.description || ""}
-            onChange={(e) => setNewSession({ ...newSession, description: e.target.value })}
-          />
-        </div>
-
-        {/* Counselor Name */}
-        <div className="space-y-2">
-          <label htmlFor="tutorName" className="flex items-center gap-2  font-semibold text-gray-700">
-            
-            Counselor Name
-          </label>
-          <input
-            type="text"
-            name="tutorName"
-            id="tutorName"
-            placeholder="Enter counselor name"
-            className="w-full p-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
-            value={newSession.tutorName || ""}
-            onChange={(e) => setNewSession({ ...newSession, tutorName: e.target.value })}
-          />
-        </div>
-
-        {/* Skills */}
-        <div className="space-y-2">
-          <label htmlFor="skills" className="flex items-center gap-2  font-semibold text-gray-700">
-            
-            Skills
-          </label>
-          <input
-            type="text"
-            name="skills"
-            id="skills"
-            placeholder="Enter skills separated by commas"
-            className="w-full p-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
-            value={newSession.skills?.join(", ") || ""}
-            onChange={(e) =>
-              setNewSession({
-                ...newSession,
-                skills: e.target.value.split(",").map((s) => s.trim()).filter((s) => s),
-              })
-            }
-          />
-          <p className="text-xs text-gray-500 flex items-center gap-1">
-            
-            Separate multiple skills with commas
-          </p>
-        </div>
-
-        {/* Colleges Multi-Select Dropdown */}
-        <div className="space-y-3">
-          <label htmlFor="colleges" className="flex items-center gap-2  font-semibold text-gray-700">
-            
-            Colleges
-          </label>
-          <select
-            name="colleges"
-            id="colleges"
-            className="w-full p-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white h-40"
-            multiple
-            value={newSession.colleges && newSession.colleges.length > 0 ? newSession.colleges : []}
-            onChange={(e) =>
-              setNewSession({
-                ...newSession,
-                colleges: Array.from(e.target.selectedOptions, (option) => option.value),
-              })
-            }
-          >
-            <option value="" disabled hidden>
-              Select College(s)
-            </option>
-            <option value="Vishnu Institute of Technology">Vishnu Institute of Technology</option>
-            <option value="Vishnu Dental College">Vishnu Dental College</option>
-            <option value="Shri Vishnu College of Pharmacy">Shri Vishnu College of Pharmacy</option>
-            <option value="BV Raju Institute of Technology">BV Raju Institute of Technology</option>
-            <option value="BVRIT Hyderabad College of Engineering">
-              BVRIT Hyderabad College of Engineering
-            </option>
-            <option value="Shri Vishnu Engineering College for Women">
-              Shri Vishnu Engineering College for Women
-            </option>
-          </select>
-          <p className="text-xs text-gray-500 flex items-center gap-1">
-            
-            Hold Ctrl (Cmd on Mac) to select multiple colleges
-          </p>
-        </div>
-
-        {/* Session Type - 1-on-1 Only */}
-        <div className="space-y-3">
-          <label className="flex items-center gap-2  font-semibold text-gray-700">
-            
-            Session Type
-          </label>
-          <div className="flex items-center gap-6 bg-[hsl(60,100%,95%)] p-2 rounded-xl  border-2">
-            <label className="flex items-center gap-2  cursor-pointer">
-              <input
-                type="radio"
-                name="isGroup"
-                className="w-4 h-2 text-primary focus:ring-primary"
-                checked={newSession.isGroup === false}
-                onChange={() => setNewSession({ ...newSession, isGroup: false })}
-              />
-              <span className="font-medium text-gray-700">1-on-1 Counseling</span>
-            </label>
-          </div>
-          <p className="text-xs text-gray-500">Counseling sessions are private and personalized</p>
-        </div>
-
-        {/* 1-on-1 Session Fields */}
-        {newSession.isGroup === false && (
-          <div className="space-y-4 p-2 bg-green-50 rounded-xl border border-pink-100">
-            <h3 className="font-semibold text-primary flex items-center gap-2 ">
-              
-              Counseling Schedule
-            </h3>
-            
-            <div className="grid grid-cols-1 gap-4">
-              <div className="space-y-2">
-                <label htmlFor="date" className="font-semibold text-gray-700 text-sm">Date</label>
-                <input
-                  type="date"
-                  name="date"
-                  id="date"
-                  className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white"
-                  value={newSession.date || ""}
-                  onChange={(e) => setNewSession({ ...newSession, date: e.target.value })}
-                />
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4 overflow-y-auto backdrop-blur-sm">
+            <div className="bg-[hsl(60,100%,95%)] rounded-2xl p-8 w-full max-w-lg space-y-6 max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100">
+              <div className="text-center border-b border-gray-100 pb-4">
+                <h2 className="text-2xl text-primary font-bold bg-gradient-to-r from-primary to-blue-500 bg-clip-text">
+                  Add New Counseling Session
+                </h2>
+                <p className="text-gray-500 text-sm mt-1">Fill in the details to create a new session</p>
               </div>
-
-              <div className="space-y-2">
-                <label htmlFor="startTime" className="font-semibold text-gray-700 text-sm">Start Time</label>
-                <input
-                  type="time"
-                  name="startTime"
-                  id="startTime"
-                  className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white"
-                  value={newSession.startTime || ""}
-                  onChange={(e) => setNewSession({ ...newSession, startTime: e.target.value })}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label htmlFor="totalDuration" className="font-semibold text-gray-700 text-sm">Total Duration (minutes)</label>
-                <input
-                  type="number"
-                  name="totalDuration"
-                  id="totalDuration"
-                  placeholder="Enter total duration"
-                  className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white"
-                  value={newSession.totalDuration || ""}
-                  onChange={(e) =>
-                    setNewSession({ ...newSession, totalDuration: parseInt(e.target.value) })
-                  }
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label htmlFor="slotDuration" className="font-semibold text-gray-700 text-sm">Slot Duration (minutes)</label>
-                <input
-                  type="number"
-                  name="slotDuration"
-                  id="slotDuration"
-                  placeholder="Enter slot duration"
-                  className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white"
-                  value={newSession.slotDuration || ""}
-                  onChange={(e) =>
-                    setNewSession({ ...newSession, slotDuration: parseInt(e.target.value) })
-                  }
-                />
-              </div>
+              <form className="space-y-6">
+                <div className="space-y-2">
+                  <label htmlFor="title" className="flex items-center gap-2 font-semibold text-gray-700">
+                    Title
+                  </label>
+                  <input
+                    type="text"
+                    name="title"
+                    id="title"
+                    placeholder="Enter session title"
+                    className="w-full p-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
+                    value={newSession.title || ""}
+                    onChange={(e) => setNewSession({ ...newSession, title: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="description" className="flex items-center gap-2 font-semibold text-gray-700">
+                    Description
+                  </label>
+                  <textarea
+                    name="description"
+                    id="description"
+                    placeholder="Enter session description"
+                    rows={2}
+                    className="w-full p-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 resize-none bg-gray-50 hover:bg-white"
+                    value={newSession.description || ""}
+                    onChange={(e) => setNewSession({ ...newSession, description: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="tutorName" className="flex items-center gap-2 font-semibold text-gray-700">
+                    Counselor Name
+                  </label>
+                  <input
+                    type="text"
+                    name="tutorName"
+                    id="tutorName"
+                    placeholder="Enter counselor name"
+                    className="w-full p-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
+                    value={newSession.tutorName || ""}
+                    onChange={(e) => setNewSession({ ...newSession, tutorName: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="skills" className="flex items-center gap-2 font-semibold text-gray-700">
+                    Skills
+                  </label>
+                  <input
+                    type="text"
+                    name="skills"
+                    id="skills"
+                    placeholder="Enter skills separated by commas"
+                    className="w-full p-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
+                    value={newSession.skills?.join(", ") || ""}
+                    onChange={(e) =>
+                      setNewSession({
+                        ...newSession,
+                        skills: e.target.value.split(",").map((s) => s.trim()),
+                      })
+                    }
+                  />
+                  <p className="text-xs text-gray-500 flex items-center gap-1">
+                    Separate multiple skills with commas
+                  </p>
+                </div>
+                <div className="space-y-3">
+                  <label htmlFor="colleges" className="flex items-center gap-2 font-semibold text-gray-700">
+                    Colleges
+                  </label>
+                  <select
+                    name="colleges"
+                    id="colleges"
+                    className="w-full p-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white h-40"
+                    multiple
+                    value={newSession.colleges && newSession.colleges.length > 0 ? newSession.colleges : []}
+                    onChange={(e) =>
+                      setNewSession({
+                        ...newSession,
+                        colleges: Array.from(e.target.selectedOptions, (option) => option.value),
+                      })
+                    }
+                  >
+                    <option value="" disabled hidden>
+                      Select College(s)
+                    </option>
+                    <option value="Vishnu Institute of Technology">Vishnu Institute of Technology</option>
+                    <option value="Vishnu Dental College">Vishnu Dental College</option>
+                    <option value="Shri Vishnu College of Pharmacy">Shri Vishnu College of Pharmacy</option>
+                    <option value="BV Raju Institute of Technology">BV Raju Institute of Technology</option>
+                    <option value="BVRIT Hyderabad College of Engineering">
+                      BVRIT Hyderabad College of Engineering
+                    </option>
+                    <option value="Shri Vishnu Engineering College for Women">
+                      Shri Vishnu Engineering College for Women
+                    </option>
+                  </select>
+                  <p className="text-xs text-gray-500 flex items-center gap-1">
+                    Hold Ctrl (Cmd on Mac) to select multiple colleges
+                  </p>
+                </div>
+                <div className="space-y-3">
+                  <label className="flex items-center gap-2 font-semibold text-gray-700">
+                    Session Type
+                  </label>
+                  <div className="flex items-center gap-6 bg-[hsl(60,100%,95%)] border-2 p-2 rounded-xl">
+                    {/* <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="isGroup"
+                        className="w-4 h-4 text-primary focus:ring-primary"
+                        checked={newSession.isGroup === true}
+                        onChange={() => setNewSession({ ...newSession, isGroup: true })}
+                      />
+                      <span className="font-medium text-gray-700">Group Session</span>
+                    </label> */}
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="isGroup"
+                        className="w-4 h-4 text-primary focus:ring-primary"
+                        checked={newSession.isGroup === false}
+                        onChange={() => setNewSession({ ...newSession, isGroup: false })}
+                      />
+                      <span className="font-medium text-gray-700">1-on-1</span>
+                    </label>
+                  </div>
+                </div>
+                {/* {newSession.isGroup && (
+                  <div className="space-y-4 p-2 bg-blue-50 rounded-xl border border-blue-100">
+                    <h3 className="font-semibold text-blue-800 flex items-center gap-2">
+                      Group Session Details
+                    </h3>
+                    <div className="grid grid-cols-1 gap-2">
+                      <div className="space-y-2">
+                        <label htmlFor="date" className="font-semibold text-gray-700 text-sm">Date</label>
+                        <input
+                          type="date"
+                          name="date"
+                          id="date"
+                          className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white"
+                          value={newSession.date || ""}
+                          onChange={(e) => setNewSession({ ...newSession, date: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label htmlFor="startTime" className="font-semibold text-gray-700 text-sm">Start Time</label>
+                        <input
+                          type="time"
+                          name="startTime"
+                          id="startTime"
+                          className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white"
+                          value={newSession.startTime || ""}
+                          onChange={(e) => setNewSession({ ...newSession, startTime: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label htmlFor="slots" className="font-semibold text-gray-700 text-sm">Number of Slots</label>
+                        <input
+                          type="number"
+                          name="slots"
+                          id="slots"
+                          placeholder="Enter number of slots"
+                          className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white"
+                          value={newSession.slots || ""}
+                          onChange={(e) => setNewSession({ ...newSession, slots: parseInt(e.target.value) })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )} */}
+                {newSession.isGroup === false && (
+                  <div className="space-y-4 p-2 bg-green-50 rounded-xl border border-green-100">
+                    <h3 className="font-semibold text-green-800 flex items-center gap-2">
+                      1-on-1 Session Details
+                    </h3>
+                    <div className="grid grid-cols-1 gap-4">
+                      <div className="space-y-2">
+                        <label htmlFor="date" className="font-semibold text-gray-700 text-sm">Date</label>
+                        <input
+                          type="date"
+                          name="date"
+                          id="date"
+                          className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white"
+                          value={newSession.date || ""}
+                          onChange={(e) => setNewSession({ ...newSession, date: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label htmlFor="startTime" className="font-semibold text-gray-700 text-sm">Start Time</label>
+                        <input
+                          type="time"
+                          name="startTime"
+                          id="startTime"
+                          className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white"
+                          value={newSession.startTime || ""}
+                          onChange={(e) => setNewSession({ ...newSession, startTime: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label htmlFor="totalDuration" className="font-semibold text-gray-700 text-sm">Total Duration (minutes)</label>
+                        <input
+                          type="number"
+                          name="totalDuration"
+                          id="totalDuration"
+                          placeholder="Enter total duration"
+                          className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white"
+                          value={newSession.totalDuration || ""}
+                          onChange={(e) =>
+                            setNewSession({ ...newSession, totalDuration: parseInt(e.target.value) })
+                          }
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label htmlFor="slotDuration" className="font-semibold text-gray-700 text-sm">Slot Duration (minutes)</label>
+                        <input
+                          type="number"
+                          name="slotDuration"
+                          id="slotDuration"
+                          placeholder="Enter slot duration"
+                          className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white"
+                          value={newSession.slotDuration || ""}
+                          onChange={(e) =>
+                            setNewSession({ ...newSession, slotDuration: parseInt(e.target.value) })
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="space-y-2">
+                    <label htmlFor="expiryDate" className="flex items-center gap-2 font-semibold text-gray-700">
+                      Expiry Date
+                    </label>
+                    <input
+                      type="date"
+                      name="expiryDate"
+                      id="expiryDate"
+                      className="w-full p-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
+                      value={newSession.expiryDate || ""}
+                      onChange={(e) => setNewSession({ ...newSession, expiryDate: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label htmlFor="expiryTime" className="flex items-center gap-2 font-semibold text-gray-700">
+                      Expiry Time
+                    </label>
+                    <input
+                      type="time"
+                      name="expiryTime"
+                      id="expiryTime"
+                      className="w-full p-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
+                      value={newSession.expiryTime || ""}
+                      onChange={(e) => setNewSession({ ...newSession, expiryTime: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                  <button
+                    type="button"
+                    className="px-5 py-3 rounded-xl bg-red-500 text-white font-medium hover:bg-red-700 transition-all duration-200 flex items-center gap-2 shadow-sm"
+                    onClick={() => setShowForm(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="px-6 py-3 rounded-xl bg-gradient-to-r from-primary to-blue-700 text-white font-medium transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                    onClick={handleAddSession}
+                  >
+                    Add Session
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}
-
-        {/* Expiry Fields */}
-        <div className="grid grid-cols-1 gap-4">
-          <div className="space-y-2">
-            <label htmlFor="expiryDate" className="flex items-center gap-2  font-semibold text-gray-700">
-              
-              Expiry Date
-            </label>
-            <input
-              type="date"
-              name="expiryDate"
-              id="expiryDate"
-              className="w-full p-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
-              value={newSession.expiryDate || ""}
-              onChange={(e) => setNewSession({ ...newSession, expiryDate: e.target.value })}
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <label htmlFor="expiryTime" className="flex items-center gap-2  font-semibold text-gray-700">
-              
-              Expiry Time
-            </label>
-            <input
-              type="time"
-              name="expiryTime"
-              id="expiryTime"
-              className="w-full p-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
-              value={newSession.expiryTime || ""}
-              onChange={(e) => setNewSession({ ...newSession, expiryTime: e.target.value })}
-            />
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
-          <button
-            type="button"
-            className="px-6 py-3 rounded-xl bg-red-500 text-white font-medium hover:bg-red-700 transition-all duration-200 flex items-center gap-2  shadow-sm"
-            onClick={() => setShowForm(false)}
-          >
-            
-            Cancel
-          </button>
-          <button
-            type="button"
-            className="px-6 py-3 rounded-xl bg-gradient-to-r from-primary to-blue-600 text-white font-medium transition-all duration-200 flex items-center gap-2  shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-            onClick={handleAddSession}
-          >
-            
-            Add Counseling Session
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-)}
-
-        {/* Participants Modal */}
         {showParticipants && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
             <div className="bg-[hsl(60,100%,95%)] p-6 rounded-lg shadow-lg w-[450px]">
@@ -1011,20 +1113,99 @@ export default function CounselingPage() {
             </div>
           </div>
         )}
+        {showProofsModal && selectedSession && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4 sm:p-0">
+    <div className="bg-[hsl(60,100%,95%)] rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-lg">
+      
+      {/* Heading */}
+      <h2 className="text-xl sm:text-2xl font-bold mb-4 text-center text-gray-800">
+        {selectedSession.validated ? "View Proofs" : "View and Validate Proofs"}
+      </h2>
 
-        {/* Calendar Modal */}
+      {/* Session Details */}
+      <div className="mb-4 p-4 bg-yellow-100 rounded-lg border border-yellow-200 text-sm sm:text-base">
+        <p className="font-semibold text-gray-800 break-words">
+          Session: <span className="font-normal">{selectedSession.title}</span>
+        </p>
+        <p className="text-gray-700 break-words">
+          Tutor: <span className="font-normal">{selectedSession.tutorName}</span>
+        </p>
+        <p className="text-gray-700">
+          Date:{" "}
+          <span className="font-normal">
+            {selectedSession.date} {selectedSession.startTime}
+          </span>
+        </p>
+      </div>
+
+      {/* Proofs Display */}
+      {proofsToView.length === 0 ? (
+        <p className="text-sm text-gray-500 text-center">No proofs available</p>
+      ) : (
+        <div className="space-y-4">
+          {proofsToView.map((proof, index) => (
+            <div
+              key={index}
+              className="border p-2 rounded-lg bg-yellow-100 flex flex-col items-center"
+            >
+              {proof.match(/\.(jpg|jpeg|png)$/i) ? (
+                <img
+                  src={proof}
+                  alt={`Proof ${index + 1}`}
+                  className="w-full max-h-56 sm:max-h-64 object-contain rounded transition-transform duration-200 hover:scale-105"
+                />
+              ) : (
+                <a
+                  href={proof}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-800 hover:underline break-words text-center"
+                >
+                  View Proof {index + 1}
+                </a>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Buttons */}
+      <div className="flex flex-col sm:flex-row justify-end gap-3 mt-6">
+        <button
+          className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-800 text-white w-full sm:w-auto"
+          onClick={() => {
+            setShowProofsModal(false);
+            setSelectedSession(null);
+            setProofsToView([]);
+          }}
+        >
+          Close
+        </button>
+
+        {!selectedSession.validated && proofsToView.length > 0 && (
+          <button
+            className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-900 text-white w-full sm:w-auto"
+            onClick={handleValidateSession}
+          >
+            Confirm Validation
+          </button>
+        )}
+      </div>
+    </div>
+  </div>
+)}
+
         {showCalendar && selectedSession && !selectedSession.isGroup && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
-            <div className="[background-color:hsl(60,100%,90%)] rounded-xl p-6 w-full max-w-md">
+            <div className="bg-background rounded-xl p-6 w-full max-w-md">
               <h2 className="text-xl font-bold mb-4">{selectedSession.title} - Select Date</h2>
-              <Calendar className="[background-color:hsl(60,100%,95%)]" onClickDay={handleDateClick} tileClassName={tileClassName} />
-
+              <Calendar className="[background-color:hsl(60,100%,95%)] mb-3" onClickDay={handleDateClick} tileClassName={tileClassName} />
               {selectedDate && availableSlots.length > 0 && (
                 <div className="mt-4">
                   <p className="mb-2 font-semibold">
                     Available Slots on {selectedDate.toDateString()}:
                   </p>
-                  <div className="grid grid-cols-2 gap-2  mb-4">
+                  <div className="grid grid-cols-2 gap-2 mb-4">
                     {availableSlots.map((slot) => {
                       const isUserSlot = slot.user === user?.uid;
 
@@ -1032,7 +1213,7 @@ export default function CounselingPage() {
                         <button
                           key={slot.time}
                           className={`py-2 rounded-lg text-sm font-semibold text-white transition
-                            ${slot.booked ? (isUserSlot ? "bg-green-600" : "bg-gray-400") : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-indigo-600 hover:to-blue-600"}`}
+                            ${slot.booked ? (isUserSlot ? "bg-green-600" : "bg-gray-400") : "bg-primary"}`}
                           onClick={() => handleSlotSelect(slot.time)}
                           disabled={slot.booked}
                         >
@@ -1074,7 +1255,7 @@ export default function CounselingPage() {
                   Cancel
                 </button>
                 <button
-                  className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-blue-800"
+                  className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-blue-900"
                   onClick={confirmJoin}
                   disabled={bookingInProgress}
                 >
@@ -1084,33 +1265,32 @@ export default function CounselingPage() {
             </div>
           </div>
         )}
+        {showCancelDialog && sessionToCancel && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+            <div className="[background-color:hsl(60,100%,95%)] rounded-xl p-6 w-96">
+              <h2 className="text-xl font-bold text-red-600 mb-4">Cancel Counseling Session</h2>
+              <p className="mb-4 text-gray-700">
+                Are you sure you want to cancel <strong>{sessionToCancel.title}</strong>? 
+                This will delete the counseling session and all related bookings.
+              </p>
+              <div className="flex justify-end gap-4">
+                <button
+                  className="px-4 py-2 rounded-lg bg-gray-500 hover:bg-gray-600 text-white"
+                  onClick={() => setShowCancelDialog(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white"
+                  onClick={handleCancelSession}
+                >
+                  Delete Session
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
-      {/* Cancel Session Dialog */}
-{showCancelDialog && sessionToCancel && (
-  <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-    <div className="[background-color:hsl(60,100%,95%)] rounded-xl p-6 w-96">
-      <h2 className="text-xl font-bold text-red-600 mb-4">Cancel Counseling Session</h2>
-      <p className="mb-4 text-gray-700">
-        Are you sure you want to cancel <strong>{sessionToCancel.title}</strong>? 
-        This will delete the counseling session and all related bookings.
-      </p>
-      <div className="flex justify-end gap-4">
-        <button
-          className="px-4 py-2 rounded-lg bg-gray-500 hover:bg-gray-600 text-white"
-          onClick={() => setShowCancelDialog(false)}
-        >
-          Cancel
-        </button>
-        <button
-          className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white"
-          onClick={handleCancelSession}
-        >
-          Delete Session
-        </button>
-      </div>
-    </div>
-  </div>
-)}
     </div>
   );
 }
