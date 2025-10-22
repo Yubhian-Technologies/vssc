@@ -94,7 +94,8 @@ export default function AuthPage() {
           points: 10,
           keywords: generateKeywords(name, email),
         });
-        navigate("/", { state: { showCongrats: true } });
+
+        navigate("/hero", { state: { showCongrats: true } });
       }
       
       
