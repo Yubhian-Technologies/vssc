@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { auth, db } from "../firebase";
@@ -6,6 +6,7 @@ import { onAuthStateChanged, signOut } from "firebase/auth";
 import { doc, onSnapshot } from "firebase/firestore";
 import ButtonGradient from "./ui/ButtonGradient";
 import VSSCLogo from "@/assets/VSSC LOGO[1].png";
+import AppointmentToggleModal from "./ui/AppointmentToggleModal";
 
 const Header = () => {
   const navigate = useNavigate();
@@ -14,8 +15,8 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [profileUrl, setProfileUrl] = useState<string | null>(null);
   const [isServicesOpen, setIsServicesOpen] = useState(false);
-
   const [role, setRole] = useState<string | null>(null);
+  const [uid, setUid] = useState<string | null>(null);
   const [points, setPoints] = useState<number>(0);
 
   const isHome = location.pathname === "/";
@@ -33,6 +34,7 @@ const Header = () => {
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (user) {
         setIsLoggedIn(true);
+        setUid(user.uid);
         const docRef = doc(db, "users", user.uid);
         unsubscribeSnapshot = onSnapshot(docRef, (docSnap) => {
           if (docSnap.exists()) {
@@ -47,6 +49,7 @@ const Header = () => {
         setProfileUrl(null);
         setRole(null);
         setPoints(0);
+        setUid(null);
       }
     });
 
@@ -56,14 +59,11 @@ const Header = () => {
     };
   }, []);
 
-
-
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const handleLoginClick = () => {
     if (!isLoggedIn) navigate("/auth");
     else navigate("/appointment");
   };
-
   const handleSignOut = async () => {
     try {
       await signOut(auth);
@@ -86,10 +86,7 @@ const Header = () => {
   const PointsBadge = () => (
     <div
       id="points-section"
-      onClick={() => {
-        setIsMenuOpen(false);
-        navigate("/leaderboard");
-      }}
+      onClick={() => navigate("/leaderboard")}
       className="flex items-center gap-2 px-3 py-1 bg-black/80 rounded-full shadow-lg relative overflow-hidden cursor-pointer"
     >
       <div className="absolute inset-0 bg-gradient-to-t from-orange-600 via-yellow-400 to-transparent animate-pulse opacity-60 blur-sm"></div>
@@ -102,22 +99,22 @@ const Header = () => {
   return (
     <header className="relative w-full bg-background border-b border-border z-[100]">
       {/* Decorative background */}
-      <div className="absolute top-0 right-0 h-full w-[350px] md:w-[500px] bg-primary z-0 [clip-path:polygon(20%_0,100%_0,100%_100%,0%_100%)] opacity-90 pointer-events-none"></div>
+      <div className="absolute top-0 right-0 h-full w-[250px] md:w-[500px] bg-primary z-0 [clip-path:polygon(20%_0,100%_0,100%_100%,0%_100%)] opacity-90 pointer-events-none"></div>
 
       {/* Header container */}
       <div className="container mx-auto px-4 sm:px-6 py-2 flex items-center justify-between relative z-20">
-        {/* Logo section */}
+        {/* Logo */}
         <div
           className={`flex items-center transition-all duration-500 ${
             isHome ? "translate-y-4" : ""
           }`}
-          style={{ marginLeft: "0.75rem" }} // move logo slightly right
+          style={{ marginLeft: "0.75rem" }}
         >
           <Link
             to="/"
             className={`transition-all duration-500 flex items-center ${
               isHome
-                ? "scale-[1.7] drop-shadow-[0_0_25px_rgba(255,200,0,0.8)]"
+                ? "scale-[1.7] drop-shadow-[0_0_25px_rgba(0,0,80,0.9)]"
                 : "scale-100"
             }`}
           >
@@ -188,7 +185,9 @@ const Header = () => {
         {/* Desktop Right */}
         <div className="hidden lg:flex items-center gap-4 relative z-20">
           {isLoggedIn && role === "admin" ? (
-            <ButtonGradient name="Appointments →" onClick={handleLoginClick} />
+            <>
+              <ButtonGradient name="Appointments →" onClick={handleLoginClick} />
+            </>
           ) : (
             <ButtonGradient
               name={isLoggedIn ? "Book an Appointment →" : "Login/Register"}
@@ -198,7 +197,7 @@ const Header = () => {
 
           {isLoggedIn && (
             <>
-              <div 
+              <div
                 className="w-10 h-10 rounded-full overflow-hidden border-2 border-primary cursor-pointer"
                 onClick={() => navigate("/account")}
               >
@@ -216,6 +215,9 @@ const Header = () => {
               </div>
 
               <PointsBadge />
+              {isLoggedIn && role === "admin" && uid && (
+              <AppointmentToggleModal userId={uid} />
+            )}
             </>
           )}
         </div>
@@ -302,36 +304,21 @@ const Header = () => {
                 </Link>
               )
             )}
-
-            {isLoggedIn && role === "admin" ? (
-              <ButtonGradient
-                name="Appointments →"
-                onClick={() => {
-                  setIsMenuOpen(false);
-                  handleLoginClick();
-                }}
-              />
-            ) : (
-              <ButtonGradient
-                name={isLoggedIn ? "Book an Appointment →" : "Login/Register"}
-                onClick={() => {
-                  setIsMenuOpen(false);
-                  handleLoginClick();
-                }}
-              />
+            {isLoggedIn && role === "admin" && uid && (
+              <AppointmentToggleModal userId={uid} />
             )}
+            
 
-            {isLoggedIn && (
-              <>
-                <PointsBadge />
-                <button
-                  onClick={handleSignOut}
-                  className="flex justify-center items-center w-full bg-red-500 hover:bg-red-600 text-white py-2 rounded transition"
-                >
-                  Sign Out
-                </button>
-              </>
-            )}
+            <ButtonGradient
+              name={isLoggedIn ? "Book an Appointment →" : "Login/Register"}
+              onClick={() => {
+                setIsMenuOpen(false);
+                handleLoginClick();
+              }}
+            />
+
+            {isLoggedIn && <PointsBadge />}
+            
           </nav>
         </div>
       )}

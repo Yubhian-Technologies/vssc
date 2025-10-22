@@ -6,6 +6,8 @@ import green2 from "@/assets/green2.png";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { toastSuccess, toastError } from "@/components/ui/sonner";
+import CompleteSessionButton from "@/components/ui/CompleteSessionButton";
+import SessionProof from "./SessionProofs";
 
 import {
   collection,
@@ -597,6 +599,7 @@ export default function StudyWorkshopPage() {
         expiryDate: "",
         expiryTime: "",
       });
+      toastSuccess("Session Added Successfully");
     } catch (err) {
       console.error("Error adding session:", err);
       toastError("Failed to add session. Try again.");
@@ -645,10 +648,10 @@ export default function StudyWorkshopPage() {
       // Delete the session
       await deleteDoc(doc(db, "studyworkshop", sessionToCancel.id)); // 👈 Collection name
 
-      toast.success("Workshop session canceled and deleted successfully.");
+      toastSuccess("Workshop session canceled and deleted successfully.");
     } catch (err) {
       console.error("Error canceling session:", err);
-      toast.error("Failed to cancel session. Try again.");
+      toastError("Failed to cancel session. Try again.");
     } finally {
       setShowCancelDialog(false);
       setSessionToCancel(null);
@@ -806,8 +809,18 @@ export default function StudyWorkshopPage() {
                       >
                         Cancel Session
                       </button>
+                      <CompleteSessionButton
+                        session={session}
+                        collectionName="studyworkshop"
+                      />
                     </div>
                   )}
+                {userData?.role === "admin+" && (
+                  <SessionProof
+                    collectionName="studyworkshop"
+                    sessions={session}
+                  />
+                )}
               </div>
             ))}
           </div>

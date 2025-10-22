@@ -1,5 +1,5 @@
-// src/pages/LeaderboardPage.tsx
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom"; // Add this import
 import { 
   motion, 
   AnimatePresence, 
@@ -29,7 +29,10 @@ const formatPoints = (points: number) => {
 const LeaderboardPage = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loadingStage, setLoadingStage] = useState<LoadingStage>('logo');
+  const [showAll, setShowAll] = useState(false);
   const { width, height } = useWindowSize();
+  const { state } = useLocation(); // Access navigation state
+  const showArrow = state?.showArrow || false; // Check for showArrow
 
   useEffect(() => {
     const q = query(collection(db, "users"), orderBy("points", "desc"));
@@ -84,33 +87,31 @@ const LeaderboardPage = () => {
   // Logo Screen
   if (loadingStage === 'logo') {
     return (
-      <div className="relative min-h-screen bg-gradient-to-br from-yellow-100 via-yellow-100 to-orange-100 flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0">
-          {Array.from({ length: 20 }).map((_, i) => (
-            <motion.div
-              key={`grid-${i}`}
-              className="absolute bg-white/15 rounded"
-              style={{
-                width: Math.random() * 100 + 50,
-                height: Math.random() * 100 + 50,
-                top: `${Math.random() * 100}%`,
-                left: `${Math.random() * 100}%`,
-              }}
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{
-                scale: [0, 1, 0],
-                opacity: [0, 0.3, 0],
-                rotate: [0, 180, 360],
-              }}
-              transition={{
-                duration: 3,
-                repeat: Infinity,
-                delay: i * 0.1,
-              }}
-            />
-          ))}
-        </div>
-
+      <div id="leaderboard" className="relative min-h-screen bg-gradient-to-br from-yellow-100 via-yellow-100 to-orange-100 flex items-center justify-center overflow-hidden">
+        {/* Existing logo screen code unchanged */}
+        {Array.from({ length: 20 }).map((_, i) => (
+          <motion.div
+            key={`grid-${i}`}
+            className="absolute bg-white/15 rounded"
+            style={{
+              width: Math.random() * 100 + 50,
+              height: Math.random() * 100 + 50,
+              top: `${Math.random() * 100}%`,
+              left: `${Math.random() * 100}%`,
+            }}
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{
+              scale: [0, 1, 0],
+              opacity: [0, 0.3, 0],
+              rotate: [0, 180, 360],
+            }}
+            transition={{
+              duration: 3,
+              repeat: Infinity,
+              delay: i * 0.1,
+            }}
+          />
+        ))}
         <motion.div
           className="relative z-10 text-center"
           initial={{ opacity: 0, scale: 0 }}
@@ -139,7 +140,6 @@ const LeaderboardPage = () => {
               rotate: { duration: 20, repeat: Infinity, ease: "linear" },
             }}
           />
-          
           <motion.div
             className="relative bg-gradient-to-br from-amber-300 via-yellow-200 to-orange-300 bg-clip-text text-transparent drop-shadow-lg"
             animate={{ scale: [1, 1.05, 1] }}
@@ -164,7 +164,6 @@ const LeaderboardPage = () => {
               />
             </div>
           </motion.div>
-
           <motion.p
             className="text-3xl text-amber-800 mt-8 font-bold tracking-wide"
             initial={{ opacity: 0, y: 20 }}
@@ -174,7 +173,6 @@ const LeaderboardPage = () => {
             Excellence Platform
           </motion.p>
         </motion.div>
-
         {Array.from({ length: 100 }).map((_, i) => (
           <motion.div
             key={`logo-particle-${i}`}
@@ -204,7 +202,8 @@ const LeaderboardPage = () => {
   // Loading Screen
   if (loadingStage === 'loading') {
     return (
-      <div className="relative min-h-screen bg-gradient-to-br from-yellow-50  to-orange-50 flex items-center justify-center overflow-hidden">
+      <div className="relative min-h-screen bg-gradient-to-br from-yellow-50 to-orange-50 flex items-center justify-center overflow-hidden">
+        {/* Existing loading screen code unchanged */}
         <div className="absolute inset-0">
           <motion.div
             className="absolute inset-0 bg-gradient-to-r from-amber-300/15 to-yellow-300/15"
@@ -225,7 +224,6 @@ const LeaderboardPage = () => {
             transition={{ duration: 5, repeat: Infinity, delay: 2 } as Transition}
           />
         </div>
-
         <motion.div
           className="text-center relative z-10"
           initial={{ opacity: 0, y: 50 }}
@@ -253,16 +251,14 @@ const LeaderboardPage = () => {
               <Trophy className="w-20 h-20 text-white drop-shadow-2xl" />
             </div>
           </motion.div>
-
           <motion.h1
-            className="text-4xl sm:text-6xl font-black bg-gradient-to-r from-amber-700  to-orange-500 bg-clip-text text-transparent mb-8 drop-shadow-lg"
+            className="text-4xl sm:text-6xl font-black bg-gradient-to-r from-amber-700 to-orange-500 bg-clip-text text-transparent mb-8 drop-shadow-lg"
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.3, type: "spring" as const } as Transition}
           >
             Leaderboard
           </motion.h1>
-
           <motion.p
             className="text-md sm:text-2xl text-amber-500 font-bold tracking-wide"
             initial={{ opacity: 0, y: 20 }}
@@ -272,7 +268,6 @@ const LeaderboardPage = () => {
             Preparing the Hall of Fame...
           </motion.p>
         </motion.div>
-
         {Array.from({ length: 80 }).map((_, i) => (
           <motion.div
             key={`loading-particle-${i}`}
@@ -302,6 +297,20 @@ const LeaderboardPage = () => {
   // Main Leaderboard
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-yellow-50 to-yellow-100 overflow-hidden">
+      {/* Add arrow when showArrow is true */}
+      {showArrow && (
+        <motion.div
+          className="absolute top-10 right-10 z-20"
+          initial={{ opacity: 0, scale: 0 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2">
+            <path d="M5 12h14M12 5l7 7-7 7" />
+          </svg>
+        </motion.div>
+      )}
+
       <div className="absolute inset-0 opacity-20">
         <div className="absolute inset-0 bg-gradient-to-r from-amber-100/50 via-transparent to-yellow-100/50" />
         <div 
@@ -463,7 +472,7 @@ const LeaderboardPage = () => {
             
             <div className="divide-y divide-amber-50">
               <AnimatePresence>
-                {users.slice(3).map((user, index) => (
+                {users.slice(3, showAll ? users.length : 10).map((user, index) => (
                   <motion.div
                     key={user.uid}
                     className="px-6 py-4 hover:bg-amber-50 transition-colors duration-200 flex items-center justify-between group"
@@ -493,6 +502,27 @@ const LeaderboardPage = () => {
                 ))}
               </AnimatePresence>
             </div>
+            
+            {users.length > 10 && (
+              <div className="px-6 py-4 bg-amber-25 border-t border-amber-100">
+                <button
+                  onClick={() => setShowAll(!showAll)}
+                  className="w-full bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
+                >
+                  {showAll ? (
+                    <>
+                      <Users className="w-4 h-4" />
+                      Show Less
+                    </>
+                  ) : (
+                    <>
+                      <Users className="w-4 h-4" />
+                      View More ({users.length - 10} more)
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
           </div>
         </motion.section>
       </div>
@@ -507,8 +537,6 @@ const LeaderboardPage = () => {
           gravity={0.1}
         />
       )}
-
-      
     </div>
   );
 };

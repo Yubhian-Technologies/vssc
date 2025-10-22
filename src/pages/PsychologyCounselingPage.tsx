@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import TitleHeroSection from "@/components/TitleHeroSection";
 import SearchFilter from "@/components/SearchFilter";
+import CompleteSessionButton from "@/components/ui/CompleteSessionButton";
 import { db } from "../firebase";
 import green5 from "@/assets/green5.png";
 import { motion } from "framer-motion";
 import { toastSuccess, toastError } from "@/components/ui/sonner";
+import SessionProof from "./SessionProofs";
 import {
   collection,
   doc,
@@ -813,6 +815,16 @@ export default function PsychologyCounselingPage() {
                       >
                         Cancel Session
                       </button>
+                      <CompleteSessionButton
+                        session={session}
+                        collectionName="psychologycounseling"
+                      />
+                      {userData?.role === "admin+" && (
+                        <SessionProof
+                          collectionName="psychologycouseling"
+                          sessions={session}
+                        />
+                      )}
                     </div>
                   )}
               </div>

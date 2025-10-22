@@ -14,6 +14,7 @@ import {
   query,
   where,
   DocumentData,
+  onSnapshot,
 } from "firebase/firestore";
 import { useAuth } from "../AuthContext";
 import red3 from "@/assets/red3.png";
@@ -75,23 +76,25 @@ const AppointmentPage = () => {
   }, [user]);
 
   // 🔹 Student: fetch faculty from same college
-  useEffect(() => {
-    const fetchFaculty = async () => {
-      if (role !== "student" || !college) return;
+useEffect(() => {
+  if (role !== "student" || !college) return;
 
-      const snap = await getDocs(
-        query(collection(db, "faculty"), where("college", "==", college))
-      );
+  const q = query(
+    collection(db, "faculty"),
+    where("college", "==", college),
+    where("isReady", "==", true) // only ready faculty
+  );
 
-      const list: Faculty[] = snap.docs.map((d) => ({
-        id: d.id,
-        ...(d.data() as Omit<Faculty, "id">),
-      }));
+  const unsubscribe = onSnapshot(q, (snapshot) => {
+    const list: Faculty[] = snapshot.docs.map((d) => ({
+      id: d.id,
+      ...(d.data() as Omit<Faculty, "id">),
+    }));
+    setFaculty(list);
+  });
 
-      setFaculty(list);
-    };
-    fetchFaculty();
-  }, [role, college]);
+  return () => unsubscribe(); // cleanup on unmount
+}, [role, college]);
 
   // 🔹 Admin: fetch appointments
   useEffect(() => {

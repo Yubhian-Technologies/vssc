@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { db } from "../firebase";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { getAuth } from "firebase/auth";
+
 import green1 from "@/assets/green1.png";
 import green2 from "@/assets/green2.png";
 import green3 from "@/assets/green3.png";
@@ -22,6 +24,8 @@ interface Service {
 
 const Services = () => {
   const navigate = useNavigate();
+  const auth = getAuth();
+
   const [services, setServices] = useState<Service[]>([
     {
       id: "tutoring",
@@ -75,26 +79,56 @@ const Services = () => {
 
   useEffect(() => {
     const fetchCounts = async () => {
-      const updated = await Promise.all(
-        services.map(async (service) => {
-          try {
-            const snapshot = await getDocs(
-              collection(db, service.collectionName)
-            );
-            return { ...service, count: snapshot.size };
-          } catch (err) {
-            console.error(`Error fetching ${service.title}:`, err);
-            return service;
-          }
-        })
-      );
-      setServices(updated);
-      setFilteredServices(updated);
-    };
-    fetchCounts();
-  }, [services]);
+      try {
+        const currentUser = auth.currentUser;
+        if (!currentUser) return;
 
-  // Filter services based on search input
+        const userDocRef = doc(db, "users", currentUser.uid);
+        const userSnap = await getDoc(userDocRef);
+        if (!userSnap.exists()) return;
+
+        const userData = userSnap.data();
+        const userCollege = userData.college;
+        const isAdmin = userData.role === "admin" ? true : false;
+        // check if user is admin
+
+        const updatedServices = await Promise.all(
+          services.map(async (service) => {
+            try {
+              const sessionSnapshot = await getDocs(
+                collection(db, service.collectionName)
+              );
+
+              const count = sessionSnapshot.docs.filter((sessionDoc) => {
+                const sessionData = sessionDoc.data();
+
+                if (isAdmin) {
+                  // Admin sees only sessions created by themselves
+                  return sessionData.createdBy === currentUser.uid;
+                } else {
+                  // Regular user sees sessions for their college
+                  return sessionData.colleges?.includes(userCollege);
+                }
+              }).length;
+
+              return { ...service, count };
+            } catch (err) {
+              console.error(`Error fetching ${service.title}:`, err);
+              return service;
+            }
+          })
+        );
+
+        setServices(updatedServices);
+        setFilteredServices(updatedServices);
+      } catch (err) {
+        console.error("Error fetching user or sessions:", err);
+      }
+    };
+
+    fetchCounts();
+  }, [auth.currentUser]);
+
   useEffect(() => {
     const filtered = services.filter((service) =>
       service.title.toLowerCase().includes(search.toLowerCase())
@@ -118,7 +152,7 @@ const Services = () => {
         />
       </div>
 
-      {/* Hero Section  */}
+      {/* Hero Section */}
       <div className="relative w-full h-72 md:h-96 lg:h-[28rem]">
         <img
           src={green5}

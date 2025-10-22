@@ -62,13 +62,10 @@ const TestimonialsSection = () => {
       <div className="container mx-auto px-4">
        
         <div className="text-center mb-16">
-          <span className="text-blue-600 font-semibold text-2xl tracking-wide uppercase">
+          <span className="text-blue-600 font-semibold text-5xl tracking-wide uppercase">
             TESTIMONIALS
           </span>
-          <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mt-2 mb-4">
-            What Our Students Say About<br />
-            Our Services
-          </h2>
+         
         </div>
 
         

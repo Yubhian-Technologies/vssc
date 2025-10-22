@@ -135,8 +135,12 @@ export default function AuthPage() {
           role: "student",
           points: 10,
           keywords: generateKeywords(name, email),
+          isNewUser: true,
         });
-        navigate("/hero", { state: { showCongrats: true } });
+
+        localStorage.removeItem("dailyGameClaim");
+        console.log("Cleared dailyGameClaim on registration");
+        navigate("/", { state: { showCongrats: true } });
       }
     } catch (err: unknown) {
       let message = "Something went wrong";

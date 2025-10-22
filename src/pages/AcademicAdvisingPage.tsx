@@ -5,7 +5,9 @@ import { db } from "../firebase";
 import green4 from "@/assets/green4.png";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { toastSuccess, toastError } from "@/components/ui/sonner";
+import CompleteSessionButton from "@/components/ui/CompleteSessionButton";
+import { toastSuccess,toastError } from "@/components/ui/sonner";
+import SessionProof from "./SessionProofs";
 
 import {
   collection,
@@ -792,28 +794,25 @@ export default function AcademicAdvisingPage() {
                     : "Full"}
                 </button>
 
-                {user?.uid === session.createdBy &&
-                  userData?.role === "admin" && (
-                    <div className="flex justify-between mt-2">
-                      <p
-                        className="text-blue-600 hover:underline cursor-pointer text-sm"
-                        onClick={() =>
-                          handleViewParticipants(session.participants || [])
-                        }
-                      >
-                        View Participants
-                      </p>
-                      <button
-                        onClick={() => {
-                          setSessionToCancel(session);
-                          setShowCancelDialog(true);
-                        }}
-                        className="text-red-600 hover:underline cursor-pointer text-sm font-medium"
-                      >
-                        Cancel Session
-                      </button>
-                    </div>
-                  )}
+                {user?.uid === session.createdBy && userData?.role === "admin" && (
+  <div className="flex justify-between mt-2">
+    <p
+      className="text-blue-600 hover:underline cursor-pointer text-sm"
+      onClick={() => handleViewParticipants(session.participants || [])}
+    >
+      View Participants
+    </p>
+    <button
+      onClick={() => {
+        setSessionToCancel(session);
+        setShowCancelDialog(true);
+      }}
+      className="text-red-600 hover:underline cursor-pointer text-sm font-medium"
+    >
+      Cancel Session
+    </button>
+  </div>
+)}
               </div>
             ))}
           </div>
