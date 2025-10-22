@@ -8,7 +8,7 @@ import ButtonGradient from "./ui/ButtonGradient";
 import VSSCLogo from "@/assets/VSSC LOGO[1].png";
 import AppointmentToggleModal from "./ui/AppointmentToggleModal";
 
-const Header = () => {
+const Header: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -21,6 +21,7 @@ const Header = () => {
 
   const isHome = location.pathname === "/";
 
+  // Format points with K+ / M+
   const formatPoints = (num: number) => {
     if (num < 1000) return num.toString();
     if (num < 1000000)
@@ -28,6 +29,7 @@ const Header = () => {
     return (num / 1000000).toFixed(1).replace(/\.0$/, "") + "M+";
   };
 
+  // Handle authentication state
   useEffect(() => {
     let unsubscribeSnapshot: (() => void) | undefined;
 
@@ -59,6 +61,7 @@ const Header = () => {
     };
   }, []);
 
+  // Handlers
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const handleLoginClick = () => {
     if (!isLoggedIn) navigate("/auth");
@@ -184,19 +187,30 @@ const Header = () => {
 
         {/* Desktop Right */}
         <div className="hidden lg:flex items-center gap-4 relative z-20">
-          {isLoggedIn && role === "admin" ? (
+          {isLoggedIn ? (
             <>
-              <ButtonGradient name="Appointments →" onClick={handleLoginClick} />
-            </>
-          ) : (
-            <ButtonGradient
-              name={isLoggedIn ? "Book an Appointment →" : "Login/Register"}
-              onClick={handleLoginClick}
-            />
-          )}
+              {/* Admin */}
+              {role === "admin" && (
+                <ButtonGradient name="Appointments →" onClick={handleLoginClick} />
+              )}
 
-          {isLoggedIn && (
-            <>
+              {/* Admin+ */}
+              {role === "admin+" && (
+                <ButtonGradient
+                  name="Dashboard →"
+                  onClick={() => navigate("/dashboard")}
+                />
+              )}
+
+              {/* Normal User */}
+              {role !== "admin" && role !== "admin+" && (
+                <ButtonGradient
+                  name="Book an Appointment →"
+                  onClick={handleLoginClick}
+                />
+              )}
+
+              {/* Profile */}
               <div
                 className="w-10 h-10 rounded-full overflow-hidden border-2 border-primary cursor-pointer"
                 onClick={() => navigate("/account")}
@@ -215,11 +229,11 @@ const Header = () => {
               </div>
 
               <PointsBadge />
-              {isLoggedIn && role === "admin" && uid && (
-              <AppointmentToggleModal userId={uid} />
-            )}
+
+              {/* Appointment Toggle Modal for Admin */}
+              {role === "admin" && uid && <AppointmentToggleModal userId={uid} />}
             </>
-          )}
+          ) : null}
         </div>
 
         {/* Mobile Menu Button */}
@@ -307,7 +321,6 @@ const Header = () => {
             {isLoggedIn && role === "admin" && uid && (
               <AppointmentToggleModal userId={uid} />
             )}
-            
 
             <ButtonGradient
               name={isLoggedIn ? "Book an Appointment →" : "Login/Register"}
@@ -318,7 +331,6 @@ const Header = () => {
             />
 
             {isLoggedIn && <PointsBadge />}
-            
           </nav>
         </div>
       )}
