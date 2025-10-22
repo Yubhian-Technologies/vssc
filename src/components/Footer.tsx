@@ -11,7 +11,7 @@ const Footer = () => {
     { title: "Home", href: "#" },
     { title: "About", href: "/About" },
     { title: "Services", href: "/Services" },
-    { title: "Tour", href: "/TourPage" },
+    { title: "Tour", href: "/tour" },
     { title: "Help", href: "/Help" },
     { title: "Account", href: "/Account" },
   ];
@@ -34,7 +34,7 @@ const Footer = () => {
       url: "https://www.facebook.com/srivishnueducationalsocietybhimavaram/",
       external: true,
     },
-    { Icon: Twitter, url: "", external: true }, // Disabled because URL is missing
+
     {
       Icon: Instagram,
       url: "https://www.instagram.com/vishnueducationalsociety/",
@@ -45,6 +45,7 @@ const Footer = () => {
       url: "https://www.linkedin.com/school/vitbhimavaram/posts/?feedView=all",
       external: true,
     },
+    { Icon: Twitter, url: "", external: true }, // Disabled because URL is missing
   ];
 
   return (

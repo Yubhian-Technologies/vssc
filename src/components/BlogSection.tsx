@@ -9,12 +9,26 @@ const blogPost = {
   date: "Jan 23, 2024",
   image: heroStudent,
   category: "Education",
-  tags: ["Student", "Tips", "Education", "Career", "Learning", "Motivation", "Success"],
+  tags: [
+    "Student",
+    "Tips",
+    "Education",
+    "Career",
+    "Learning",
+    "Motivation",
+    "Success",
+  ],
   shortDescription:
     "Practical tips for students and recent graduates to achieve academic and professional success.",
 };
 
-const categories = ["Education", "Academic", "Teaching", "Technology", "Lifestyle"];
+const categories = [
+  "Education",
+  "Academic",
+  "Teaching",
+  "Technology",
+  "Lifestyle",
+];
 
 const BlogPage = () => {
   const navigate = useNavigate(); // ✅ Initialize navigation
@@ -48,9 +62,12 @@ const BlogPage = () => {
               alt={blogPost.title}
               className="w-full h-40 sm:h-48 md:h-56 lg:h-64 object-cover rounded-md shadow-md"
             />
-            <h2 className="text-lg font-bold text-foreground mt-1">{blogPost.title}</h2>
-            <p className="text-muted-foreground text-xs">{blogPost.shortDescription}</p>
-            
+            <h2 className="text-lg font-bold text-foreground mt-1">
+              {blogPost.title}
+            </h2>
+            <p className="text-muted-foreground text-xs">
+              {blogPost.shortDescription}
+            </p>
           </div>
 
           {/* Sidebar */}
@@ -77,7 +94,7 @@ const BlogPage = () => {
                 {blogPost.tags.map((tag) => (
                   <Badge
                     key={tag}
-                    className="border border-gray-300 text-xs cursor-pointer px-1 py-[1px]"
+                    className="border border-gray-300 text-xs cursor-pointer hover:bg-[#5371cb] px-1 py-[1px]"
                   >
                     {tag}
                   </Badge>

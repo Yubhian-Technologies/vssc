@@ -44,23 +44,12 @@ const ServicesSection = () => {
           </h2>
         </div>
 
-        
-        <div className="relative flex items-center">
-          <button
-            onClick={scrollLeft}
-            className="absolute left-2 z-20 bg-primary text-white text-primary p-3 rounded-full shadow-lg hover:bg-black hover:text-white transition"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-
-          <div
-            ref={scrollRef}
-            className="flex overflow-x-auto no-scrollbar gap-6 scroll-smooth px-8"
-          >
-            {services.map((service, idx) => (
+        <div className="relative w-full overflow-hidden">
+          <div className="flex gap-6 animate-marquee px-8 hover:[animation-play-state:paused]">
+            {services.concat(services).map((service, idx) => (
               <Card
                 key={idx}
-                className="flex-shrink-0 w-[220px] rounded-2xl border border-yellow-200 [background-color:hsl(60,100%,90%)] shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer"
+                className="flex-shrink-0 w-[220px] rounded-2xl border border-yellow-200 [background-color:hsl(60,100%,90%)] shadow-md hover:shadow-xl hover:-translate-y-2 transition-all duration-300 cursor-pointer"
               >
                 <CardContent className="flex flex-col items-center justify-center space-y-3 py-6">
                   <span className="text-2xl">{service.icon}</span>
@@ -71,14 +60,6 @@ const ServicesSection = () => {
               </Card>
             ))}
           </div>
-
-
-          <button
-            onClick={scrollRight}
-            className="absolute right-2 z-20 bg-primary text-white text-primary p-3 rounded-full shadow-lg hover:bg-black hover:text-white transition"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </button>
         </div>
       </div>
 

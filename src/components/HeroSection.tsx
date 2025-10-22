@@ -146,7 +146,8 @@ const HeroSection = () => {
               </motion.h1>
 
               <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-xs sm:max-w-md md:max-w-lg">
-                The Vishnu Student Success Centre is dedicated to supporting and empowering students on their academic and personal journeys.
+                The Vishnu Student Success Centre is dedicated to supporting and
+                empowering students on their academic and personal journeys.
               </p>
             </div>
 
