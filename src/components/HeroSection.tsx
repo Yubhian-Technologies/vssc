@@ -199,7 +199,7 @@ const HeroSection = () => {
                 ))}
               </motion.h1>
 
-              <p className="text-sm sm:text-base md:text-lg text-muted-foreground max-w-sm sm:max-w-md md:max-w-lg mx-auto md:mx-0">
+              <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-xs sm:max-w-md md:max-w-lg">
                 The Vishnu Student Success Centre is dedicated to supporting and empowering students on their academic and personal journeys.
               </p>
             </div>

@@ -10,6 +10,7 @@ import green2 from "@/assets/green2.png";
 import green3 from "@/assets/green3.png";
 import green4 from "@/assets/green4.png";
 import green5 from "@/assets/green5.png";
+import filter21 from "@/assets/filter21.jpg";
 
 interface Service {
   id: string;
@@ -89,7 +90,7 @@ const Services = () => {
         const userData = userSnap.data();
         const userCollege = userData.college;
         const isAdmin = userData.role === "admin" ? true : false;
-// check if user is admin
+        // check if user is admin
 
         const updatedServices = await Promise.all(
           services.map(async (service) => {
@@ -182,7 +183,13 @@ const Services = () => {
               What Does VSSC Offer?
             </h2>
             <p className="text-base leading-relaxed">
-              We offer a comprehensive range of resources designed to support and enhance all aspects of student development. Our services include personalised tutoring, academic advising, and career counselling, each tailored to individual needs. Additionally, we host a variety of workshops aimed at promoting student wellness, growth, and confidence, ensuring a well-rounded approach to success.
+              We offer a comprehensive range of resources designed to support
+              and enhance all aspects of student development. Our services
+              include personalised tutoring, academic advising, and career
+              counselling, each tailored to individual needs. Additionally, we
+              host a variety of workshops aimed at promoting student wellness,
+              growth, and confidence, ensuring a well-rounded approach to
+              success.
             </p>
           </div>
 
@@ -226,7 +233,10 @@ const Services = () => {
               hidden: { opacity: 0, y: 50 },
               visible: { opacity: 1, y: 0 },
             }}
-            onClick={() => navigate(service.route)}
+            onClick={() => {
+              navigate(service.route);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
           >
             <div className="w-full h-40 flex justify-center items-center overflow-hidden bg-background">
               <motion.img

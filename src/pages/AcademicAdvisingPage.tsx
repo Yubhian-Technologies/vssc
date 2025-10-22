@@ -68,14 +68,19 @@ interface UserData {
 
 export default function AcademicAdvisingPage() {
   const [sessions, setSessions] = useState<AcademicAdvisingSession[]>([]);
-  const [filteredSessions, setFilteredSessions] = useState<AcademicAdvisingSession[]>([]);
+  const [filteredSessions, setFilteredSessions] = useState<
+    AcademicAdvisingSession[]
+  >([]);
   const { user, userData } = useAuth();
   const userCollege = userData?.college;
 
-  const [selectedSession, setSelectedSession] = useState<AcademicAdvisingSession | null>(null);
+  const [selectedSession, setSelectedSession] =
+    useState<AcademicAdvisingSession | null>(null);
   const [showCalendar, setShowCalendar] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [availableSlots, setAvailableSlots] = useState<AcademicAdvisingSession["bookedSlots"]>([]);
+  const [availableSlots, setAvailableSlots] = useState<
+    AcademicAdvisingSession["bookedSlots"]
+  >([]);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [showDialog, setShowDialog] = useState(false);
   const [bookingInProgress, setBookingInProgress] = useState(false);
@@ -97,8 +102,14 @@ export default function AcademicAdvisingPage() {
     { name: "Vishnu Dental College", domain: "@vdc.edu.in" },
     { name: "Shri Vishnu College of Pharmacy", domain: "@svcp.edu.in" },
     { name: "BV Raju Institute of Technology", domain: "@bvrit.ac.in" },
-    { name: "BVRIT Hyderabad College of Engineering", domain: "@bvrithyderabad.ac.in" },
-    { name: "Shri Vishnu Engineering College for Women", domain: "@svecw.edu.in" },
+    {
+      name: "BVRIT Hyderabad College of Engineering",
+      domain: "@bvrithyderabad.ac.in",
+    },
+    {
+      name: "Shri Vishnu Engineering College for Women",
+      domain: "@svecw.edu.in",
+    },
   ];
 
   const [newSession, setNewSession] = useState({
@@ -129,6 +140,8 @@ export default function AcademicAdvisingPage() {
   };
 
   // --- Fetch sessions in real-time ---
+  useEffect(() => {
+    if (!userCollege || !user) return;
   useEffect(() => {
     if (!userCollege || !user) return;
 
@@ -195,6 +208,11 @@ export default function AcademicAdvisingPage() {
                 bookedSlots: generatedSlots,
                 slotAvailable: generatedSlots.length,
               });
+              const sessionRef = doc(db, "academicadvising", session.id);
+              await updateDoc(sessionRef, {
+                bookedSlots: generatedSlots,
+                slotAvailable: generatedSlots.length,
+              });
 
               return { ...session, bookedSlots: generatedSlots, slotAvailable: generatedSlots.length };
             }
@@ -206,7 +224,13 @@ export default function AcademicAdvisingPage() {
           return session;
         })
       );
+          return session;
+        })
+      );
 
+      setSessions(updatedSessions);
+      setFilteredSessions(updatedSessions);
+    });
       setSessions(updatedSessions);
       setFilteredSessions(updatedSessions);
     });
@@ -220,13 +244,16 @@ export default function AcademicAdvisingPage() {
     return new Date(year, month - 1, day);
   };
 
-  const normalizeDate = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const normalizeDate = (d: Date) =>
+    new Date(d.getFullYear(), d.getMonth(), d.getDate());
 
   const tileClassName = ({ date }: any) => {
     if (!selectedSession || !selectedSession.date) return "";
     const sessionDate = normalizeDate(parseDate(selectedSession.date));
     const currentDate = normalizeDate(date);
-    const hasAvailableSlot = selectedSession.bookedSlots?.some((s) => !s.booked);
+    const hasAvailableSlot = selectedSession.bookedSlots?.some(
+      (s) => !s.booked
+    );
     return sessionDate.getTime() === currentDate.getTime() && hasAvailableSlot
       ? "bg-green-300 rounded-full"
       : "";
@@ -266,6 +293,8 @@ export default function AcademicAdvisingPage() {
     if (bookingInProgress) return;
     if (!user?.uid || !selectedSession || (!selectedSession.isGroup && !selectedSlot)) return;
 
+    setBookingInProgress(true);
+    const sessionRef = doc(db, "academicadvising", selectedSession.id);
     setBookingInProgress(true);
     const sessionRef = doc(db, "academicadvising", selectedSession.id);
 
@@ -339,6 +368,10 @@ export default function AcademicAdvisingPage() {
           if (slot.booked) {
             throw new Error("Slot already booked by someone else.");
           }
+          const slot = sessionData.bookedSlots[slotIndex];
+          if (slot.booked) {
+            throw new Error("Slot already booked by someone else.");
+          }
 
           const updatedSlots = [...sessionData.bookedSlots];
           updatedSlots[slotIndex] = { ...updatedSlots[slotIndex], booked: true, user: user.uid };
@@ -347,6 +380,12 @@ export default function AcademicAdvisingPage() {
             ? [...sessionData.participants, user.uid]
             : [user.uid];
 
+          transaction.update(sessionRef, {
+            bookedSlots: updatedSlots,
+            slotAvailable: updatedSlots.filter((s) => !s.booked).length,
+            participants: updatedParticipants,
+          });
+        });
           transaction.update(sessionRef, {
             bookedSlots: updatedSlots,
             slotAvailable: updatedSlots.filter((s) => !s.booked).length,
@@ -407,6 +446,20 @@ export default function AcademicAdvisingPage() {
       setAvailableSlots([]);
     }
   };
+        toastSuccess(`You booked the slot at ${selectedSlot}`);
+      }
+    } catch (err: any) {
+      toastError(err.message || "Booking failed. Try again.");
+    } finally {
+      setBookingInProgress(false);
+      setShowDialog(false);
+      setShowCalendar(false);
+      setSelectedSession(null);
+      setSelectedSlot(null);
+      setSelectedDate(null);
+      setAvailableSlots([]);
+    }
+  };
 
   // --- Admin Features ---
   const handleAddSession = async () => {
@@ -417,11 +470,17 @@ export default function AcademicAdvisingPage() {
       !newSession.skills.length ||
       !newSession.date ||
       newSession.isGroup === undefined ||
-      (!newSession.isGroup && (!newSession.startTime || !newSession.totalDuration || !newSession.slotDuration)) ||
+      (!newSession.isGroup &&
+        (!newSession.startTime ||
+          !newSession.totalDuration ||
+          !newSession.slotDuration)) ||
       (newSession.isGroup && !newSession.startTime) ||
       !newSession.expiryDate ||
       !newSession.expiryTime
     ) {
+      toastError(
+        "Please fill in all required fields (title, description, tutor name, skills, date, session type, expiry date, and expiry time). For 1-on-1, include start time, total duration, and slot duration. For group, include start time."
+      );
       toastError(
         "Please fill in all required fields (title, description, tutor name, skills, date, session type, expiry date, and expiry time). For 1-on-1, include start time, total duration, and slot duration. For group, include start time."
       );
@@ -471,25 +530,36 @@ export default function AcademicAdvisingPage() {
         sessionData.startTime = newSession.startTime;
         sessionData.totalDuration = newSession.totalDuration;
         sessionData.slotDuration = newSession.slotDuration;
-        sessionData.slotAvailable = Math.floor(newSession.totalDuration / newSession.slotDuration);
+        sessionData.slotAvailable = Math.floor(
+          newSession.totalDuration / newSession.slotDuration
+        );
         sessionData.participants = [];
 
-        const [hoursStr, minutesStrWithSuffix] = newSession.startTime!.split(":");
+        const [hoursStr, minutesStrWithSuffix] =
+          newSession.startTime!.split(":");
         let hours = parseInt(hoursStr);
         let minutesStr = minutesStrWithSuffix;
         let suffix = "";
-        if (minutesStrWithSuffix.includes("AM") || minutesStrWithSuffix.includes("PM")) {
+        if (
+          minutesStrWithSuffix.includes("AM") ||
+          minutesStrWithSuffix.includes("PM")
+        ) {
           suffix = minutesStrWithSuffix.slice(-2);
           minutesStr = minutesStrWithSuffix.slice(0, -2).trim();
         }
         const minutes = parseInt(minutesStr);
         if (suffix.toLowerCase() === "pm" && hours < 12) hours += 12;
 
-        const slotCount = Math.floor(newSession.totalDuration / newSession.slotDuration);
+        const slotCount = Math.floor(
+          newSession.totalDuration / newSession.slotDuration
+        );
         const bookedSlots = Array.from({ length: slotCount }, (_, i) => {
           const slotDate = new Date(newSession.date!);
           slotDate.setHours(hours, minutes + i * newSession.slotDuration, 0, 0);
-          const timeStr = `${slotDate.getHours().toString().padStart(2, "0")}:${slotDate
+          const timeStr = `${slotDate
+            .getHours()
+            .toString()
+            .padStart(2, "0")}:${slotDate
             .getMinutes()
             .toString()
             .padStart(2, "0")}`;
@@ -553,6 +623,7 @@ export default function AcademicAdvisingPage() {
 
   const handleCancelSession = async () => {
     if (!sessionToCancel) return;
+    if (!sessionToCancel) return;
 
     try {
       const bookingsQuery = query(
@@ -566,6 +637,15 @@ export default function AcademicAdvisingPage() {
 
       await deleteDoc(doc(db, "academicadvising", sessionToCancel.id));
 
+      toastSuccess("Session canceled and deleted successfully.");
+    } catch (err) {
+      console.error("Error canceling session:", err);
+      toastError("Failed to cancel session. Try again.");
+    } finally {
+      setShowCancelDialog(false);
+      setSessionToCancel(null);
+    }
+  };
       toastSuccess("Session canceled and deleted successfully.");
     } catch (err) {
       console.error("Error canceling session:", err);
@@ -666,7 +746,9 @@ export default function AcademicAdvisingPage() {
         <SearchFilter data={sessions} onFilteredData={setFilteredSessions} />
 
         {filteredSessions.length === 0 ? (
-          <p className="text-center text-gray-600">No sessions available for your college.</p>
+          <p className="text-center text-gray-600">
+            No sessions available for your college.
+          </p>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredSessions.map((session) => (
@@ -686,7 +768,9 @@ export default function AcademicAdvisingPage() {
                 <h2 className="text-xl font-bold text-gray-800 group-hover:text-primary transition">
                   {session.title}
                 </h2>
-                <p className="text-gray-600 mt-2 flex-1">{session.description}</p>
+                <p className="text-gray-600 mt-2 flex-1">
+                  {session.description}
+                </p>
                 <div className="mt-4 space-y-2 text-sm text-gray-700">
                   <p className="flex items-center gap-2">
                     <UserIcon className="w-4 h-4 text-primary" />
@@ -709,7 +793,8 @@ export default function AcademicAdvisingPage() {
                   <p className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-red-600" />
                     <span>
-                      <strong>Expiry:</strong> {session.expiryDate} {session.expiryTime}
+                      <strong>Expiry:</strong> {session.expiryDate}{" "}
+                      {session.expiryTime}
                     </span>
                   </p>
                   {session.isGroup ? (
@@ -723,7 +808,8 @@ export default function AcademicAdvisingPage() {
                     <p className="flex items-center gap-2">
                       <Clock className="w-4 h-4 text-purple-600" />
                       <span>
-                        <strong>One-to-One Slots:</strong> {session.slotAvailable}
+                        <strong>One-to-One Slots:</strong>{" "}
+                        {session.slotAvailable}
                       </span>
                     </p>
                   )}
@@ -828,7 +914,7 @@ export default function AcademicAdvisingPage() {
         {userData?.role === "admin" && (
           <button
             onClick={() => setShowForm(true)}
-            className="fixed bottom-6 right-6 bg-blue-600 text-white rounded-full w-14 h-14 flex items-center justify-center text-3xl shadow-lg hover:bg-blue-700"
+            className="fixed bottom-24 right-6 z-50 bg-blue-800 text-white rounded-[8px] w-12 h-12 flex items-center justify-center text-3xl shadow-lg hover:bg-blue-700"
           >
             +
           </button>
@@ -1151,8 +1237,9 @@ export default function AcademicAdvisingPage() {
                 <ul className="list-disc pl-5 space-y-2">
                   {selectedParticipants.map((user) => (
                     <li key={user.id}>
-                      <span className="font-medium">{user.name || "N/A"}</span> -{" "}
-                      {user.email || "No email"} ({user.college || "No college"})
+                      <span className="font-medium">{user.name || "N/A"}</span>{" "}
+                      - {user.email || "No email"} (
+                      {user.college || "No college"})
                     </li>
                   ))}
                 </ul>
@@ -1279,10 +1366,22 @@ export default function AcademicAdvisingPage() {
                                   : "bg-gray-400"
                                 : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-indigo-600 hover:to-blue-600"
                             }`}
+                            ${
+                              slot.booked
+                                ? isUserSlot
+                                  ? "bg-green-600"
+                                  : "bg-gray-400"
+                                : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-indigo-600 hover:to-blue-600"
+                            }`}
                           onClick={() => handleSlotSelect(slot.time)}
                           disabled={slot.booked}
                         >
-                          {slot.time} {slot.booked ? (isUserSlot ? "(Your Booking)" : "(Booked)") : ""}
+                          {slot.time}{" "}
+                          {slot.booked
+                            ? isUserSlot
+                              ? "(Your Booking)"
+                              : "(Booked)"
+                            : ""}
                         </button>
                       );
                     })}

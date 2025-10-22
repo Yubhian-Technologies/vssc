@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import CompleteSessionButton from "@/components/ui/CompleteSessionButton";
 import { toastSuccess, toastError } from "@/components/ui/sonner";
+import { toastSuccess, toastError } from "@/components/ui/sonner";
 import SessionProof from "./SessionProofs";
 import {
   collection,
@@ -22,7 +23,7 @@ import {
   orderBy,
   deleteDoc,
   getDocs,
-  where
+  where,
 } from "firebase/firestore";
 import { useAuth } from "../AuthContext";
 import { Users, Clock, BookOpen, User as UserIcon } from "lucide-react";
@@ -67,14 +68,19 @@ interface UserData {
 
 export default function CounselingPage() {
   const [sessions, setSessions] = useState<CounselingSession[]>([]);
-  const [filteredSessions, setFilteredSessions] = useState<CounselingSession[]>([]);
+  const [filteredSessions, setFilteredSessions] = useState<CounselingSession[]>(
+    []
+  );
   const { user, userData } = useAuth();
   const userCollege = userData?.college;
 
-  const [selectedSession, setSelectedSession] = useState<CounselingSession | null>(null);
+  const [selectedSession, setSelectedSession] =
+    useState<CounselingSession | null>(null);
   const [showCalendar, setShowCalendar] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [availableSlots, setAvailableSlots] = useState<CounselingSession["bookedSlots"]>([]);
+  const [availableSlots, setAvailableSlots] = useState<
+    CounselingSession["bookedSlots"]
+  >([]);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [showDialog, setShowDialog] = useState(false);
   const [bookingInProgress, setBookingInProgress] = useState(false);
@@ -95,8 +101,14 @@ export default function CounselingPage() {
     { name: "Vishnu Dental College", domain: "@vdc.edu.in" },
     { name: "Shri Vishnu College of Pharmacy", domain: "@svcp.edu.in" },
     { name: "BV Raju Institute of Technology", domain: "@bvrit.ac.in" },
-    { name: "BVRIT Hyderabad College of Engineering", domain: "@bvrithyderabad.ac.in" },
-    { name: "Shri Vishnu Engineering College for Women", domain: "@svecw.edu.in" },
+    {
+      name: "BVRIT Hyderabad College of Engineering",
+      domain: "@bvrithyderabad.ac.in",
+    },
+    {
+      name: "Shri Vishnu Engineering College for Women",
+      domain: "@svecw.edu.in",
+    },
   ];
 
   const [newSession, setNewSession] = useState({
@@ -128,6 +140,7 @@ export default function CounselingPage() {
 
   // --- Fetch sessions in real-time ---
   useEffect(() => {
+    if (!userCollege || !user) return;
     if (!userCollege || !user) return;
 
     const q = query(collection(db, "counseling"), orderBy("createdAt", "desc"));
@@ -194,6 +207,11 @@ export default function CounselingPage() {
                 bookedSlots: generatedSlots,
                 slotAvailable: generatedSlots.length,
               });
+              const sessionRef = doc(db, "counseling", session.id);
+              await updateDoc(sessionRef, {
+                bookedSlots: generatedSlots,
+                slotAvailable: generatedSlots.length,
+              });
 
               return { ...session, bookedSlots: generatedSlots, slotAvailable: generatedSlots.length };
             }
@@ -205,7 +223,13 @@ export default function CounselingPage() {
           return session;
         })
       );
+          return session;
+        })
+      );
 
+      setSessions(updatedSessions);
+      setFilteredSessions(updatedSessions);
+    });
       setSessions(updatedSessions);
       setFilteredSessions(updatedSessions);
     });
@@ -219,7 +243,8 @@ export default function CounselingPage() {
     return new Date(year, month - 1, day);
   };
 
-  const normalizeDate = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const normalizeDate = (d: Date) =>
+    new Date(d.getFullYear(), d.getMonth(), d.getDate());
 
   // only highlight dates for the currently selectedSession
   const tileClassName = ({ date }: any) => {
@@ -231,7 +256,9 @@ export default function CounselingPage() {
     const currentDate = normalizeDate(date);
 
     // check whether this selected session actually has any free slots
-    const hasAvailableSlot = selectedSession.bookedSlots?.some((s) => !s.booked);
+    const hasAvailableSlot = selectedSession.bookedSlots?.some(
+      (s) => !s.booked
+    );
 
     // only highlight if the calendar tile matches the selected session's date
     if (sessionDate.getTime() === currentDate.getTime() && hasAvailableSlot) {
@@ -278,6 +305,8 @@ export default function CounselingPage() {
 
     setBookingInProgress(true);
     const sessionRef = doc(db, "counseling", selectedSession.id);
+    setBookingInProgress(true);
+    const sessionRef = doc(db, "counseling", selectedSession.id);
 
     try {
       if (selectedSession.isGroup) {
@@ -290,6 +319,10 @@ export default function CounselingPage() {
           return;
         }
 
+        await updateDoc(sessionRef, {
+          participants: arrayUnion(user.uid),
+          slots: increment(-1),
+        });
         await updateDoc(sessionRef, {
           participants: arrayUnion(user.uid),
           slots: increment(-1),
@@ -348,7 +381,16 @@ export default function CounselingPage() {
           const updatedParticipants = sessionData.participants
             ? [...sessionData.participants, user.uid]
             : [user.uid];
+          const updatedParticipants = sessionData.participants
+            ? [...sessionData.participants, user.uid]
+            : [user.uid];
 
+          transaction.update(sessionRef, {
+            bookedSlots: updatedSlots,
+            slotAvailable: updatedSlots.filter((s) => !s.booked).length,
+            participants: updatedParticipants,
+          });
+        });
           transaction.update(sessionRef, {
             bookedSlots: updatedSlots,
             slotAvailable: updatedSlots.filter((s) => !s.booked).length,
@@ -366,6 +408,20 @@ export default function CounselingPage() {
           bookedAt: serverTimestamp(),
         });
 
+        toastSuccess(`You booked the slot at ${selectedSlot}`);
+      }
+    } catch (err: any) {
+      toastError(err.message || "Booking failed. Try again.");
+    } finally {
+      setBookingInProgress(false);
+      setShowDialog(false);
+      setShowCalendar(false);
+      setSelectedSession(null);
+      setSelectedSlot(null);
+      setSelectedDate(null);
+      setAvailableSlots([]);
+    }
+  };
         toastSuccess(`You booked the slot at ${selectedSlot}`);
       }
     } catch (err: any) {
@@ -434,26 +490,37 @@ export default function CounselingPage() {
         sessionData.startTime = newSession.startTime;
         sessionData.totalDuration = newSession.totalDuration;
         sessionData.slotDuration = newSession.slotDuration;
-        sessionData.slotAvailable = Math.floor(newSession.totalDuration / newSession.slotDuration);
+        sessionData.slotAvailable = Math.floor(
+          newSession.totalDuration / newSession.slotDuration
+        );
         sessionData.participants = [];
 
         // Generate bookedSlots dynamically
-        const [hoursStr, minutesStrWithSuffix] = newSession.startTime!.split(":");
+        const [hoursStr, minutesStrWithSuffix] =
+          newSession.startTime!.split(":");
         let hours = parseInt(hoursStr);
         let minutesStr = minutesStrWithSuffix;
         let suffix = "";
-        if (minutesStrWithSuffix.includes("AM") || minutesStrWithSuffix.includes("PM")) {
+        if (
+          minutesStrWithSuffix.includes("AM") ||
+          minutesStrWithSuffix.includes("PM")
+        ) {
           suffix = minutesStrWithSuffix.slice(-2);
           minutesStr = minutesStrWithSuffix.slice(0, -2).trim();
         }
         const minutes = parseInt(minutesStr);
         if (suffix.toLowerCase() === "pm" && hours < 12) hours += 12;
 
-        const slotCount = Math.floor(newSession.totalDuration / newSession.slotDuration);
+        const slotCount = Math.floor(
+          newSession.totalDuration / newSession.slotDuration
+        );
         const bookedSlots = Array.from({ length: slotCount }, (_, i) => {
           const slotDate = new Date(newSession.date!);
           slotDate.setHours(hours, minutes + i * newSession.slotDuration, 0, 0);
-          const timeStr = `${slotDate.getHours().toString().padStart(2, "0")}:${slotDate
+          const timeStr = `${slotDate
+            .getHours()
+            .toString()
+            .padStart(2, "0")}:${slotDate
             .getMinutes()
             .toString()
             .padStart(2, "0")}`;
@@ -512,6 +579,7 @@ export default function CounselingPage() {
   };
 
   const handleCancelSession = async () => {
+    if (!sessionToCancel) return;
     if (!sessionToCancel) return;
 
     try {
@@ -631,7 +699,9 @@ export default function CounselingPage() {
         <SearchFilter data={sessions} onFilteredData={setFilteredSessions} />
 
         {filteredSessions.length === 0 ? (
-          <p className="text-center text-gray-600">No sessions available for your college.</p>
+          <p className="text-center text-gray-600">
+            No sessions available for your college.
+          </p>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredSessions.map((session) => (
@@ -651,7 +721,9 @@ export default function CounselingPage() {
                 <h2 className="text-xl font-bold text-gray-800 group-hover:text-primary transition">
                   {session.title}
                 </h2>
-                <p className="text-gray-600 mt-2 flex-1">{session.description}</p>
+                <p className="text-gray-600 mt-2 flex-1">
+                  {session.description}
+                </p>
                 <div className="mt-4 space-y-2 text-sm text-gray-700">
                   <p className="flex items-center gap-2">
                     <UserIcon className="w-4 h-4 text-primary" />
@@ -674,7 +746,8 @@ export default function CounselingPage() {
                   <p className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-red-600" />
                     <span>
-                      <strong>Expiry:</strong> {session.expiryDate} {session.expiryTime}
+                      <strong>Expiry:</strong> {session.expiryDate}{" "}
+                      {session.expiryTime}
                     </span>
                   </p>
                   {session.isGroup ? (
@@ -688,7 +761,8 @@ export default function CounselingPage() {
                     <p className="flex items-center gap-2">
                       <Clock className="w-4 h-4 text-purple-600" />
                       <span>
-                        <strong>One-to-One Slots:</strong> {session.slotAvailable}
+                        <strong>One-to-One Slots:</strong>{" "}
+                        {session.slotAvailable}
                       </span>
                     </p>
                   )}
@@ -793,7 +867,7 @@ export default function CounselingPage() {
         {userData?.role === "admin" && (
           <button
             onClick={() => setShowForm(true)}
-            className="fixed bottom-6 right-6 bg-blue-600 text-white rounded-full w-14 h-14 flex items-center justify-center text-3xl shadow-lg hover:bg-blue-700"
+            className="fixed bottom-24 right-6 z-50 bg-blue-800 text-white rounded-[8px] w-12 h-12 flex items-center justify-center text-3xl shadow-lg hover:bg-blue-700"
           >
             +
           </button>
@@ -1096,8 +1170,9 @@ export default function CounselingPage() {
                 <ul className="list-disc pl-5 space-y-2">
                   {selectedParticipants.map((user) => (
                     <li key={user.id}>
-                      <span className="font-medium">{user.name || "N/A"}</span> -{" "}
-                      {user.email || "No email"} ({user.college || "No college"})
+                      <span className="font-medium">{user.name || "N/A"}</span>{" "}
+                      - {user.email || "No email"} (
+                      {user.college || "No college"})
                     </li>
                   ))}
                 </ul>
@@ -1217,7 +1292,12 @@ export default function CounselingPage() {
                           onClick={() => handleSlotSelect(slot.time)}
                           disabled={slot.booked}
                         >
-                          {slot.time} {slot.booked ? (isUserSlot ? "(Your Booking)" : "(Booked)") : ""}
+                          {slot.time}{" "}
+                          {slot.booked
+                            ? isUserSlot
+                              ? "(Your Booking)"
+                              : "(Booked)"
+                            : ""}
                         </button>
                       );
                     })}

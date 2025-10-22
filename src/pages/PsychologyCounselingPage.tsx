@@ -6,6 +6,7 @@ import { db } from "../firebase";
 import green5 from "@/assets/green5.png";
 import { motion } from "framer-motion";
 import { toastSuccess, toastError } from "@/components/ui/sonner";
+import { toastSuccess, toastError } from "@/components/ui/sonner";
 import SessionProof from "./SessionProofs";
 import {
   collection,
@@ -21,6 +22,7 @@ import {
   orderBy,
   deleteDoc,
   getDocs,
+  where,
   where,
 } from "firebase/firestore";
 import { useAuth } from "../AuthContext";
@@ -67,14 +69,19 @@ interface UserData {
 
 export default function PsychologyCounselingPage() {
   const [sessions, setSessions] = useState<PsychologySession[]>([]);
-  const [filteredSessions, setFilteredSessions] = useState<PsychologySession[]>([]);
+  const [filteredSessions, setFilteredSessions] = useState<PsychologySession[]>(
+    []
+  );
   const { user, userData } = useAuth();
   const userCollege = userData?.college;
 
-  const [selectedSession, setSelectedSession] = useState<PsychologySession | null>(null);
+  const [selectedSession, setSelectedSession] =
+    useState<PsychologySession | null>(null);
   const [showCalendar, setShowCalendar] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [availableSlots, setAvailableSlots] = useState<PsychologySession["bookedSlots"]>([]);
+  const [availableSlots, setAvailableSlots] = useState<
+    PsychologySession["bookedSlots"]
+  >([]);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [showDialog, setShowDialog] = useState(false);
   const [bookingInProgress, setBookingInProgress] = useState(false);
@@ -95,8 +102,14 @@ export default function PsychologyCounselingPage() {
     { name: "Vishnu Dental College", domain: "@vdc.edu.in" },
     { name: "Shri Vishnu College of Pharmacy", domain: "@svcp.edu.in" },
     { name: "BV Raju Institute of Technology", domain: "@bvrit.ac.in" },
-    { name: "BVRIT Hyderabad College of Engineering", domain: "@bvrithyderabad.ac.in" },
-    { name: "Shri Vishnu Engineering College for Women", domain: "@svecw.edu.in" },
+    {
+      name: "BVRIT Hyderabad College of Engineering",
+      domain: "@bvrithyderabad.ac.in",
+    },
+    {
+      name: "Shri Vishnu Engineering College for Women",
+      domain: "@svecw.edu.in",
+    },
   ];
 
   const [newSession, setNewSession] = useState({
@@ -128,6 +141,7 @@ export default function PsychologyCounselingPage() {
 
   // --- Fetch sessions in real-time ---
   useEffect(() => {
+    if (!userCollege || !user) return;
     if (!userCollege || !user) return;
 
     const q = query(collection(db, "psychologycounseling"), orderBy("createdAt", "desc"));
@@ -194,6 +208,11 @@ export default function PsychologyCounselingPage() {
                 bookedSlots: generatedSlots,
                 slotAvailable: generatedSlots.length,
               });
+              const sessionRef = doc(db, "psychologycounseling", session.id);
+              await updateDoc(sessionRef, {
+                bookedSlots: generatedSlots,
+                slotAvailable: generatedSlots.length,
+              });
 
               return { ...session, bookedSlots: generatedSlots, slotAvailable: generatedSlots.length };
             }
@@ -205,7 +224,13 @@ export default function PsychologyCounselingPage() {
           return session;
         })
       );
+          return session;
+        })
+      );
 
+      setSessions(updatedSessions);
+      setFilteredSessions(updatedSessions);
+    });
       setSessions(updatedSessions);
       setFilteredSessions(updatedSessions);
     });
@@ -219,7 +244,8 @@ export default function PsychologyCounselingPage() {
     return new Date(year, month - 1, day);
   };
 
-  const normalizeDate = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const normalizeDate = (d: Date) =>
+    new Date(d.getFullYear(), d.getMonth(), d.getDate());
 
   // only highlight dates for the currently selectedSession
   const tileClassName = ({ date }: any) => {
@@ -231,7 +257,9 @@ export default function PsychologyCounselingPage() {
     const currentDate = normalizeDate(date);
 
     // check whether this selected session actually has any free slots
-    const hasAvailableSlot = selectedSession.bookedSlots?.some((s) => !s.booked);
+    const hasAvailableSlot = selectedSession.bookedSlots?.some(
+      (s) => !s.booked
+    );
 
     // only highlight if the calendar tile matches the selected session's date
     if (sessionDate.getTime() === currentDate.getTime() && hasAvailableSlot) {
@@ -272,41 +300,50 @@ export default function PsychologyCounselingPage() {
 
     setBookingInProgress(true);
     const sessionRef = doc(db, "psychologycounseling", selectedSession.id);
+    setBookingInProgress(true);
+    const sessionRef = doc(db, "psychologycounseling", selectedSession.id);
 
     try {
       await runTransaction(db, async (transaction) => {
         const sessionSnap = await transaction.get(sessionRef);
         if (!sessionSnap.exists()) throw new Error("Session not found");
 
-        const sessionData = sessionSnap.data() as PsychologySession;
-        if (!sessionData.bookedSlots) throw new Error("Slots not initialized");
+          const sessionData = sessionSnap.data() as PsychologySession;
+          if (!sessionData.bookedSlots)
+            throw new Error("Slots not initialized");
 
         const alreadyBooked = sessionData.bookedSlots.some((s) => s.user === user.uid);
         if (alreadyBooked) {
           throw new Error("You already booked a slot in this session.");
         }
 
-        const slotIndex = sessionData.bookedSlots.findIndex((s) => s.time === selectedSlot);
-        if (slotIndex < 0) throw new Error("Slot not found");
+          const slotIndex = sessionData.bookedSlots.findIndex(
+            (s) => s.time === selectedSlot
+          );
+          if (slotIndex < 0) throw new Error("Slot not found");
 
         const slot = sessionData.bookedSlots[slotIndex];
         if (slot.booked) {
           throw new Error("Slot already booked by someone else.");
         }
 
-        const updatedSlots = [...sessionData.bookedSlots];
-        updatedSlots[slotIndex] = { ...updatedSlots[slotIndex], booked: true, user: user.uid };
+          const updatedSlots = [...sessionData.bookedSlots];
+          updatedSlots[slotIndex] = {
+            ...updatedSlots[slotIndex],
+            booked: true,
+            user: user.uid,
+          };
 
-        const updatedParticipants = sessionData.participants
-          ? [...sessionData.participants, user.uid]
-          : [user.uid];
+          const updatedParticipants = sessionData.participants
+            ? [...sessionData.participants, user.uid]
+            : [user.uid];
 
-        transaction.update(sessionRef, {
-          bookedSlots: updatedSlots,
-          slotAvailable: updatedSlots.filter((s) => !s.booked).length,
-          participants: updatedParticipants,
+          transaction.update(sessionRef, {
+            bookedSlots: updatedSlots,
+            slotAvailable: updatedSlots.filter((s) => !s.booked).length,
+            participants: updatedParticipants,
+          });
         });
-      });
 
       // // Update state
       // setSessions((prev) =>
@@ -338,16 +375,16 @@ export default function PsychologyCounselingPage() {
       //   )
       // );
 
-      // Save booking in centralized collection
-      await addDoc(collection(db, "bookings"), {
-        userId: user.uid,
-        userName: user.displayName || "",
-        serviceType: "Psychology Counseling",
-        sessionId: selectedSession.id,
-        sessionTitle: selectedSession.title || "",
-        slotTime: selectedSlot,
-        bookedAt: serverTimestamp(),
-      });
+        // Save booking in centralized collection
+        await addDoc(collection(db, "bookings"), {
+          userId: user.uid,
+          userName: user.displayName || "",
+          serviceType: "Psychology Counseling",
+          sessionId: selectedSession.id,
+          sessionTitle: selectedSession.title || "",
+          slotTime: selectedSlot,
+          bookedAt: serverTimestamp(),
+        });
 
       toastSuccess(`You booked the slot at ${selectedSlot}`);
     } catch (err: any) {
@@ -496,6 +533,7 @@ export default function PsychologyCounselingPage() {
 
   const handleCancelSession = async () => {
     if (!sessionToCancel) return;
+    if (!sessionToCancel) return;
 
     try {
       const bookingsQuery = query(
@@ -547,7 +585,6 @@ export default function PsychologyCounselingPage() {
 
   return (
     <div>
-
       <div className="relative w-full h-72 md:h-96 lg:h-[28rem]">
         <img
           src={green5}
@@ -614,7 +651,9 @@ export default function PsychologyCounselingPage() {
         <SearchFilter data={sessions} onFilteredData={setFilteredSessions} />
 
         {filteredSessions.length === 0 ? (
-          <p className="text-center text-gray-600">No sessions available for your college.</p>
+          <p className="text-center text-gray-600">
+            No sessions available for your college.
+          </p>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredSessions.map((session) => (
@@ -634,7 +673,9 @@ export default function PsychologyCounselingPage() {
                 <h2 className="text-xl font-bold text-gray-800 group-hover:text-primary transition">
                   {session.title}
                 </h2>
-                <p className="text-gray-600 mt-2 flex-1">{session.description}</p>
+                <p className="text-gray-600 mt-2 flex-1">
+                  {session.description}
+                </p>
                 <div className="mt-4 space-y-2 text-sm text-gray-700">
                   <p className="flex items-center gap-2">
                     <UserIcon className="w-4 h-4 text-primary" />
@@ -657,7 +698,8 @@ export default function PsychologyCounselingPage() {
                   <p className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-red-600" />
                     <span>
-                      <strong>Expiry:</strong> {session.expiryDate} {session.expiryTime}
+                      <strong>Expiry:</strong> {session.expiryDate}{" "}
+                      {session.expiryTime}
                     </span>
                   </p>
                   <p className="flex items-center gap-2">
@@ -753,7 +795,7 @@ export default function PsychologyCounselingPage() {
         {userData?.role === "admin" && (
           <button
             onClick={() => setShowForm(true)}
-            className="fixed bottom-6 right-6 bg-blue-600 text-white rounded-full w-14 h-14 flex items-center justify-center text-3xl shadow-lg hover:bg-blue-700"
+            className="fixed bottom-24 right-6 z-50 bg-blue-800 text-white rounded-[8px] w-12 h-12 flex items-center justify-center text-3xl shadow-lg hover:bg-blue-700"
           >
             +
           </button>
@@ -1005,8 +1047,9 @@ export default function PsychologyCounselingPage() {
                 <ul className="list-disc pl-5 space-y-2">
                   {selectedParticipants.map((user) => (
                     <li key={user.id}>
-                      <span className="font-medium">{user.name || "N/A"}</span> -{" "}
-                      {user.email || "No email"} ({user.college || "No college"})
+                      <span className="font-medium">{user.name || "N/A"}</span>{" "}
+                      - {user.email || "No email"} (
+                      {user.college || "No college"})
                     </li>
                   ))}
                 </ul>
@@ -1130,7 +1173,12 @@ export default function PsychologyCounselingPage() {
                           onClick={() => handleSlotSelect(slot.time)}
                           disabled={slot.booked}
                         >
-                          {slot.time} {slot.booked ? (isUserSlot ? "(Your Booking)" : "(Booked)") : ""}
+                          {slot.time}{" "}
+                          {slot.booked
+                            ? isUserSlot
+                              ? "(Your Booking)"
+                              : "(Booked)"
+                            : ""}
                         </button>
                       );
                     })}

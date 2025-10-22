@@ -18,14 +18,14 @@ import {
   orderBy,
   deleteDoc,
   getDocs,
-  where
-  
+  where,
 } from "firebase/firestore";
 import { useAuth } from "../AuthContext";
 import { Users, Clock, BookOpen, User as UserIcon, } from "lucide-react";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { runTransaction } from "firebase/firestore";
+import green3 from "@/assets/green3.png";
 import green3 from "@/assets/green3.png";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -69,15 +69,20 @@ interface UserData {
 
 export default function TutoringPage() {
   const [sessions, setSessions] = useState<TutoringSession[]>([]);
-  const [filteredSessions, setFilteredSessions] = useState<TutoringSession[]>([]);
+  const [filteredSessions, setFilteredSessions] = useState<TutoringSession[]>(
+    []
+  );
 
   const { user, userData } = useAuth();
   const userCollege = userData?.college;
 
-  const [selectedSession, setSelectedSession] = useState<TutoringSession | null>(null);
+  const [selectedSession, setSelectedSession] =
+    useState<TutoringSession | null>(null);
   const [showCalendar, setShowCalendar] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [availableSlots, setAvailableSlots] = useState<TutoringSession["bookedSlots"]>([]);
+  const [availableSlots, setAvailableSlots] = useState<
+    TutoringSession["bookedSlots"]
+  >([]);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [showDialog, setShowDialog] = useState(false);
   const [bookingInProgress, setBookingInProgress] = useState(false);
@@ -99,8 +104,14 @@ export default function TutoringPage() {
     { name: "Vishnu Dental College", domain: "@vdc.edu.in" },
     { name: "Shri Vishnu College of Pharmacy", domain: "@svcp.edu.in" },
     { name: "BV Raju Institute of Technology", domain: "@bvrit.ac.in" },
-    { name: "BVRIT Hyderabad College of Engineering", domain: "@bvrithyderabad.ac.in" },
-    { name: "Shri Vishnu Engineering College for Women", domain: "@svecw.edu.in" },
+    {
+      name: "BVRIT Hyderabad College of Engineering",
+      domain: "@bvrithyderabad.ac.in",
+    },
+    {
+      name: "Shri Vishnu Engineering College for Women",
+      domain: "@svecw.edu.in",
+    },
   ];
 
   const [newSession, setNewSession] = useState({
@@ -132,6 +143,7 @@ export default function TutoringPage() {
 
   // --- Fetch sessions in real-time ---
   useEffect(() => {
+    if (!userCollege || !user) return;
     if (!userCollege || !user) return;
 
     const q = query(collection(db, "tutoring"), orderBy("createdAt", "desc"));
@@ -198,6 +210,11 @@ export default function TutoringPage() {
                 bookedSlots: generatedSlots,
                 slotAvailable: generatedSlots.length,
               });
+              const sessionRef = doc(db, "tutoring", session.id);
+              await updateDoc(sessionRef, {
+                bookedSlots: generatedSlots,
+                slotAvailable: generatedSlots.length,
+              });
 
               return { ...session, bookedSlots: generatedSlots, slotAvailable: generatedSlots.length };
             }
@@ -206,6 +223,9 @@ export default function TutoringPage() {
             return { ...session, slotAvailable };
           }
 
+          return session;
+        })
+      );
           return session;
         })
       );
@@ -223,7 +243,8 @@ export default function TutoringPage() {
     return new Date(year, month - 1, day);
   };
 
-  const normalizeDate = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const normalizeDate = (d: Date) =>
+    new Date(d.getFullYear(), d.getMonth(), d.getDate());
 
   const tileClassName = ({ date }: any) => {
     if (!selectedSession || !selectedSession.date) return "";
@@ -275,6 +296,8 @@ export default function TutoringPage() {
 
     setBookingInProgress(true);
     const sessionRef = doc(db, "tutoring", selectedSession.id);
+    setBookingInProgress(true);
+    const sessionRef = doc(db, "tutoring", selectedSession.id);
 
     try {
       if (selectedSession.isGroup) {
@@ -291,7 +314,18 @@ export default function TutoringPage() {
           participants: arrayUnion(user.uid),
           slots: increment(-1),
         });
+        await updateDoc(sessionRef, {
+          participants: arrayUnion(user.uid),
+          slots: increment(-1),
+        });
 
+        setSessions((prev) =>
+          prev.map((s) =>
+            s.id === selectedSession.id
+              ? { ...s, participants: [...(s.participants || []), user.uid] }
+              : s
+          )
+        );
         setSessions((prev) =>
           prev.map((s) =>
             s.id === selectedSession.id
@@ -307,7 +341,15 @@ export default function TutoringPage() {
               : s
           )
         );
+        setFilteredSessions((prev) =>
+          prev.map((s) =>
+            s.id === selectedSession.id
+              ? { ...s, participants: [...(s.participants || []), user.uid] }
+              : s
+          )
+        );
 
+        toastSuccess("You joined the group session!");
         toastSuccess("You joined the group session!");
 
         await addDoc(collection(db, "bookings"), {
@@ -339,6 +381,10 @@ export default function TutoringPage() {
           if (slot.booked) {
             throw new Error("Slot already booked by someone else.");
           }
+          const slot = sessionData.bookedSlots[slotIndex];
+          if (slot.booked) {
+            throw new Error("Slot already booked by someone else.");
+          }
 
           const updatedSlots = [...sessionData.bookedSlots];
           updatedSlots[slotIndex] = { ...updatedSlots[slotIndex], booked: true, user: user.uid };
@@ -347,6 +393,12 @@ export default function TutoringPage() {
             ? [...sessionData.participants, user.uid]
             : [user.uid];
 
+          transaction.update(sessionRef, {
+            bookedSlots: updatedSlots,
+            slotAvailable: updatedSlots.filter((s) => !s.booked).length,
+            participants: updatedParticipants,
+          });
+        });
           transaction.update(sessionRef, {
             bookedSlots: updatedSlots,
             slotAvailable: updatedSlots.filter((s) => !s.booked).length,
@@ -364,6 +416,20 @@ export default function TutoringPage() {
           bookedAt: serverTimestamp(),
         });
 
+        toastSuccess(`You booked the slot at ${selectedSlot}`);
+      }
+    } catch (err: any) {
+      toastError(err.message || "Booking failed. Try again.");
+    } finally {
+      setBookingInProgress(false);
+      setShowDialog(false);
+      setShowCalendar(false);
+      setSelectedSession(null);
+      setSelectedSlot(null);
+      setSelectedDate(null);
+      setAvailableSlots([]);
+    }
+  };
         toastSuccess(`You booked the slot at ${selectedSlot}`);
       }
     } catch (err: any) {
@@ -436,22 +502,31 @@ export default function TutoringPage() {
         sessionData.participants = [];
 
         // Generate bookedSlots dynamically
-        const [hoursStr, minutesStrWithSuffix] = newSession.startTime!.split(":");
+        const [hoursStr, minutesStrWithSuffix] =
+          newSession.startTime!.split(":");
         let hours = parseInt(hoursStr);
         let minutesStr = minutesStrWithSuffix;
         let suffix = "";
-        if (minutesStrWithSuffix.includes("AM") || minutesStrWithSuffix.includes("PM")) {
+        if (
+          minutesStrWithSuffix.includes("AM") ||
+          minutesStrWithSuffix.includes("PM")
+        ) {
           suffix = minutesStrWithSuffix.slice(-2);
           minutesStr = minutesStr.slice(0, -2).trim();
         }
         const minutes = parseInt(minutesStr);
         if (suffix.toLowerCase() === "pm" && hours < 12) hours += 12;
 
-        const slotCount = Math.floor(newSession.totalDuration / newSession.slotDuration);
+        const slotCount = Math.floor(
+          newSession.totalDuration / newSession.slotDuration
+        );
         const bookedSlots = Array.from({ length: slotCount }, (_, i) => {
           const slotDate = new Date(newSession.date!);
           slotDate.setHours(hours, minutes + i * newSession.slotDuration, 0, 0);
-          const timeStr = `${slotDate.getHours().toString().padStart(2, "0")}:${slotDate
+          const timeStr = `${slotDate
+            .getHours()
+            .toString()
+            .padStart(2, "0")}:${slotDate
             .getMinutes()
             .toString()
             .padStart(2, "0")}`;
@@ -479,6 +554,7 @@ export default function TutoringPage() {
         expiryDate: "",
         expiryTime: "",
       });
+      toastSuccess("Session Added Successfully");
       toastSuccess("Session Added Successfully");
     } catch (err) {
       console.error("Error adding session:", err);
@@ -510,6 +586,7 @@ export default function TutoringPage() {
   };
 
   const handleCancelSession = async () => {
+    if (!sessionToCancel) return;
     if (!sessionToCancel) return;
 
     try {
@@ -574,6 +651,13 @@ export default function TutoringPage() {
         <div className="absolute inset-0 bg-black bg-opacity-60"></div>
         <div className="absolute inset-0 flex flex-col justify-center items-center text-center text-white px-4">
           <motion.h1
+            className="text-3xl md:text-5xl font-bold text-white mb-6 drop-shadow-lg"
+            initial={{ opacity: 0, y: -40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7 }}
+          >
+            Available Tutoring Sessions
+          </motion.h1>
             className="text-3xl md:text-5xl font-bold text-white mb-6 drop-shadow-lg"
             initial={{ opacity: 0, y: -40 }}
             animate={{ opacity: 1, y: 0 }}
