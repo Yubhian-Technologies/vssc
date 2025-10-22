@@ -18,7 +18,7 @@ const AddAdminPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [showAll, setShowAll] = useState(false); // ✅ added toggle for "See more"
+  const [showAll, setShowAll] = useState(false); 
 
   // Function to load default or full users
   const loadUsers = (showAll: boolean) => {
@@ -135,7 +135,7 @@ const AddAdminPage = () => {
             ))}
           </div>
 
-          {/* ✅ See More / See Less Button */}
+          
           {!searchTerm && (
             <div className="text-center mt-6">
               <button
