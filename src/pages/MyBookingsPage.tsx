@@ -26,7 +26,7 @@ interface UnifiedBooking {
   description: string;
   expiryDate?: string;
   expiryTime?: string;
-  status: "upcoming" | "confirmed" | "expired" | "cancelled";
+  status: "upcoming" | "confirmed" | "expired" | "cancelled" | "completed";
 }
 
 // Service-to-Collection Mapping
@@ -79,25 +79,33 @@ const fetchServiceBookings = (
       }
 
       if (isBooked && session.date) {
-        const status = isSessionExpired(session.expiryDate, session.expiryTime)
-          ? "expired"
-          : new Date(session.date) > new Date()
-          ? "upcoming"
-          : "confirmed";
+        let status: UnifiedBooking["status"];
+        // Check if session is validated and expired
+        if (session.validated === true && isSessionExpired(session.expiryDate, session.expiryTime)) {
+          status = "expired"; // Validated and expired sessions are marked as expired
+        } else if (session.validated === true) {
+          status = "completed"; // Validated but not expired sessions are marked as completed
+        } else if (isSessionExpired(session.expiryDate, session.expiryTime)) {
+          status = "expired"; // Non-validated expired sessions
+        } else if (new Date(session.date) > new Date()) {
+          status = "upcoming"; // Non-validated upcoming sessions
+        } else {
+          status = "confirmed"; // Non-validated confirmed sessions
+        }
 
         userBookings.push({
           id: `${session.id}-${userId}`,
           serviceType,
           sessionId: session.id,
-          title: session.title,
-          tutorName: session.tutorName,
+          title: session.title || "Untitled Session",
+          tutorName: session.tutorName || "Unknown Tutor",
           date: session.date,
           startTime: session.startTime,
           slotTime,
           type: session.isGroup ? "group" : "1-on-1",
           skills: session.skills || [],
           colleges: session.colleges || [],
-          description: session.description,
+          description: session.description || "",
           expiryDate: session.expiryDate,
           expiryTime: session.expiryTime,
           status,
@@ -111,6 +119,8 @@ const fetchServiceBookings = (
       );
       return [...nonServiceBookings, ...userBookings];
     });
+  }, (error) => {
+    console.error(`Error fetching bookings for ${serviceType}:`, error);
   });
 
   return unsubscribe;
@@ -119,9 +129,9 @@ const fetchServiceBookings = (
 export default function MyBookingsPage() {
   const { user } = useAuth();
   const [bookings, setBookings] = useState<UnifiedBooking[]>([]);
-  const [filter, setFilter] = useState<"all" | "upcoming" | "confirmed" | "expired">("all");
+  const [filter, setFilter] = useState<"all" | "upcoming" | "confirmed" | "expired" | "completed">("all");
   const [selectedService, setSelectedService] = useState<UnifiedBooking["serviceType"] | "all">("all");
-  const [selectedDate, setSelectedDate] = useState<string>(""); // New state for date picker
+  const [selectedDate, setSelectedDate] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
   const [showAll, setShowAll] = useState(false);
 
@@ -168,6 +178,7 @@ export default function MyBookingsPage() {
       confirmed: 1,
       expired: 2,
       cancelled: 3,
+      completed: 4,
     };
 
     result.sort((a, b) => {
@@ -192,8 +203,10 @@ export default function MyBookingsPage() {
         return "bg-green-50 text-green-800 border-green-300";
       case "expired":
         return "bg-red-50 text-red-800 border-red-300";
-      default:
+      case "completed":
         return "bg-blue-50 text-blue-800 border-blue-300";
+      default:
+        return "bg-gray-50 text-gray-800 border-gray-300";
     }
   };
 
@@ -236,12 +249,12 @@ export default function MyBookingsPage() {
         >
 
           <div className="flex flex-wrap gap-2">
-            {(["all", "upcoming", "confirmed", "expired"] as const).map((status) => (
+            {(["all", "upcoming", "confirmed", "expired", "completed"] as const).map((status) => (
               <button
                 key={status}
                 onClick={() => {
                   setFilter(status);
-                  setSelectedDate(""); 
+                  setSelectedDate("");
                 }}
                 className={`px-4 py-2 rounded-lg border font-medium transition ${
                   filter === status
@@ -278,17 +291,16 @@ export default function MyBookingsPage() {
         </motion.div>
 
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto items-start sm:items-center mb-3">
-  <label className="text-gray-700 text-md font-medium mb-1 sm:mb-0 sm:mr-2">
-    Pick a date to view bookings:
-  </label>
-  <input
-    type="date"
-    value={selectedDate}
-    onChange={(e) => setSelectedDate(e.target.value)}
-    className="border border-gray-300 rounded-lg px-4 py-2 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
-  />
-</div>
-
+          <label className="text-gray-700 text-md font-medium mb-1 sm:mb-0 sm:mr-2">
+            Pick a date to view bookings:
+          </label>
+          <input
+            type="date"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            className="border border-gray-300 rounded-lg px-4 py-2 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
+          />
+        </div>
 
         {filteredBookings.length === 0 ? (
           <motion.div

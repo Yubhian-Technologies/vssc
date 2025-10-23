@@ -104,7 +104,7 @@ export default function StudyWorkshopPage() {
     startTime: "",
     totalDuration: 0,
     slotDuration: 0,
-    slots: 1,
+    slots: 0,
     colleges: [] as string[],
     description: "",
     tutorName: "",
@@ -243,137 +243,137 @@ export default function StudyWorkshopPage() {
   };
 
   const confirmJoin = async () => {
-    if (bookingInProgress || !user?.uid || !selectedSession || (!selectedSession.isGroup && !selectedSlot)) return;
+  if (bookingInProgress || !user?.uid || !selectedSession || (!selectedSession.isGroup && !selectedSlot)) return;
 
-    setBookingInProgress(true);
-    const sessionRef = doc(db, "studyworkshop", selectedSession.id);
+  setBookingInProgress(true);
+  const sessionRef = doc(db, "studyworkshop", selectedSession.id);
 
-    try {
-      if (selectedSession.isGroup) {
-        if (!selectedSession.slots || selectedSession.slots <= 0) {
-          toastError("No slots left.");
-          return;
-        }
-        if (selectedSession.participants?.includes(user.uid)) {
-          toastSuccess("You already joined this group session.");
-          return;
-        }
+  try {
+    if (selectedSession.isGroup) {
+      await runTransaction(db, async (transaction) => {
+        const sessionSnap = await transaction.get(sessionRef);
+        if (!sessionSnap.exists()) throw new Error("Session not found");
 
-        await updateDoc(sessionRef, {
+        const sessionData = sessionSnap.data() as StudyWorkshopSession;
+        if (!sessionData.slots || sessionData.slots <= 0) throw new Error("No slots left.");
+        if (sessionData.participants?.includes(user.uid)) throw new Error("You already joined this group session.");
+
+        transaction.update(sessionRef, {
           participants: arrayUnion(user.uid),
           slots: increment(-1),
         });
+      });
 
-        setSessions((prev) =>
-          prev.map((s) =>
-            s.id === selectedSession.id
-              ? { ...s, participants: [...(s.participants || []), user.uid], slots: s.slots - 1 }
-              : s
-          )
-        );
-        setFilteredSessions((prev) =>
-          prev.map((s) =>
-            s.id === selectedSession.id
-              ? { ...s, participants: [...(s.participants || []), user.uid], slots: s.slots - 1 }
-              : s
-          )
-        );
+      setSessions((prev) =>
+        prev.map((s) =>
+          s.id === selectedSession.id
+            ? { ...s, participants: [...(s.participants || []), user.uid], slots: (s.slots || 0) - 1 }
+            : s
+        )
+      );
+      setFilteredSessions((prev) =>
+        prev.map((s) =>
+          s.id === selectedSession.id
+            ? { ...s, participants: [...(s.participants || []), user.uid], slots: (s.slots || 0) - 1 }
+            : s
+        )
+      );
 
-        await addDoc(collection(db, "bookings"), {
-          userId: user.uid,
-          userName: user.displayName || "",
-          serviceType: "Study Workshop",
-          sessionId: selectedSession.id,
-          sessionTitle: selectedSession.title || "",
-          slotTime: "Group Session",
-          bookedAt: serverTimestamp(),
+      await addDoc(collection(db, "bookings"), {
+        userId: user.uid,
+        userName: user.displayName || "",
+        serviceType: "Study Workshop",
+        sessionId: selectedSession.id,
+        sessionTitle: selectedSession.title || "",
+        slotTime: "Group Session",
+        bookedAt: serverTimestamp(),
+      });
+
+      toastSuccess("You joined the group session!");
+    } else {
+      await runTransaction(db, async (transaction) => {
+        const sessionSnap = await transaction.get(sessionRef);
+        if (!sessionSnap.exists()) throw new Error("Session not found");
+
+        const sessionData = sessionSnap.data() as StudyWorkshopSession;
+        if (!sessionData.bookedSlots) throw new Error("Slots not initialized");
+
+        const alreadyBooked = sessionData.bookedSlots.some((s) => s.user === user.uid);
+        if (alreadyBooked) throw new Error("You already booked a slot in this session.");
+
+        const slotIndex = sessionData.bookedSlots.findIndex((s) => s.time === selectedSlot);
+        if (slotIndex < 0) throw new Error("Slot not found");
+
+        const slot = sessionData.bookedSlots[slotIndex];
+        if (slot.booked) throw new Error("Slot already booked by someone else.");
+
+        const updatedSlots = [...sessionData.bookedSlots];
+        updatedSlots[slotIndex] = { ...updatedSlots[slotIndex], booked: true, user: user.uid };
+
+        const updatedParticipants = sessionData.participants
+          ? [...sessionData.participants, user.uid]
+          : [user.uid];
+
+        transaction.update(sessionRef, {
+          bookedSlots: updatedSlots,
+          slotAvailable: updatedSlots.filter((s) => !s.booked).length,
+          participants: updatedParticipants,
         });
+      });
 
-        toastSuccess("You joined the group session!");
-      } else {
-        await runTransaction(db, async (transaction) => {
-          const sessionSnap = await transaction.get(sessionRef);
-          if (!sessionSnap.exists()) throw new Error("Session not found");
+      setSessions((prev) =>
+        prev.map((s) =>
+          s.id === selectedSession.id
+            ? {
+                ...s,
+                bookedSlots: s.bookedSlots?.map((slot) =>
+                  slot.time === selectedSlot ? { ...slot, booked: true, user: user.uid } : slot
+                ),
+                slotAvailable: s.bookedSlots?.filter((slot) => !slot.booked).length,
+                participants: [...(s.participants || []), user.uid],
+              }
+            : s
+        )
+      );
+      setFilteredSessions((prev) =>
+        prev.map((s) =>
+          s.id === selectedSession.id
+            ? {
+                ...s,
+                bookedSlots: s.bookedSlots?.map((slot) =>
+                  slot.time === selectedSlot ? { ...slot, booked: true, user: user.uid } : slot
+                ),
+                slotAvailable: s.bookedSlots?.filter((slot) => !slot.booked).length,
+                participants: [...(s.participants || []), user.uid],
+              }
+            : s
+        )
+      );
 
-          const sessionData = sessionSnap.data() as StudyWorkshopSession;
-          if (!sessionData.bookedSlots) throw new Error("Slots not initialized");
+      await addDoc(collection(db, "bookings"), {
+        userId: user.uid,
+        userName: user.displayName || "",
+        serviceType: "Study Workshop",
+        sessionId: selectedSession.id,
+        sessionTitle: selectedSession.title || "",
+        slotTime: selectedSlot,
+        bookedAt: serverTimestamp(),
+      });
 
-          const alreadyBooked = sessionData.bookedSlots.some((s) => s.user === user.uid);
-          if (alreadyBooked) throw new Error("You already booked a slot in this session.");
-
-          const slotIndex = sessionData.bookedSlots.findIndex((s) => s.time === selectedSlot);
-          if (slotIndex < 0) throw new Error("Slot not found");
-
-          const slot = sessionData.bookedSlots[slotIndex];
-          if (slot.booked) throw new Error("Slot already booked by someone else.");
-
-          const updatedSlots = [...sessionData.bookedSlots];
-          updatedSlots[slotIndex] = { ...updatedSlots[slotIndex], booked: true, user: user.uid };
-
-          const updatedParticipants = sessionData.participants
-            ? [...sessionData.participants, user.uid]
-            : [user.uid];
-
-          transaction.update(sessionRef, {
-            bookedSlots: updatedSlots,
-            slotAvailable: updatedSlots.filter((s) => !s.booked).length,
-            participants: updatedParticipants,
-          });
-        });
-
-        setSessions((prev) =>
-          prev.map((s) =>
-            s.id === selectedSession.id
-              ? {
-                  ...s,
-                  bookedSlots: s.bookedSlots?.map((slot) =>
-                    slot.time === selectedSlot ? { ...slot, booked: true, user: user.uid } : slot
-                  ),
-                  slotAvailable: s.bookedSlots?.filter((slot) => !slot.booked).length,
-                  participants: [...(s.participants || []), user.uid],
-                }
-              : s
-          )
-        );
-        setFilteredSessions((prev) =>
-          prev.map((s) =>
-            s.id === selectedSession.id
-              ? {
-                  ...s,
-                  bookedSlots: s.bookedSlots?.map((slot) =>
-                    slot.time === selectedSlot ? { ...slot, booked: true, user: user.uid } : slot
-                  ),
-                  slotAvailable: s.bookedSlots?.filter((slot) => !slot.booked).length,
-                  participants: [...(s.participants || []), user.uid],
-                }
-              : s
-          )
-        );
-
-        await addDoc(collection(db, "bookings"), {
-          userId: user.uid,
-          userName: user.displayName || "",
-          serviceType: "Study Workshop",
-          sessionId: selectedSession.id,
-          sessionTitle: selectedSession.title || "",
-          slotTime: selectedSlot,
-          bookedAt: serverTimestamp(),
-        });
-
-        toastSuccess(`You booked the slot at ${selectedSlot}`);
-      }
-    } catch (err: any) {
-      toastError(err.message || "Booking failed. Try again.");
-    } finally {
-      setBookingInProgress(false);
-      setShowDialog(false);
-      setShowCalendar(false);
-      setSelectedSession(null);
-      setSelectedSlot(null);
-      setSelectedDate(null);
-      setAvailableSlots([]);
+      toastSuccess(`You booked the slot at ${selectedSlot}`);
     }
-  };
+  } catch (err: any) {
+    toastError(err.message || "Booking failed. Try again.");
+  } finally {
+    setBookingInProgress(false);
+    setShowDialog(false);
+    setShowCalendar(false);
+    setSelectedSession(null);
+    setSelectedSlot(null);
+    setSelectedDate(null);
+    setAvailableSlots([]);
+  }
+};
 
   // --- Admin Features ---
   const handleAddSession = async () => {
@@ -832,17 +832,18 @@ export default function StudyWorkshopPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <label htmlFor="totalDuration" className="font-semibold text-gray-700 text-sm">Total Duration (minutes)</label>
-                      <input
-                        type="number"
-                        name="totalDuration"
-                        id="totalDuration"
-                        placeholder="Enter total duration"
-                        className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white"
-                        value={newSession.totalDuration}
-                        onChange={(e) => setNewSession({ ...newSession, totalDuration: parseInt(e.target.value) || 0 })}
-                      />
-                    </div>
+  <label htmlFor="totalDuration" className="font-semibold text-gray-700 text-sm">Total Duration (minutes)</label>
+  <input
+    type="number"
+    name="totalDuration"
+    id="totalDuration"
+    placeholder="Enter total duration"
+    className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white"
+    value={newSession.totalDuration === 0 ? "" : newSession.totalDuration} // Display empty string if 0
+    onChange={(e) => setNewSession({ ...newSession, totalDuration: e.target.value === "" ? 0 : parseInt(e.target.value) || 0 })}
+    min="0" 
+  />
+</div>
                     <div className="space-y-2">
                       <label htmlFor="startTime" className="font-semibold text-gray-700 text-sm">Start Time</label>
                       <input
@@ -855,17 +856,18 @@ export default function StudyWorkshopPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <label htmlFor="slots" className="font-semibold text-gray-700 text-sm">Number of Slots</label>
-                      <input
-                        type="number"
-                        name="slots"
-                        id="slots"
-                        placeholder="Enter number of slots"
-                        className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white"
-                        value={newSession.slots}
-                        onChange={(e) => setNewSession({ ...newSession, slots: parseInt(e.target.value) || 1 })}
-                      />
-                    </div>
+  <label htmlFor="slots" className="font-semibold text-gray-700 text-sm">Number of Slots</label>
+  <input
+    type="number"
+    name="slots"
+    id="slots"
+    placeholder="Enter number of slots"
+    className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white"
+    value={newSession.slots === 0 ? "" : newSession.slots} // Display empty string if 0
+    onChange={(e) => setNewSession({ ...newSession, slots: e.target.value === "" ? 0 : parseInt(e.target.value) || 0 })}
+    min="0"
+  />
+</div>
                   </div>
                 </div>
                 <div className="grid grid-cols-1 gap-2">
