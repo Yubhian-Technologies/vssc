@@ -1,22 +1,23 @@
 import React, { useEffect, useState } from "react";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
-import toast from "react-hot-toast";
+// import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
+import { toastSuccess, toastError } from "@/components/ui/sonner";
 
 interface SessionProofProps {
   collectionName: string;
-  sessions: Session; // Correct: session ID as string
+  sessions: Session;
 }
 
 interface Session {
   id: string;
-  proof?: string[];
-  isProofValidate?: boolean;
+  proofs?: string[]; // Changed from proof to proofs
+  validated?: boolean;
   [key: string]: any;
 }
 
-const SessionProof: React.FC<SessionProofProps> = ({ collectionName, sessions}) => {
+const SessionProof: React.FC<SessionProofProps> = ({ collectionName, sessions }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [isOpen, setIsOpen] = useState(false);
 
@@ -31,16 +32,16 @@ const SessionProof: React.FC<SessionProofProps> = ({ collectionName, sessions}) 
           const data = sessionDoc.data();
           setSession({
             id: sessionDoc.id,
-            proof: data?.proof || [],
-            isProofValidate: data?.isProofValidate || false,
+            proofs: data?.proofs || [], // Changed from proof to proofs
+            validated: data?.validated || false,
             ...data,
           });
         } else {
-          toast.error("Session not found.");
+          toastError("Session not found.");
         }
       } catch (err) {
         console.error(err);
-        toast.error("Failed to fetch session.");
+        toastError("Failed to fetch session.");
       }
     };
 
@@ -53,13 +54,13 @@ const SessionProof: React.FC<SessionProofProps> = ({ collectionName, sessions}) 
 
     try {
       const sessionRef = doc(db, collectionName, session.id);
-      await updateDoc(sessionRef, { isProofValidate: true });
-      toast.success("Proof validated successfully!");
-      setSession({ ...session, isProofValidate: true });
+      await updateDoc(sessionRef, { validated: true });
+      toastSuccess("Proof validated successfully!");
+      setSession({ ...session, validated: true });
       setIsOpen(false);
     } catch (err) {
       console.error(err);
-      toast.error("Failed to validate proof.");
+      toastError("Failed to validate proof.");
     }
   };
 
@@ -118,7 +119,7 @@ const SessionProof: React.FC<SessionProofProps> = ({ collectionName, sessions}) 
               )}
 
               {/* Validate button */}
-              {!session.isProofValidate ? (
+              {!session.validated ? (
                 <button
                   className="bg-green-500 text-white px-4 py-2 rounded"
                   onClick={handleValidate}

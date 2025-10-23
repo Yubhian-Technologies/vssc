@@ -31,9 +31,10 @@ import Pyschology from "./pages/PsychologyCounselingPage";
 import Academic from "./pages/AcademicAdvisingPage";
 import StudyWorkshop from "./pages/StudyWorkshopPage";
 import LeaderboardPage from "./pages/LeaderboardPage";
-import MyBookingsPage from "./pages/MyBookingsPage"; // ✅ ADD THIS IMPORT
+import MyBookingsPage from "./pages/MyBookingsPage"; 
 import ScrollToTopButton from "./components/ScrollToTopButton";
 import LoadingScreen from "./components/LoadingScreen";
+import Dashboard from "./pages/DashboardPage";
 
 const queryClient = new QueryClient();
 
@@ -78,6 +79,7 @@ const App = () => {
               <Route path="/tour" element={<TourPage />} />
               <Route path="/campus/:id" element={<CampusPage />} />
               <Route path="/help" element={<Help />} />
+              <Route path="/dashboard" element={<Dashboard />} />
 
               {/* Auth Routes */}
               <Route 

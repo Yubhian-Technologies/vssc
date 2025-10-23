@@ -550,12 +550,16 @@ const AccountPage = () => {
                 )}
                 
                 <div className="flex gap-2 mt-2">
-                  <button
+                  {userData?.role === "admin+" && (
+  
+    <button
       
       onClick={() => navigate("/addAdmin")} className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-3 py-2 rounded-lg transition-all backdrop-blur-sm border border-white border-opacity-30 text-sm"
     >
       Add Admin
     </button>
+ 
+)}
                   <button
                     onClick={() => navigate("/reservations")}
                     className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-3 py-2 rounded-lg transition-all backdrop-blur-sm border border-white border-opacity-30 text-sm"
