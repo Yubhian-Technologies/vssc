@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+
+import React, { useEffect, useState, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { auth, db } from "../firebase";
@@ -15,9 +16,11 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [profileUrl, setProfileUrl] = useState<string | null>(null);
   const [isServicesOpen, setIsServicesOpen] = useState(false);
+  const [isEventsOpen, setIsEventsOpen] = useState(false);
   const [role, setRole] = useState<string | null>(null);
   const [uid, setUid] = useState<string | null>(null);
   const [points, setPoints] = useState<number>(0);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const isHome = location.pathname === "/";
 
@@ -59,6 +62,22 @@ const Header = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    if (isMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isMenuOpen]);
+
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const handleLoginClick = () => {
     if (!isLoggedIn) navigate("/auth");
@@ -81,12 +100,16 @@ const Header = () => {
     { name: "Tour", path: "/tour" },
     { name: "Help", path: "/help" },
     { name: "Account", path: "/account" },
+    { name: "Events", path: "/events" }
   ];
 
   const PointsBadge = () => (
     <div
       id="points-section"
-      onClick={() => navigate("/leaderboard")}
+      onClick={() => {
+        setIsMenuOpen(false);
+        navigate("/leaderboard");
+      }}
       className="flex items-center gap-2 px-3 py-1 bg-black/80 rounded-full shadow-lg relative overflow-hidden cursor-pointer"
     >
       <div className="absolute inset-0 bg-gradient-to-t from-orange-600 via-yellow-400 to-transparent animate-pulse opacity-60 blur-sm"></div>
@@ -168,6 +191,54 @@ const Header = () => {
                   >
                     Psychology Counseling Service
                   </Link>
+                  
+                </div>
+              </div>
+            ) : link.name === "Events" ? (
+              <div key={link.name} className="relative group">
+                <Link
+                  to="/events"
+                  className="relative text-foreground hover:text-primary font-semibold cursor-pointer flex items-center gap-1"
+                >
+                  {link.name} <span>▾</span>
+                </Link>
+                <div className="absolute left-0 mt-2 w-64 bg-[hsl(60,100%,95%)] border border-border rounded-md shadow-lg opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all duration-200 z-50">
+                  <Link
+                    to="/events/FindingNemo"
+                    className="block px-4 py-2 text-sm hover:bg-muted rounded-t-md"
+                  >
+                    Finding Nemo
+                  </Link>
+                  <Link
+                    to="/events/TheIncredibles"
+                    className="block px-4 py-2 text-sm hover:bg-muted"
+                  >
+                    The Incredibles
+                  </Link>
+                  <Link
+                    to="/events/InsideOut"
+                    className="block px-4 py-2 text-sm hover:bg-muted"
+                  >
+                    Inside Out
+                  </Link>
+                  <Link
+                    to="/events/ThePursuitofHappyness"
+                    className="block px-4 py-2 text-sm hover:bg-muted"
+                  >
+                    The Pursuit of Happyness
+                  </Link>
+                  <Link
+                    to="/events/HappyFeet"
+                    className="block px-4 py-2 text-sm hover:bg-muted"
+                  >
+                    Happy Feet
+                  </Link>
+                  <Link
+                    to="/events/HiddenFigures"
+                    className="block px-4 py-2 text-sm hover:bg-muted rounded-b-md"
+                  >
+                    Hidden Figures
+                  </Link>
                 </div>
               </div>
             ) : link.name === "Account" ? null : (
@@ -181,6 +252,8 @@ const Header = () => {
             )
           )}
         </nav>
+        
+       
 
         {/* Desktop Right */}
         <div className="hidden lg:flex items-center gap-4 relative z-20">
@@ -233,7 +306,7 @@ const Header = () => {
 
       {/* Mobile Menu */}
       {isMenuOpen && (
-        <div className="lg:hidden absolute top-full left-0 w-full bg-background border-t border-border shadow-md z-[150]">
+        <div ref={menuRef} className="lg:hidden absolute top-full left-0 w-full bg-background border-t border-border shadow-md z-[150]">
           <nav className="flex flex-col px-6 py-4 gap-4 justify-center items-center">
             {navLinks.map((link) =>
               link.name === "Services" ? (
@@ -289,6 +362,70 @@ const Header = () => {
                         onClick={() => setIsMenuOpen(false)}
                       >
                         Psychology Counseling Service
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              ) : link.name === "Events" ? (
+                <div key="Events" className="w-full flex flex-col items-center">
+                  <div className="flex items-center justify-center gap-1">
+                    <Link
+                      to="/events"
+                      className="text-foreground font-semibold hover:text-primary"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Events
+                    </Link>
+                    <button
+                      onClick={() => setIsEventsOpen(!isEventsOpen)}
+                      className="text-foreground hover:text-primary"
+                    >
+                      {isEventsOpen ? "▴" : "▾"}
+                    </button>
+                  </div>
+                  {isEventsOpen && (
+                    <div className="mt-2 flex flex-col justify-center items-center bg-background rounded-md shadow-md border border-border w-full">
+                      <Link
+                        to="/events/FindingNemo"
+                        className="px-4 py-2 text-sm hover:bg-muted rounded-t-md"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        Finding Nemo
+                      </Link>
+                      <Link
+                        to="/events/TheIncredibles"
+                        className="px-4 py-2 text-sm hover:bg-muted"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        The Incredibles
+                      </Link>
+                      <Link
+                        to="/events/InsideOut"
+                        className="px-4 py-2 text-sm hover:bg-muted"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        Inside Out
+                      </Link>
+                      <Link
+                        to="/events/ThePursuitofHappyness"
+                        className="px-4 py-2 text-sm hover:bg-muted"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        The Pursuit of Happyness
+                      </Link>
+                      <Link
+                        to="/events/HappyFeet"
+                        className="px-4 py-2 text-sm hover:bg-muted"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        Happy Feet
+                      </Link>
+                      <Link
+                        to="/events/HiddenFigures"
+                        className="px-4 py-2 text-sm hover:bg-muted rounded-b-md"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        Hidden Figures
                       </Link>
                     </div>
                   )}

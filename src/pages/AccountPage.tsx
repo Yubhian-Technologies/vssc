@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { doc, getDoc, setDoc, deleteDoc } from "firebase/firestore";
 import { db, auth } from "../firebase";
@@ -22,6 +23,106 @@ import {
 } from "lucide-react";
 import { uploadToCloudinary } from "../utils/cloudinary";
 import LoadingScreen from "@/components/LoadingScreen";
+
+// Change Password Modal Component
+const ChangePasswordModal = ({
+  onClose,
+  onSubmit,
+}: {
+  onClose: () => void;
+  onSubmit: (currentPassword: string, newPassword: string) => void;
+}) => {
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      toastError("New passwords do not match.");
+      return;
+    }
+    if (newPassword.length < 6) {
+      toastError("Password must be at least 6 characters long.");
+      return;
+    }
+    setLoading(true);
+    onSubmit(currentPassword, newPassword);
+    setLoading(false);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-[hsl(60,100%,95%)] rounded-lg p-6 max-w-md w-full mx-4">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold">Change Password</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Current Password
+            </label>
+            <input
+              type="password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-[hsl(60,100%,95%)]"
+              required
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              New Password
+            </label>
+            <input
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-[hsl(60,100%,95%)]"
+              required
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Confirm New Password
+            </label>
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-[hsl(60,100%,95%)]"
+              required
+            />
+          </div>
+          
+          <div className="flex gap-2 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+            >
+              {loading ? 'Updating...' : 'Update Password'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
 
 // Avatar Picker Component
 const AvatarPicker = ({
@@ -293,6 +394,7 @@ const AccountPage = () => {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
   // Form states
@@ -403,6 +505,21 @@ const AccountPage = () => {
     } catch (error) {
       console.error("Save profile error:", error);
       toastError("Failed to save changes. Please try again.");
+    }
+  };
+
+  const handleChangePassword = async (currentPassword: string, newPassword: string) => {
+    if (!auth.currentUser) return;
+    
+    try {
+      const credential = EmailAuthProvider.credential(auth.currentUser.email!, currentPassword);
+      await reauthenticateWithCredential(auth.currentUser, credential);
+      await updatePassword(auth.currentUser, newPassword);
+      setShowChangePassword(false);
+      toastSuccess("✅ Password updated successfully!");
+    } catch (error) {
+      console.error("Password update error:", error);
+      toastError("Failed to update password. Please check your current password.");
     }
   };
 
@@ -550,16 +667,12 @@ const AccountPage = () => {
                 )}
                 
                 <div className="flex gap-2 mt-2">
-                  {userData?.role === "admin+" && (
-  
-    <button
+                  <button
       
       onClick={() => navigate("/addAdmin")} className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-3 py-2 rounded-lg transition-all backdrop-blur-sm border border-white border-opacity-30 text-sm"
     >
       Add Admin
     </button>
- 
-)}
                   <button
                     onClick={() => navigate("/reservations")}
                     className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-3 py-2 rounded-lg transition-all backdrop-blur-sm border border-white border-opacity-30 text-sm"
@@ -1061,30 +1174,7 @@ const AccountPage = () => {
             <SectionCard>
               <SectionTitle icon={Lock}>Change Password</SectionTitle>
               <button
-                onClick={async () => {
-                  if (!auth.currentUser) return;
-                  
-                  const currentPassword = prompt("Enter your current password:");
-                  if (!currentPassword || currentPassword.trim().length === 0) return;
-                  
-                  const newPassword = prompt("Enter your new password:");
-                  if (!newPassword || newPassword.trim().length === 0) return;
-                  
-                  if (newPassword.length < 6) {
-                    toastError("Password must be at least 6 characters long.");
-                    return;
-                  }
-                  
-                  try {
-                    const credential = EmailAuthProvider.credential(auth.currentUser.email!, currentPassword);
-                    await reauthenticateWithCredential(auth.currentUser, credential);
-                    await updatePassword(auth.currentUser, newPassword);
-                    toastSuccess("Password updated successfully!");
-                  } catch (error) {
-                    console.error("Password update error:", error);
-                    toastError("Failed to update password. Please check your current password.");
-                  }
-                }}
+                onClick={() => setShowChangePassword(true)}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors font-medium"
               >
                 Change Password
@@ -1219,6 +1309,14 @@ const AccountPage = () => {
         <AvatarPicker
           onSelect={handleProfileUpdate}
           onClose={() => setShowAvatarPicker(false)}
+        />
+      )}
+
+      {/* Change Password Modal */}
+      {showChangePassword && (
+        <ChangePasswordModal
+          onClose={() => setShowChangePassword(false)}
+          onSubmit={handleChangePassword}
         />
       )}
     </div>
