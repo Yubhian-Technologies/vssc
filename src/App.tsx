@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -31,10 +32,16 @@ import Pyschology from "./pages/PsychologyCounselingPage";
 import Academic from "./pages/AcademicAdvisingPage";
 import StudyWorkshop from "./pages/StudyWorkshopPage";
 import LeaderboardPage from "./pages/LeaderboardPage";
-import MyBookingsPage from "./pages/MyBookingsPage"; 
+import MyBookingsPage from "./pages/MyBookingsPage"; // ✅ ADD THIS IMPORT
 import ScrollToTopButton from "./components/ScrollToTopButton";
 import LoadingScreen from "./components/LoadingScreen";
-import Dashboard from "./pages/DashboardPage";
+import EventsPage from "./pages/EventsPage";
+import FindingNemoPage from "./pages/FindingNemoPage";
+import TheIncrediblesPage from "./pages/TheIncrediblesPage";
+import InsideOutPage from "./pages/InsideOutPage";
+import ThePursuitOfHappinessPage from "./pages/ThePursuitOfHappinessPage";
+import HappyFeetPage from "./pages/HappyFeetPage";
+import HiddenFiguresPage from "./pages/HiddenFiguresPage";
 
 const queryClient = new QueryClient();
 
@@ -79,7 +86,13 @@ const App = () => {
               <Route path="/tour" element={<TourPage />} />
               <Route path="/campus/:id" element={<CampusPage />} />
               <Route path="/help" element={<Help />} />
-              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/Events" element={<EventsPage />} />
+              <Route path="/Events/FindingNemo" element={<FindingNemoPage />} />
+              <Route path="/Events/TheIncredibles" element={<TheIncrediblesPage />} />
+              <Route path="/Events/InsideOut" element={<InsideOutPage />} />
+              <Route path="/Events/ThePursuitOfHappiness" element={<ThePursuitOfHappinessPage />} />
+              <Route path="/Events/HappyFeet" element={<HappyFeetPage />} />
+              <Route path="/Events/HiddenFigures" element={<HiddenFiguresPage />} />
 
               {/* Auth Routes */}
               <Route 
