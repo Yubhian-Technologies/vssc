@@ -1,72 +1,84 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 
-import event1 from "@/assets/event1.png";
-import gallery1 from "../assets/gallery1.jpg";
-import gallery2 from "../assets/gallery2.jpg";
-import gallery3 from "../assets/gallery3.jpg";
-import gallery4 from "../assets/gallery4.jpg";
+import event2 from "@/assets/event2.png";
 
-import two from "@/assets/two.png";
-import twelve from "@/assets/twelve.png";
-import eleven from "@/assets/eleven.png";
-import ten from "@/assets/ten.png";
-import eight from "@/assets/eight.png";
-import nine from "@/assets/nine.png";
+import green1 from "@/assets/green1.png";
+import green2 from "@/assets/green2.png";
+import green3 from "@/assets/green3.png";
+import green4 from "@/assets/green4.png";
+import green5 from "@/assets/green5.png";
 
 const sessions = [
   {
     id: 1,
-    name: "Networking Workshop",
-    cover: event1,
+    name: "Leadership Development",
+    cover: event2,
     description:
-      "Learn effective networking strategies to build meaningful professional connections and discover new opportunities in your field.",
+      "Develop essential leadership skills and learn how to inspire and motivate others to achieve common goals.",
   },
 ];
 
 const courses = [
   {
-    focus: "Ice-breaker activities for Interpersonal Exchange",
-    desc: "Discover Networks and Opportunities",
-    image: two,
+    focus: "Subject-focused Peer Learning (Maths & Sciences)",
+    desc: "Student Empowerment Support",
+    image: green1,
   },
   {
-    focus: "Finding friends through shared Extra-Curricular Interests",
-    desc: "Discover Networks and Opportunities",
-    image: eight,
+    focus: "Reading groups for Innovation and Research",
+    desc: "Student Empowerment Support",
+    image: green2,
   },
   {
-    focus: "Peer Mentoring and Reflection Groups",
-    desc: "Discover Networks and Opportunities",
-    image: nine,
+    focus: "Student-led Recap Sessions",
+    desc: "Student Empowerment Support",
+    image: green3,
   },
   {
-    focus: "Cultivating a Culture of Innovation and Entrepreneurship",
-    desc: "Discover Networks and Opportunities",
-    image: ten,
+    focus: "Critical Thinking Workshops",
+    desc: "Student Empowerment Support",
+    image: green4,
   },
   {
-    focus: "Introduction to Academic/Professional Networking",
-    desc: "Discover Networks and Opportunities",
-    image: twelve,
+    focus: "Language Training and Writing Assistance",
+    desc: "Student Empowerment Support",
+    image: green5,
   },
   {
-    focus: "Ideate Collaborative Projects",
-    desc: "Discover Networks and Opportunities",
-    image: eleven,
+    focus: "Managing Finance and Time",
+    desc: "Student Empowerment Support",
+    image: green1,
   },
 ];
 
-const FindingNemoPage: React.FC = () => {
+const TheIncrediblesPage: React.FC = () => {
   const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    option: "",
+    course: "",
+    message: "",
+  });
+  const [showForm, setShowForm] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState("");
 
-  const sessionBgColors = [
-    "bg-[hsl(60,100%,95%)]",
-    "bg-[hsl(60,100%,95%)]",
-    "bg-[hsl(60,100%,95%)]",
-    "bg-[hsl(60,100%,95%)]",
-  ];
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    alert(
+      `Registration submitted for ${formData.name} - ${selectedCourse} (${formData.option})`
+    );
+    setFormData({ name: "", email: "", option: "", course: "", message: "" });
+    setShowForm(false);
+  };
+
+  const handleCourseClick = (courseName: string) => {
+    setSelectedCourse(courseName);
+    setFormData({ ...formData, course: courseName });
+    setShowForm(true);
+  };
 
   return (
     <div className="bg-gray-50">
@@ -133,7 +145,7 @@ const FindingNemoPage: React.FC = () => {
             meaningful relationships, expand your professional network, and
             thrive through collaboration. This is where you unlock your
             potential and give it wings! Join us and take your personal and
-            academic experience to the next level
+            academic experience to the next level.
           </p>
         </div>
       </section>
@@ -148,7 +160,8 @@ const FindingNemoPage: React.FC = () => {
             {courses.map((course, index) => (
               <Card
                 key={index}
-                className="[background-color:hsl(60,100%,95%)]   transition-all duration-300 overflow-hidden "
+                onClick={() => handleCourseClick(course.focus)}
+                className="[background-color:hsl(60,100%,95%)] transition-all duration-300 overflow-hidden cursor-pointer"
               >
                 <img
                   src={course.image}
@@ -166,8 +179,82 @@ const FindingNemoPage: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {/* Registration Modal */}
+      {showForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-[hsl(60,100%,95%)] p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
+            <h3 className="text-xl font-bold mb-4">
+              Register for {selectedCourse}
+            </h3>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <input
+                type="text"
+                placeholder="Full Name"
+                value={formData.name}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
+                className="w-full p-3 border rounded-lg bg-[hsl(60,100%,90%)]"
+                required
+              />
+              <input
+                type="email"
+                placeholder="Email"
+                value={formData.email}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
+                className="w-full p-3 border rounded-lg bg-[hsl(60,100%,90%)]"
+                required
+              />
+              <select
+                value={formData.option}
+                onChange={(e) =>
+                  setFormData({ ...formData, option: e.target.value })
+                }
+                className="w-full p-3 border rounded-lg bg-[hsl(60,100%,90%)]"
+                required
+              >
+                <option value="" disabled>
+                  Select an option
+                </option>
+                <option value="Option 1">Option 1</option>
+                <option value="Option 2">Option 2</option>
+                <option value="Option 3">Option 3</option>
+                <option value="Option 4">Option 4</option>
+                <option value="Option 5">Option 5</option>
+                <option value="Option 6">Option 6</option>
+              </select>
+              <textarea
+                placeholder="Additional Message (Optional)"
+                value={formData.message}
+                onChange={(e) =>
+                  setFormData({ ...formData, message: e.target.value })
+                }
+                className="w-full p-3 border rounded-lg bg-[hsl(60,100%,90%)] h-24 resize-none"
+              />
+              <div className="flex gap-4">
+                <button
+                  type="submit"
+                  className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700"
+                >
+                  Submit
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowForm(false)}
+                  className="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-export default FindingNemoPage;
+export default TheIncrediblesPage;

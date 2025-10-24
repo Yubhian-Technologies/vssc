@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 
 import event2 from "@/assets/event2.png";
-
 import green1 from "@/assets/green1.png";
 import green2 from "@/assets/green2.png";
 import green3 from "@/assets/green3.png";
@@ -58,19 +57,19 @@ const TheIncrediblesPage: React.FC = () => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    option: "",
     course: "",
     message: "",
   });
-  const [formData, setFormData] = useState({ name: '', email: '',option:'', course: '', message: '' });
   const [showForm, setShowForm] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    alert(`Registration submitted for ${formData.name} - ${selectedCourse}`);
-    setFormData({ name: "", email: "", course: "", message: "" });
-    alert(`Registration submitted for ${formData.name} - ${selectedCourse} (${formData.option})`);
-    setFormData({ name: '', email: '',option:'', course: '', message: '' });
+    alert(
+      `Registration submitted for ${formData.name} - ${selectedCourse} (${formData.option})`
+    );
+    setFormData({ name: "", email: "", option: "", course: "", message: "" });
     setShowForm(false);
   };
 
@@ -89,68 +88,35 @@ const TheIncrediblesPage: React.FC = () => {
 
   return (
     <div className="bg-gray-50">
-      <section className="[background-color:hsl(60,100%,90%)] w-full py-8">
-        <section className="[background-color:hsl(60,100%,90%)] w-full">
-          <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center gap-8 px-5">
-            {sessions.map((session) => (
-              <div
-                key={session.id}
-                className="flex flex-col md:flex-row items-center md:items-stretch w-full gap-6"
-              >
-                {/* Image */}
-                <div className="flex-1 flex justify-center">
-                  <img
-                    src={session.cover}
-                    alt={session.name}
-                    className="w-full h-full object-cover max-w-xs md:max-w-sm"
-                  />
-                </div>
-
-                {/* Text block */}
-                <div className="flex-1 flex flex-col justify-center items-center md:items-start text-center md:text-left gap-4 p-2 max-h-[300px] mt-20">
-                  <h2
-                    className="text-4xl font-extrabold leading-tight text-green-600"
-                    style={{
-                      fontFamily:
-                        "'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif",
-                      margin: 0,
-                      padding: 0,
-                    }}
-                  >
-                    Students empowerment
-                    <br />
-                    Support
-                  </h2>
-                  <h2
-                    className="text-4xl font-extrabold leading-tight text-green-400"
-                    style={{
-                      fontFamily:
-                        "'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif",
-                      margin: 0,
-                      padding: 0,
-                    }}
-                  >
-                    Learn
-                    <br />
-                    Grow
-                    <br />
-                    Prosper
-                  </h2>
-                </div>
+      <section className="w-full bg-gray-50 py-12 px-6 md:px-12 lg:px-20 [background-color:hsl(60,100%,90%)]">
+        <div className="flex flex-col gap-16 px-6 lg:px-16 py-12">
+          {sessions.map((session) => (
+            <div
+              key={session.id}
+              className={`flex flex-col md:flex-row items-start gap-8 ${sessionBgColors[0]} rounded-xl p-8`}
+            >
+              <img
+                src={session.cover}
+                alt={session.name}
+                className="md:w-1/2 w-full h-80 md:h-96 object-contain rounded-xl shadow-lg"
+              />
+              <div className="md:w-1/2 w-full flex flex-col gap-4">
+                <h2 className="text-2xl font-bold">{session.name}</h2>
+                <p className="text-gray-700">{session.description}</p>
               </div>
-            ))}
-          </div>
-        </section>
+            </div>
+          ))}
+        </div>
       </section>
 
       {/* Description Paragraph */}
-      <section className="w-full bg-gray-50 pt-2 pb-8 px-6 md:px-12 lg:px-20 [background-color:hsl(60,100%,90%)]">
+      <section className="w-full bg-gray-50 py-8 px-6 md:px-12 lg:px-20 [background-color:hsl(60,100%,90%)]">
         <div className="container mx-auto text-center">
           <p className="text-lg md:text-xl text-gray-700 leading-relaxed max-w-4xl mx-auto">
             We are here to equip you with essential tools for success. Whether
             you need subject-focused recap sessions or help with improving your
             writing skills, you’ll find our unwavering support right here. Visit
-            us and let us help you achieve your goals
+            us and let us help you achieve your goals.
           </p>
         </div>
       </section>
@@ -159,14 +125,14 @@ const TheIncrediblesPage: React.FC = () => {
       <section className="w-full bg-gray-50 py-12 px-6 md:px-12 lg:px-20 [background-color:hsl(60,100%,95%)]">
         <div className="container mx-auto">
           <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">
-            Here are some of the areas we focus on{" "}
+            Course Offerings
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {courses.map((course, index) => (
               <Card
                 key={index}
-                className="[background-color:hsl(60,100%,95%)]  transition-all duration-300 overflow-hidden cursor-pointer"
+                className="[background-color:hsl(60,100%,90%)] shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden rounded-2xl cursor-pointer"
                 onClick={() => handleCourseClick(course.focus)}
               >
                 <img
@@ -215,21 +181,23 @@ const TheIncrediblesPage: React.FC = () => {
                 required
               />
               <select
-  value={formData.option}
-  onChange={(e) => setFormData({ ...formData, option: e.target.value })}
-  className="w-full p-3 border rounded-lg bg-[hsl(60,100%,90%)]"
-  required
->
-  <option value="" disabled>
-    Select an option
-  </option>
-  <option value="Option 1">Option 1</option>
-  <option value="Option 2">Option 2</option>
-  <option value="Option 3">Option 3</option>
-  <option value="Option 4">Option 4</option>
-  <option value="Option 5">Option 5</option>
-  <option value="Option 6">Option 6</option>
-</select>
+                value={formData.option}
+                onChange={(e) =>
+                  setFormData({ ...formData, option: e.target.value })
+                }
+                className="w-full p-3 border rounded-lg bg-[hsl(60,100%,90%)]"
+                required
+              >
+                <option value="" disabled>
+                  Select an option
+                </option>
+                <option value="Option 1">Option 1</option>
+                <option value="Option 2">Option 2</option>
+                <option value="Option 3">Option 3</option>
+                <option value="Option 4">Option 4</option>
+                <option value="Option 5">Option 5</option>
+                <option value="Option 6">Option 6</option>
+              </select>
               <textarea
                 placeholder="Additional Message (Optional)"
                 value={formData.message}
