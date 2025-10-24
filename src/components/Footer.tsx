@@ -14,6 +14,7 @@ const Footer = () => {
     { title: "Tour", href: "/tour" },
     { title: "Help", href: "/Help" },
     { title: "Account", href: "/Account" },
+    { title: "Events", href: "/Events" },
   ];
 
   const courseLinks = [
