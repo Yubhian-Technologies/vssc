@@ -225,7 +225,7 @@ const Header = () => {
                     to="/events/ThePursuitOfHappiness"
                     className="block px-4 py-2 text-sm hover:bg-muted"
                   >
-                    The Pursuit of Happyness
+                    The Pursuit of Happiness
                   </Link>
                   <Link
                     to="/events/HappyFeet"
@@ -411,7 +411,7 @@ const Header = () => {
                         className="px-4 py-2 text-sm hover:bg-muted"
                         onClick={() => setIsMenuOpen(false)}
                       >
-                        The Pursuit of Happyness
+                        The Pursuit of Happiness
                       </Link>
                       <Link
                         to="/events/HappyFeet"
