@@ -55,19 +55,14 @@ const courses = [
 
 const HappyFeetPage: React.FC = () => {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    course: "",
-    message: "",
-  });
+  const [formData, setFormData] = useState({ name: '', email: '',option:'', course: '', message: '' });
   const [showForm, setShowForm] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    alert(`Registration submitted for ${formData.name} - ${selectedCourse}`);
-    setFormData({ name: "", email: "", course: "", message: "" });
+    alert(`Registration submitted for ${formData.name} - ${selectedCourse} (${formData.option})`);
+    setFormData({ name: '', email: '',option:'', course: '', message: '' });
     setShowForm(false);
   };
 
@@ -211,6 +206,22 @@ const HappyFeetPage: React.FC = () => {
                 className="w-full p-3 border rounded-lg bg-[hsl(60,100%,90%)]"
                 required
               />
+              <select
+  value={formData.option}
+  onChange={(e) => setFormData({ ...formData, option: e.target.value })}
+  className="w-full p-3 border rounded-lg bg-[hsl(60,100%,90%)]"
+  required
+>
+  <option value="" disabled>
+    Select an option
+  </option>
+  <option value="Option 1">Option 1</option>
+  <option value="Option 2">Option 2</option>
+  <option value="Option 3">Option 3</option>
+  <option value="Option 4">Option 4</option>
+  <option value="Option 5">Option 5</option>
+  <option value="Option 6">Option 6</option>
+</select>
               <textarea
                 placeholder="Additional Message (Optional)"
                 value={formData.message}
