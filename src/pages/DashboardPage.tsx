@@ -42,7 +42,7 @@ interface AggregatedData {
   totalDuration: number;
 }
 
-const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#A28EFF"];
+const COLORS = ["#0061feff", "#00C49F", "#FFBB28", "#FF8042", "#A28EFF"];
 const collections = [
   "tutoring",
   "academicadvising",
@@ -214,39 +214,39 @@ const DashboardPage: React.FC = () => {
 
   return (
     <motion.div
-      className="p-8 min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white"
+      className="p-8 min-h-screen bg-[hsl(60,100%,85%)] text-gray-900"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.6 }}
     >
       <motion.h2
-        className="text-3xl font-bold mb-8 text-center bg-gradient-to-r from-blue-400 to-green-300 bg-clip-text text-transparent"
+        className="text-3xl font-bold mb-8 text-center text-blue-900"
         initial={{ y: -30, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.2 }}
       >
-        Dashboard – {adminCollege}
+        Dashboard – Vishnu Institute of Technology
       </motion.h2>
 
       {/* Summary Stats */}
       <div className="grid md:grid-cols-3 gap-6 mb-10">
-        <Card className="bg-white/10 backdrop-blur-md border-none shadow-xl">
+        <Card className="bg-[hsl(60,100%,95%)] border-none shadow-xl">
           <CardContent className="p-5 text-center">
-            <h3 className="text-lg font-semibold text-gray-300">Total Users</h3>
+            <h3 className="text-lg font-semibold text-gray-700">Total Users</h3>
             <p className="text-3xl font-bold mt-2">{aggregated.length}</p>
           </CardContent>
         </Card>
-        <Card className="bg-white/10 backdrop-blur-md border-none shadow-xl">
+        <Card className="bg-[hsl(60,100%,95%)] border-none shadow-xl">
           <CardContent className="p-5 text-center">
-            <h3 className="text-lg font-semibold text-gray-300">
+            <h3 className="text-lg font-semibold text-gray-700">
               Total Duration
             </h3>
             <p className="text-3xl font-bold mt-2">{totalDurationSum}</p>
           </CardContent>
         </Card>
-        <Card className="bg-white/10 backdrop-blur-md border-none shadow-xl">
+        <Card className="bg-[hsl(60,100%,95%)] border-none shadow-xl">
           <CardContent className="p-5 text-center">
-            <h3 className="text-lg font-semibold text-gray-300">
+            <h3 className="text-lg font-semibold text-gray-700">
               Average Duration / User
             </h3>
             <p className="text-3xl font-bold mt-2">
@@ -259,7 +259,7 @@ const DashboardPage: React.FC = () => {
       {/* Charts Section */}
       <div className="grid md:grid-cols-2 gap-10">
         <motion.div
-          className="bg-white/10 rounded-2xl shadow-lg p-5 backdrop-blur-lg"
+          className="bg-[hsl(60,100%,95%)] rounded-2xl shadow-lg p-5"
           initial={{ x: -30, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ delay: 0.3 }}
@@ -290,7 +290,7 @@ const DashboardPage: React.FC = () => {
         </motion.div>
 
         <motion.div
-          className="bg-white/10 rounded-2xl shadow-lg p-5 backdrop-blur-lg"
+          className="bg-[hsl(60,100%,95%)] rounded-2xl shadow-lg p-5"
           initial={{ x: 30, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ delay: 0.4 }}
@@ -314,7 +314,7 @@ const DashboardPage: React.FC = () => {
 
       {/* Line Chart */}
       <motion.div
-        className="mt-10 bg-white/10 rounded-2xl shadow-lg p-5 backdrop-blur-lg"
+        className="mt-10 bg-[hsl(60,100%,95%)] rounded-2xl shadow-lg p-5"
         initial={{ y: 40, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.5 }}
@@ -359,14 +359,14 @@ const DashboardPage: React.FC = () => {
 
       {/* Table */}
       <motion.div
-        className="mt-10 overflow-x-auto bg-white/10 backdrop-blur-lg rounded-2xl shadow-lg"
+        className="mt-10 overflow-x-auto bg-[hsl(60,100%,95%)] rounded-2xl shadow-lg"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.6 }}
       >
-        <table className="w-full text-left border-collapse text-gray-300">
+        <table className="w-full text-left border-collapse text-black">
           <thead>
-            <tr className="bg-white/20 text-white">
+            <tr className="bg-[hsl(60,100%,95%)] text-black">
               <th className="py-3 px-4 border-b border-gray-700">Name</th>
               <th className="py-3 px-4 border-b border-gray-700">
                 Total Duration
@@ -377,7 +377,7 @@ const DashboardPage: React.FC = () => {
             {aggregated.map((item) => (
               <tr
                 key={item.uid}
-                className="hover:bg-white/10 transition duration-200"
+                className="hover:bg-[hsl(60,100%,95%)] transition duration-200"
               >
                 <td className="py-3 px-4 border-b border-gray-700">
                   {item.name}
