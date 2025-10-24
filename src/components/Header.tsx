@@ -97,10 +97,11 @@ const Header = () => {
     { name: "Home", path: "/" },
     { name: "About", path: "/about" },
     { name: "Services", path: "/services" },
+    { name: "Events", path: "/events" },
     { name: "Tour", path: "/tour" },
     { name: "Help", path: "/help" },
     { name: "Account", path: "/account" },
-    { name: "Events", path: "/events" }
+    
   ];
 
   const PointsBadge = () => (
