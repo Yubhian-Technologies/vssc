@@ -90,30 +90,36 @@ const ThePursuitOfHappinessPage: React.FC = () => {
 
       {/* Courses Grid Section */}
       <section className="w-full bg-gray-50 py-12 px-6 md:px-12 lg:px-20 [background-color:hsl(60,100%,95%)]">
-        <div className="container mx-auto">
-          <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">Course Offerings</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {courses.map((course, index) => (
-              <Card 
-                key={index} 
-                className="[background-color:hsl(60,100%,90%)] shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden rounded-2xl cursor-pointer"
-                onClick={() => handleCourseClick(course.focus)}
-              >
-                <img
-                  src={course.image}
-                  alt={course.focus}
-                  className="w-full h-48 object-contain"
-                />
-                <CardContent className="p-4">
-                  <h3 className="font-semibold text-gray-900 text-base mb-2">{course.focus}</h3>
-                  <p className="text-gray-700 text-sm">{course.desc}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
+  <div className="container mx-auto">
+    <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">Course Offerings</h2>
+    
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {courses.map((course, index) => (
+        <Card 
+          key={index} 
+          className="flex flex-col [background-color:hsl(60,100%,90%)] shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden rounded-2xl cursor-pointer"
+        >
+          <img
+            src={course.image}
+            alt={course.focus}
+            className="w-full h-48 object-contain"
+          />
+          <CardContent className="flex flex-col flex-1 p-4">
+            <h3 className="font-semibold text-gray-900 text-base mb-2">{course.focus}</h3>
+            <p className="text-gray-700 text-sm mb-4">{course.desc}</p>
+            <button
+              onClick={() => handleCourseClick(course.focus)}
+              className="mt-auto w-full bg-primary text-white px-4 py-2 rounded-lg hover:bg-blue-900"
+            >
+              Register
+            </button>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  </div>
+</section>
+
 
       {/* Registration Modal */}
       {showForm && (
@@ -159,11 +165,11 @@ const ThePursuitOfHappinessPage: React.FC = () => {
                 onChange={(e) => setFormData({...formData, message: e.target.value})}
                 className="w-full p-3 border rounded-lg bg-[hsl(60,100%,90%)] h-24 resize-none"
               />
-              <div className="flex gap-4">
-                <button type="submit" className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700">
+              <div className="flex justify-between gap-4">
+                <button type="submit" className="bg-green-800 text-white px-6 py-2 rounded-lg hover:bg-green-900">
                   Submit
                 </button>
-                <button type="button" onClick={() => setShowForm(false)} className="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600">
+                <button type="button" onClick={() => setShowForm(false)} className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700">
                   Cancel
                 </button>
               </div>
