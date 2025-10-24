@@ -42,6 +42,7 @@ import InsideOutPage from "./pages/InsideOutPage";
 import ThePursuitOfHappinessPage from "./pages/ThePursuitOfHappinessPage";
 import HappyFeetPage from "./pages/HappyFeetPage";
 import HiddenFiguresPage from "./pages/HiddenFiguresPage";
+import DashboardPage from "./pages/DashboardPage";
 
 const queryClient = new QueryClient();
 
@@ -151,6 +152,14 @@ const App = () => {
                 element={
                   <ProtectedRoute>
                     <AccountPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/dashboard" 
+                element={
+                  <ProtectedRoute>
+                    <DashboardPage />
                   </ProtectedRoute>
                 } 
               />
