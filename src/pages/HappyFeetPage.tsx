@@ -15,35 +15,65 @@ const sessions = [
     id: 1,
     name: "Stress Management Workshop",
     cover: event3,
-    description: "Learn effective techniques to manage stress and maintain mental well-being during challenging times.",
+    description:
+      "Learn effective techniques to manage stress and maintain mental well-being during challenging times.",
   },
 ];
 
 const courses = [
-  { focus: "Mindfulness and Meditation Sessions", desc: "Wellness & Self-Care", image: maroon1 },
-  { focus: "Hacking into physical wellbeing (Yoga, Zumba, etc.)", desc: "Wellness & Self-Care", image: maroon2 },
-  { focus: "Peer-driven Fitness Bootcamps", desc: "Wellness & Self-Care", image: maroon3 },
-  { focus: "Digital Detox Sessions", desc: "Wellness & Self-Care", image: maroon4 },
-  { focus: "Work-life Balance Workshops", desc: "Wellness & Self-Care", image: maroon5 },
-  { focus: "Student-led health and hygiene circle to promote peer-awareness", desc: "Wellness & Self-Care", image: maroon1 },
+  {
+    focus: "Mindfulness and Meditation Sessions",
+    desc: "Wellness & Self-Care",
+    image: maroon1,
+  },
+  {
+    focus: "Hacking into physical wellbeing (Yoga, Zumba, etc.)",
+    desc: "Wellness & Self-Care",
+    image: maroon2,
+  },
+  {
+    focus: "Peer-driven Fitness Bootcamps",
+    desc: "Wellness & Self-Care",
+    image: maroon3,
+  },
+  {
+    focus: "Digital Detox Sessions",
+    desc: "Wellness & Self-Care",
+    image: maroon4,
+  },
+  {
+    focus: "Work-life Balance Workshops",
+    desc: "Wellness & Self-Care",
+    image: maroon5,
+  },
+  {
+    focus: "Student-led health and hygiene circle to promote peer-awareness",
+    desc: "Wellness & Self-Care",
+    image: maroon1,
+  },
 ];
 
 const HappyFeetPage: React.FC = () => {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({ name: '', email: '', course: '', message: '' });
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    course: "",
+    message: "",
+  });
   const [showForm, setShowForm] = useState(false);
-  const [selectedCourse, setSelectedCourse] = useState('');
+  const [selectedCourse, setSelectedCourse] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     alert(`Registration submitted for ${formData.name} - ${selectedCourse}`);
-    setFormData({ name: '', email: '', course: '', message: '' });
+    setFormData({ name: "", email: "", course: "", message: "" });
     setShowForm(false);
   };
 
   const handleCourseClick = (courseName: string) => {
     setSelectedCourse(courseName);
-    setFormData({...formData, course: courseName});
+    setFormData({ ...formData, course: courseName });
     setShowForm(true);
   };
 
@@ -56,35 +86,68 @@ const HappyFeetPage: React.FC = () => {
 
   return (
     <div className="bg-gray-50">
-      <section className="w-full bg-gray-50 py-12 px-6 md:px-12 lg:px-20 [background-color:hsl(60,100%,90%)]">
-        <div className="flex flex-col gap-16 px-6 lg:px-16 py-12">
-          {sessions.map((session) => (
-            <div
-              key={session.id}
-              className={`flex flex-col md:flex-row items-start gap-8 ${sessionBgColors[0]} rounded-xl p-8`}
-            >
-              <img
-                src={session.cover}
-                alt={session.name}
-                className="md:w-1/2 w-full h-80 md:h-96 object-contain rounded-xl shadow-lg"
-              />
-              <div className="md:w-1/2 w-full flex flex-col gap-4">
-                <h2 className="text-2xl font-bold">{session.name}</h2>
-                <p className="text-gray-700">{session.description}</p>
-               
+      <section className="[background-color:hsl(60,100%,90%)] w-full py-8">
+        <section className="[background-color:hsl(60,100%,90%)] w-full ">
+          <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center gap-8 px-5">
+            {sessions.map((session) => (
+              <div
+                key={session.id}
+                className="flex flex-col md:flex-row items-center md:items-stretch w-full gap-6"
+              >
+                {/* Image */}
+                <div className="flex-1 flex justify-center">
+                  <img
+                    src={session.cover}
+                    alt={session.name}
+                    className="w-full h-full object-cover max-w-xs md:max-w-sm"
+                  />
+                </div>
+
+                {/* Text block */}
+                <div className="flex-1 flex flex-col justify-center items-center md:items-start text-center md:text-left gap-4 p-2 max-h-[300px] mt-20">
+                  <h2
+                    className="text-5xl font-extrabold leading-tight text-green-800"
+                    style={{
+                      fontFamily:
+                        "'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif",
+                      margin: 0,
+                      padding: 0,
+                    }}
+                  >
+                    Wellness &
+                    <br />
+                    Self-Care
+                  </h2>
+                  <h2
+                    className="text-4xl font-extrabold leading-tight text-pink-700"
+                    style={{
+                      fontFamily:
+                        "'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif",
+                      margin: 0,
+                      padding: 0,
+                    }}
+                  >
+                    Head
+                    <br />
+                    Hustle
+                    <br />
+                    Heal
+                  </h2>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </section>
       </section>
 
       {/* Description Paragraph */}
-      <section className="w-full bg-gray-50 py-8 px-6 md:px-12 lg:px-20 [background-color:hsl(60,100%,90%)]">
+      <section className="w-full bg-gray-50 pt-2 pb-8 px-6 md:px-12 lg:px-20 [background-color:hsl(60,100%,90%)]">
         <div className="container mx-auto text-center">
           <p className="text-lg md:text-xl text-gray-700 leading-relaxed max-w-4xl mx-auto">
-             Your wellbeing is our priority. From zumba for your limbs to a digital detox for your 
-             mind, we have got it all covered. Listen to your needs, stay active, and rejuvenate 
-             yourself. Join us to cultivate a balanced and healthy lifestyle
+            Your wellbeing is our priority. From zumba for your limbs to a
+            digital detox for your mind, we have got it all covered. Listen to
+            your needs, stay active, and rejuvenate yourself. Join us to
+            cultivate a balanced and healthy lifestyle
           </p>
         </div>
       </section>
@@ -92,13 +155,15 @@ const HappyFeetPage: React.FC = () => {
       {/* Courses Grid Section */}
       <section className="w-full bg-gray-50 py-12 px-6 md:px-12 lg:px-20 [background-color:hsl(60,100%,95%)]">
         <div className="container mx-auto">
-          <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">Course Offerings</h2>
-          
+          <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">
+            Here are some of the areas we focus on{" "}
+          </h2>
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {courses.map((course, index) => (
-              <Card 
-                key={index} 
-                className="[background-color:hsl(60,100%,90%)] shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden rounded-2xl cursor-pointer"
+              <Card
+                key={index}
+                className="[background-color:hsl(60,100%,95%)]  transition-all duration-300 overflow-hidden rounded-2xl cursor-pointer"
                 onClick={() => handleCourseClick(course.focus)}
               >
                 <img
@@ -107,7 +172,9 @@ const HappyFeetPage: React.FC = () => {
                   className="w-full h-48 object-contain"
                 />
                 <CardContent className="p-4">
-                  <h3 className="font-semibold text-gray-900 text-base mb-2">{course.focus}</h3>
+                  <h3 className="font-semibold text-gray-900 text-base mb-2">
+                    {course.focus}
+                  </h3>
                   <p className="text-gray-700 text-sm">{course.desc}</p>
                 </CardContent>
               </Card>
@@ -120,13 +187,17 @@ const HappyFeetPage: React.FC = () => {
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-[hsl(60,100%,95%)] p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
-            <h3 className="text-xl font-bold mb-4">Register for {selectedCourse}</h3>
+            <h3 className="text-xl font-bold mb-4">
+              Register for {selectedCourse}
+            </h3>
             <form onSubmit={handleSubmit} className="space-y-4">
               <input
                 type="text"
                 placeholder="Full Name"
                 value={formData.name}
-                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
                 className="w-full p-3 border rounded-lg bg-[hsl(60,100%,90%)]"
                 required
               />
@@ -134,21 +205,32 @@ const HappyFeetPage: React.FC = () => {
                 type="email"
                 placeholder="Email"
                 value={formData.email}
-                onChange={(e) => setFormData({...formData, email: e.target.value})}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
                 className="w-full p-3 border rounded-lg bg-[hsl(60,100%,90%)]"
                 required
               />
               <textarea
                 placeholder="Additional Message (Optional)"
                 value={formData.message}
-                onChange={(e) => setFormData({...formData, message: e.target.value})}
+                onChange={(e) =>
+                  setFormData({ ...formData, message: e.target.value })
+                }
                 className="w-full p-3 border rounded-lg bg-[hsl(60,100%,90%)] h-24 resize-none"
               />
               <div className="flex gap-4">
-                <button type="submit" className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700">
+                <button
+                  type="submit"
+                  className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700"
+                >
                   Submit
                 </button>
-                <button type="button" onClick={() => setShowForm(false)} className="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600">
+                <button
+                  type="button"
+                  onClick={() => setShowForm(false)}
+                  className="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600"
+                >
                   Cancel
                 </button>
               </div>
