@@ -2,19 +2,20 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 
-import event2 from "@/assets/event2.png";
+import event1 from "@/assets/event1.png";
 
-import green1 from "@/assets/green1.png";
-import green2 from "@/assets/green2.png";
-import green3 from "@/assets/green3.png";
-import green4 from "@/assets/green4.png";
-import green5 from "@/assets/green5.png";
+import two from "@/assets/two.png";
+import twelve from "@/assets/twelve.png";
+import eleven from "@/assets/eleven.png";
+import ten from "@/assets/ten.png";
+import eight from "@/assets/eight.png";
+import nine from "@/assets/nine.png";
 
 const sessions = [
   {
     id: 1,
     name: "Leadership Development",
-    cover: event2,
+    cover: event1,
     description:
       "Develop essential leadership skills and learn how to inspire and motivate others to achieve common goals.",
   },
@@ -24,32 +25,32 @@ const courses = [
   {
     focus: "Subject-focused Peer Learning (Maths & Sciences)",
     desc: "Student Empowerment Support",
-    image: green1,
+    image: two,
   },
   {
     focus: "Reading groups for Innovation and Research",
     desc: "Student Empowerment Support",
-    image: green2,
+    image: twelve,
   },
   {
     focus: "Student-led Recap Sessions",
     desc: "Student Empowerment Support",
-    image: green3,
+    image: eleven,
   },
   {
     focus: "Critical Thinking Workshops",
     desc: "Student Empowerment Support",
-    image: green4,
+    image: ten,
   },
   {
     focus: "Language Training and Writing Assistance",
     desc: "Student Empowerment Support",
-    image: green5,
+    image: eight,
   },
   {
     focus: "Managing Finance and Time",
     desc: "Student Empowerment Support",
-    image: green1,
+    image: nine,
   },
 ];
 
