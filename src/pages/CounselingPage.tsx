@@ -20,6 +20,7 @@ import {
   orderBy,
   deleteDoc,
   getDocs,
+  setDoc,
   where,
 } from "firebase/firestore";
 import { useAuth } from "../AuthContext";
@@ -329,106 +330,141 @@ export default function CounselingPage() {
 
   // --- Admin Features ---
   const handleAddSession = async () => {
-    if (
-      !newSession.title ||
-      newSession.isGroup === undefined ||
-      !newSession.date ||
-      !newSession.startTime ||
-      !newSession.expiryDate ||
-      !newSession.expiryTime ||
-      (newSession.isGroup && (!newSession.slots || newSession.slots <= 0)) ||
-      (!newSession.isGroup && (!newSession.totalDuration || !newSession.slotDuration))
-    ) {
-      toastError("Please fill in all required fields.");
+  if (
+    !newSession.title ||
+    !newSession.description ||
+    !newSession.tutorName ||
+    !newSession.skills.length ||
+    !newSession.date ||
+    !newSession.startTime ||
+    !newSession.expiryDate ||
+    !newSession.expiryTime ||
+    (newSession.isGroup && (!newSession.slots || newSession.slots <= 0)) ||
+    (!newSession.isGroup && (!newSession.totalDuration || !newSession.slotDuration))
+  ) {
+    toastError(
+      "Please fill in all required fields (title, description, counselor name, skills, date, start time, expiry date, expiry time, and session type). For group sessions, include slots. For 1-on-1 sessions, include total duration and slot duration."
+    );
+    return;
+  }
+
+  if (!user?.uid) {
+    toastError("No authenticated user found. Please sign in again.");
+    console.error("No authenticated user found when adding session.");
+    return;
+  }
+
+  try {
+    // Check if user document exists in the users collection
+    const userRef = doc(db, "users", user.uid);
+    const userSnap = await getDoc(userRef);
+    if (!userSnap.exists()) {
+      // Create user document if it doesn't exist
+      const userName = user.displayName || newSession.tutorName || "Anonymous User";
+      await setDoc(userRef, {
+        name: userName,
+        college: userData?.college || newSession.colleges[0] || "Unknown College",
+        email: user.email || "",
+        role: userData?.role || "user",
+        createdAt: serverTimestamp(),
+      });
+      console.log(`Created user document for UID: ${user.uid}`);
+    } else {
+      // Ensure the existing user document has a name field
+      const userDocData = userSnap.data();
+      if (!userDocData.name) {
+        await updateDoc(userRef, {
+          name: user.displayName || newSession.tutorName || "Anonymous User",
+        });
+        console.log(`Updated name for user UID: ${user.uid}`);
+      }
+    }
+
+    const sessionDateTime = new Date(`${newSession.date}T${newSession.startTime}:00`);
+    const [expiryYear, expiryMonth, expiryDay] = newSession.expiryDate.split("-").map(Number);
+    const [expiryHour, expiryMinute] = newSession.expiryTime.split(":").map(Number);
+    const expiryDateTime = new Date(expiryYear, expiryMonth - 1, expiryDay, expiryHour, expiryMinute);
+
+    if (expiryDateTime <= sessionDateTime) {
+      toastError("Expiry date and time must be after the session start date and time.");
       return;
     }
 
-    try {
-      const sessionDateTime = new Date(`${newSession.date}T${newSession.startTime}:00`);
-      const [expiryYear, expiryMonth, expiryDay] = newSession.expiryDate.split("-").map(Number);
-      const [expiryHour, expiryMinute] = newSession.expiryTime.split(":").map(Number);
-      const expiryDateTime = new Date(expiryYear, expiryMonth - 1, expiryDay, expiryHour, expiryMinute);
+    const sessionData: any = {
+      title: newSession.title,
+      createdBy: user.uid, // Use user.uid directly since we validated it
+      colleges: newSession.colleges || [],
+      description: newSession.description,
+      tutorName: newSession.tutorName,
+      skills: newSession.skills,
+      createdAt: serverTimestamp(),
+      isGroup: newSession.isGroup,
+      date: newSession.date,
+      startTime: newSession.startTime,
+      expiryDate: newSession.expiryDate,
+      expiryTime: newSession.expiryTime,
+      validated: false,
+      proofs: [],
+    };
 
-      if (expiryDateTime <= sessionDateTime) {
-        toastError("Expiry date and time must be after the session start date and time.");
-        return;
+    if (newSession.isGroup) {
+      sessionData.slots = newSession.slots || 1;
+      sessionData.participants = [];
+    } else {
+      sessionData.totalDuration = newSession.totalDuration;
+      sessionData.slotDuration = newSession.slotDuration;
+      const slotCount = Math.floor(newSession.totalDuration / newSession.slotDuration);
+      sessionData.slotAvailable = slotCount;
+      sessionData.participants = [];
+
+      const [hoursStr, minutesStrWithSuffix] = newSession.startTime.split(":");
+      let hours = parseInt(hoursStr);
+      let minutesStr = minutesStrWithSuffix;
+      let suffix = "";
+      if (minutesStrWithSuffix.includes("AM") || minutesStrWithSuffix.includes("PM")) {
+        suffix = minutesStrWithSuffix.slice(-2);
+        minutesStr = minutesStrWithSuffix.slice(0, -2).trim();
       }
+      const minutes = parseInt(minutesStr);
+      if (suffix.toLowerCase() === "pm" && hours < 12) hours += 12;
 
-      const sessionData: any = {
-        title: newSession.title,
-        createdBy: user?.uid,
-        colleges: newSession.colleges || [],
-        description: newSession.description || "",
-        tutorName: newSession.tutorName || "",
-        skills: newSession.skills || [],
-        createdAt: serverTimestamp(),
-        isGroup: newSession.isGroup,
-        date: newSession.date,
-        startTime: newSession.startTime,
-        expiryDate: newSession.expiryDate,
-        expiryTime: newSession.expiryTime,
-        validated: false,
-        proofs: [],
-      };
-
-      if (newSession.isGroup) {
-        sessionData.slots = newSession.slots || 1;
-        sessionData.participants = [];
-      } else {
-        sessionData.totalDuration = newSession.totalDuration;
-        sessionData.slotDuration = newSession.slotDuration;
-        const slotCount = Math.floor(newSession.totalDuration / newSession.slotDuration);
-        sessionData.slotAvailable = slotCount;
-        sessionData.participants = [];
-
-        const [hoursStr, minutesStrWithSuffix] = newSession.startTime.split(":");
-        let hours = parseInt(hoursStr);
-        let minutesStr = minutesStrWithSuffix;
-        let suffix = "";
-        if (minutesStrWithSuffix.includes("AM") || minutesStrWithSuffix.includes("PM")) {
-          suffix = minutesStrWithSuffix.slice(-2);
-          minutesStr = minutesStrWithSuffix.slice(0, -2).trim();
-        }
-        const minutes = parseInt(minutesStr);
-        if (suffix.toLowerCase() === "pm" && hours < 12) hours += 12;
-
-        const bookedSlots = Array.from({ length: slotCount }, (_, i) => {
-          const slotDate = new Date(newSession.date);
-          slotDate.setHours(hours, minutes + i * newSession.slotDuration, 0, 0);
-          const timeStr = `${slotDate.getHours().toString().padStart(2, "0")}:${slotDate
-            .getMinutes()
-            .toString()
-            .padStart(2, "0")}`;
-          return { time: timeStr, booked: false, user: null };
-        });
-
-        sessionData.bookedSlots = bookedSlots;
-      }
-
-      await addDoc(collection(db, "counseling"), sessionData);
-
-      setShowForm(false);
-      setNewSession({
-        title: "",
-        isGroup: false,
-        date: "",
-        startTime: "",
-        totalDuration: 0,
-        slotDuration: 0,
-        slots: 1,
-        colleges: [],
-        description: "",
-        tutorName: "",
-        skills: [],
-        expiryDate: "",
-        expiryTime: "",
+      const bookedSlots = Array.from({ length: slotCount }, (_, i) => {
+        const slotDate = new Date(newSession.date);
+        slotDate.setHours(hours, minutes + i * newSession.slotDuration, 0, 0);
+        const timeStr = `${slotDate.getHours().toString().padStart(2, "0")}:${slotDate
+          .getMinutes()
+          .toString()
+          .padStart(2, "0")}`;
+        return { time: timeStr, booked: false, user: null };
       });
-      toastSuccess("Session Added Successfully");
-    } catch (err) {
-      console.error("Error adding session:", err);
-      toastError("Failed to add session. Try again.");
+
+      sessionData.bookedSlots = bookedSlots;
     }
-  };
+
+    await addDoc(collection(db, "counseling"), sessionData);
+
+    setShowForm(false);
+    setNewSession({
+      title: "",
+      isGroup: false,
+      date: "",
+      startTime: "",
+      totalDuration: 0,
+      slotDuration: 0,
+      slots: 1,
+      colleges: [],
+      description: "",
+      tutorName: "",
+      skills: [],
+      expiryDate: "",
+      expiryTime: "",
+    });
+    toastSuccess("Session Added Successfully");
+  } catch (err) {
+    console.error("Error adding session:", err);
+    toastError("Failed to add session. Try again.");
+  }
+};
 
   const handleViewParticipants = async (participants: string[] = []) => {
     if (!participants || participants.length === 0) {

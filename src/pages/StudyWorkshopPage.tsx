@@ -23,6 +23,7 @@ import {
   orderBy,
   deleteDoc,
   getDocs,
+  setDoc,
   where,
 } from "firebase/firestore";
 import { useAuth } from "../AuthContext";
@@ -377,77 +378,108 @@ export default function StudyWorkshopPage() {
 
   // --- Admin Features ---
   const handleAddSession = async () => {
-    if (
-      !newSession.title ||
-      !newSession.description ||
-      !newSession.tutorName ||
-      !newSession.skills.length ||
-      !newSession.date ||
-      !newSession.startTime ||
-      !newSession.totalDuration ||
-      !newSession.slots ||
-      !newSession.expiryDate ||
-      !newSession.expiryTime
-    ) {
-      toastError("Please fill in all required fields (title, description, tutor name, skills, date, start time, total duration, slots, expiry date, and expiry time).");
+  if (
+    !newSession.title ||
+    !newSession.description ||
+    !newSession.tutorName ||
+    !newSession.skills.length ||
+    !newSession.date ||
+    !newSession.startTime ||
+    !newSession.totalDuration ||
+    !newSession.slots ||
+    !newSession.expiryDate ||
+    !newSession.expiryTime
+  ) {
+    toastError("Please fill in all required fields (title, description, tutor name, skills, date, start time, total duration, slots, expiry date, and expiry time).");
+    return;
+  }
+
+  if (!user?.uid) {
+    toastError("No authenticated user found. Please sign in again.");
+    console.error("No authenticated user found when adding session.");
+    return;
+  }
+
+  try {
+    // Check if user document exists in the users collection
+    const userRef = doc(db, "users", user.uid);
+    const userSnap = await getDoc(userRef);
+    if (!userSnap.exists()) {
+      // Create user document if it doesn't exist
+      const userName = user.displayName || newSession.tutorName || "Anonymous User";
+      await setDoc(userRef, {
+        name: userName,
+        college: userData?.college || newSession.colleges[0] || "Unknown College",
+        email: user.email || "",
+        role: userData?.role || "user",
+        createdAt: serverTimestamp(),
+      });
+      console.log(`Created user document for UID: ${user.uid}`);
+    } else {
+      // Ensure the existing user document has a name field
+      const userDocData = userSnap.data();
+      if (!userDocData.name) {
+        await updateDoc(userRef, {
+          name: user.displayName || newSession.tutorName || "Anonymous User",
+        });
+        console.log(`Updated name for user UID: ${user.uid}`);
+      }
+    }
+
+    const sessionDateTime = new Date(`${newSession.date}T${newSession.startTime}:00`);
+    const [expiryYear, expiryMonth, expiryDay] = newSession.expiryDate.split("-").map(Number);
+    const [expiryHour, expiryMinute] = newSession.expiryTime.split(":").map(Number);
+    const expiryDateTime = new Date(expiryYear, expiryMonth - 1, expiryDay, expiryHour, expiryMinute);
+
+    if (expiryDateTime <= sessionDateTime) {
+      toastError("Expiry date and time must be after the session start date and time.");
       return;
     }
 
-    try {
-      const sessionDateTime = new Date(`${newSession.date}T${newSession.startTime}:00`);
-      const [expiryYear, expiryMonth, expiryDay] = newSession.expiryDate.split("-").map(Number);
-      const [expiryHour, expiryMinute] = newSession.expiryTime.split(":").map(Number);
-      const expiryDateTime = new Date(expiryYear, expiryMonth - 1, expiryDay, expiryHour, expiryMinute);
+    const sessionData: any = {
+      title: newSession.title,
+      createdBy: user.uid, // Use user.uid directly since we validated it
+      colleges: newSession.colleges || [],
+      description: newSession.description,
+      tutorName: newSession.tutorName,
+      skills: newSession.skills,
+      createdAt: serverTimestamp(),
+      isGroup: newSession.isGroup,
+      expiryDate: newSession.expiryDate,
+      expiryTime: newSession.expiryTime,
+      validated: false,
+      proofs: [],
+      slots: newSession.slots,
+      participants: [],
+      date: newSession.date,
+      totalDuration: newSession.totalDuration,
+      startTime: newSession.startTime,
+    };
 
-      if (expiryDateTime <= sessionDateTime) {
-        toastError("Expiry date and time must be after the session start date and time.");
-        return;
-      }
+    await addDoc(collection(db, "studyworkshop"), sessionData);
 
-      const sessionData: any = {
-        title: newSession.title,
-        createdBy: user?.uid,
-        colleges: newSession.colleges || [],
-        description: newSession.description,
-        tutorName: newSession.tutorName,
-        skills: newSession.skills,
-        createdAt: serverTimestamp(),
-        isGroup: newSession.isGroup,
-        expiryDate: newSession.expiryDate,
-        expiryTime: newSession.expiryTime,
-        validated: false,
-        proofs: [],
-        slots: newSession.slots,
-        participants: [],
-        date: newSession.date,
-        totalDuration: newSession.totalDuration,
-        startTime: newSession.startTime,
-      };
-
-      await addDoc(collection(db, "studyworkshop"), sessionData);
-
-      setShowForm(false);
-      setNewSession({
-        title: "",
-        isGroup: true,
-        date: "",
-        startTime: "",
-        totalDuration: 0,
-        slotDuration: 0,
-        slots: 1,
-        colleges: [],
-        description: "",
-        tutorName: "",
-        skills: [],
-        expiryDate: "",
-        expiryTime: "",
-      });
-      toastSuccess("Session added successfully");
-    } catch (err) {
-      console.error("Error adding session:", err);
-      toastError("Failed to add session. Try again.");
-    }
-  };
+    setShowForm(false);
+    setNewSession({
+      title: "",
+      isGroup: true,
+      date: "",
+      startTime: "",
+      totalDuration: 0,
+      slotDuration: 0,
+      slots: 1,
+      colleges: [],
+      description: "",
+      tutorName: "",
+      skills: [],
+      expiryDate: "",
+      expiryTime: "",
+    });
+    toastSuccess("Session added successfully");
+  } catch (err) {
+    console.error("Error adding session:", err);
+    toastError("Failed to add session. Try again.");
+  }
+};
 
   const handleViewParticipants = async (participants: string[] = []) => {
     if (!participants || participants.length === 0) {
