@@ -124,6 +124,74 @@ const ChangePasswordModal = ({
   );
 };
 
+// Delete Account Modal Component
+const DeleteAccountModal = ({
+  onClose,
+  onSubmit,
+}: {
+  onClose: () => void;
+  onSubmit: (password: string) => void;
+}) => {
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!password || password.trim().length === 0) {
+      toastError("Please enter your password to confirm deletion.");
+      return;
+    }
+    setLoading(true);
+    onSubmit(password.trim());
+    setLoading(false);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-[hsl(60,100%,95%)] rounded-lg p-6 max-w-md w-full mx-4">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold">Delete Account</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <p className="text-sm text-gray-700">This will permanently delete your account and all associated data. This action cannot be undone.</p>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-transparent bg-[hsl(60,100%,95%)]"
+              required
+            />
+          </div>
+
+          <div className="flex gap-2 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+            >
+              {loading ? "Deleting..." : "Delete Account"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 // Avatar Picker Component
 const AvatarPicker = ({
   onSelect,
@@ -395,6 +463,7 @@ const AccountPage = () => {
   const [loading, setLoading] = useState(true);
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
+  const [showDeleteAccount, setShowDeleteAccount] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
   // Form states
@@ -520,6 +589,26 @@ const AccountPage = () => {
     } catch (error) {
       console.error("Password update error:", error);
       toastError("Failed to update password. Please check your current password.");
+    }
+  };
+
+  const handleDeleteAccount = async (password: string) => {
+    if (!auth.currentUser) return;
+    try {
+      const credential = EmailAuthProvider.credential(
+        auth.currentUser.email!,
+        password
+      );
+      await reauthenticateWithCredential(auth.currentUser, credential);
+      // Delete user document and auth account
+      await deleteDoc(doc(db, "users", auth.currentUser.uid));
+      await deleteUser(auth.currentUser);
+      toastSuccess("Account deleted successfully!");
+      setShowDeleteAccount(false);
+      navigate("/auth");
+    } catch (error) {
+      console.error("Delete account error:", error);
+      toastError("Failed to delete account. Please check your password and try again.");
     }
   };
 
@@ -1232,36 +1321,7 @@ const AccountPage = () => {
                 Permanently delete your account and all associated data. This action cannot be undone.
               </p>
               <button
-                onClick={async () => {
-                  if (!auth.currentUser) return;
-                  const confirmDelete = window.confirm(
-                    "Are you sure you want to delete your account? This action cannot be undone."
-                  );
-                  if (!confirmDelete) return;
-                  
-                  const password = prompt("Please enter your password to confirm account deletion:");
-                  if (!password || password.trim().length === 0) return;
-                  
-                  try {
-                    const credential = EmailAuthProvider.credential(
-                      auth.currentUser.email!,
-                      password
-                    );
-                    await reauthenticateWithCredential(
-                      auth.currentUser,
-                      credential
-                    );
-                    await deleteDoc(doc(db, "users", auth.currentUser.uid));
-                    await deleteUser(auth.currentUser);
-                    toastSuccess("Account deleted successfully!");
-                    navigate("/auth");
-                  } catch (error) {
-                    console.error("Delete account error:", error);
-                    toastError(
-                      "Failed to delete account. Please check your password and try again."
-                    );
-                  }
-                }}
+                onClick={() => setShowDeleteAccount(true)}
                 className="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors font-medium"
               >
                 Delete Account
@@ -1317,6 +1377,13 @@ const AccountPage = () => {
         <ChangePasswordModal
           onClose={() => setShowChangePassword(false)}
           onSubmit={handleChangePassword}
+        />
+      )}
+      {/* Delete Account Modal */}
+      {showDeleteAccount && (
+        <DeleteAccountModal
+          onClose={() => setShowDeleteAccount(false)}
+          onSubmit={handleDeleteAccount}
         />
       )}
     </div>
