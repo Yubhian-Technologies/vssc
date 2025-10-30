@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { getAuth, onAuthStateChanged, User } from "firebase/auth";
+import { gapi } from "gapi-script";
 import {
   PieChart,
   Pie,
@@ -26,19 +27,14 @@ import {
   PieChart as PieChartIcon,
   LineChart as LineChartIcon,
 } from "lucide-react";
-
-// ✅ Tell TypeScript that window.gapi exists
-declare global {
-  interface Window {
-    gapi: any;
-  }
-}
+import * as XLSX from "xlsx"; // ← ONLY ADDED THIS
 
 interface DocType {
   createdBy: string;
   colleges: string[];
   totalDuration: number;
   validated: boolean;
+  skills?: string[];
   [key: string]: any;
 }
 
@@ -46,6 +42,8 @@ interface AggregatedData {
   uid: string;
   name: string;
   totalDuration: number;
+  sessionCount: number;
+  skills: string[];
 }
 
 const COLORS = ["#0061feff", "#00C49F", "#FFBB28", "#FF8042", "#A28EFF"];
@@ -67,32 +65,12 @@ const DashboardPage: React.FC = () => {
   const [adminCollege, setAdminCollege] = useState<string | null>(null);
   const [aggregated, setAggregated] = useState<AggregatedData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [gapiInitialized, setGapiInitialized] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
 
-  // ✅ Google API Initialization (Safe)
+  // Initialize Google API
   useEffect(() => {
-    const loadGapi = async () => {
-      try {
-        // Load the Google API script if not already loaded
-        if (!window.gapi) {
-          await new Promise<void>((resolve, reject) => {
-            const script = document.createElement("script");
-            script.src = "https://apis.google.com/js/api.js";
-            script.async = true;
-            script.onload = () => resolve();
-            script.onerror = () => reject("Failed to load Google API script.");
-            document.body.appendChild(script);
-          });
-        }
-
-        // Load the required modules
-        await new Promise<void>((resolve) => {
-          window.gapi.load("client:auth2", resolve);
-        });
-
-        // Initialize client
-        await window.gapi.client.init({
+    const initClient = () => {
+      gapi.load("client:auth2", () => {
+        gapi.client.init({
           apiKey: API_KEY,
           clientId: CLIENT_ID,
           discoveryDocs: [
@@ -100,52 +78,30 @@ const DashboardPage: React.FC = () => {
           ],
           scope: SCOPES,
         });
-
-        console.log("✅ Google API client initialized successfully.");
-        setGapiInitialized(true);
-      } catch (error) {
-        console.error("❌ Error initializing Google API client:", error);
-        setError("Failed to initialize Google API client.");
-        setGapiInitialized(false);
-      }
+      });
     };
-
-    loadGapi();
+    initClient();
   }, []);
 
-  // Listen to Firebase Auth state
+  // Listen to auth state
   useEffect(() => {
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, (user: User | null) => {
-      if (user) {
-        fetchAdminCollege(user.uid);
-      } else {
-        setError("No authenticated user found. Please sign in.");
-        setLoading(false);
-      }
+      if (user) fetchAdminCollege(user.uid);
     });
     return () => unsubscribe();
   }, []);
 
-  // Fetch admin's college
   const fetchAdminCollege = async (uid: string) => {
     try {
       const userSnap = await getDoc(doc(db, "users", uid));
       if (userSnap.exists()) {
-        const college = userSnap.data().college;
-        if (college) {
-          setAdminCollege(college);
-        } else {
-          setError("User profile incomplete. Please ensure college is set.");
-        }
+        setAdminCollege(userSnap.data().college);
       } else {
-        setError("User profile not found. Please ensure your account is set up.");
+        console.error("No user found with UID:", uid);
       }
     } catch (error) {
       console.error("Error fetching admin college:", error);
-      setError("Failed to fetch user profile.");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -156,77 +112,73 @@ const DashboardPage: React.FC = () => {
     const fetchAllCollections = async () => {
       try {
         setLoading(true);
-        setError(null);
 
         const fetchPromises = collections.map(async (col) => {
           const snapshot = await getDocs(collection(db, col));
-          return snapshot.docs
-            .map((d) => {
-              const data = d.data();
-              if (
-                !data.createdBy ||
-                !Array.isArray(data.colleges) ||
-                typeof data.totalDuration !== "number" ||
-                isNaN(data.totalDuration) ||
-                typeof data.validated !== "boolean"
-              ) {
-                return null;
-              }
-              return {
-                ...data,
-                collection: col,
-                id: d.id,
-                createdBy: data.createdBy as string,
-                colleges: data.colleges as string[],
-                totalDuration: data.totalDuration as number,
-                validated: data.validated as boolean,
-              } as DocType;
-            })
-            .filter((doc): doc is DocType => doc !== null);
+          return snapshot.docs.map((d) => d.data() as DocType);
         });
 
         const results = await Promise.all(fetchPromises);
         const allDocs = results.flat();
 
         const filteredDocs = allDocs.filter(
-          (doc) =>
-            doc.colleges.includes(adminCollege) &&
-            doc.validated === true &&
-            typeof doc.totalDuration === "number"
+          (doc) => doc.colleges?.includes(adminCollege) && doc.validated === true
         );
 
-        const durationByCreator: Record<string, number> = {};
+        const statsByCreator: Record<
+          string,
+          { totalDuration: number; sessionCount: number; skills: Set<string> }
+        > = {};
+
         filteredDocs.forEach((doc) => {
-          durationByCreator[doc.createdBy] =
-            (durationByCreator[doc.createdBy] || 0) + doc.totalDuration;
+          if (doc.createdBy) {
+            if (!statsByCreator[doc.createdBy]) {
+              statsByCreator[doc.createdBy] = {
+                totalDuration: 0,
+                sessionCount: 0,
+                skills: new Set(),
+              };
+            }
+            statsByCreator[doc.createdBy].totalDuration += doc.totalDuration || 0;
+            statsByCreator[doc.createdBy].sessionCount += 1;
+            if (Array.isArray(doc.skills)) {
+              doc.skills.forEach((skill) =>
+                statsByCreator[doc.createdBy].skills.add(skill)
+              );
+            }
+          }
         });
 
+        // Fetch all users
         const usersSnapshot = await getDocs(collection(db, "users"));
         const uidNameMap: Record<string, string> = {};
+
         usersSnapshot.docs.forEach((userDoc) => {
           const data = userDoc.data();
-          uidNameMap[userDoc.id] = data.name || "Unknown User";
+          if (data.name) {
+            uidNameMap[userDoc.id] = data.name;
+          }
         });
 
-        const aggregatedData: AggregatedData[] = Object.entries(
-          durationByCreator
-        )
-          .map(([uid, totalDuration]) => {
-            if (!uidNameMap[uid]) return null;
-            return { uid, name: uidNameMap[uid], totalDuration };
+        // Build aggregated data
+        const aggregatedData: AggregatedData[] = Object.entries(statsByCreator)
+          .map(([uid, { totalDuration, sessionCount, skills }]) => {
+            const name = uidNameMap[uid];
+            if (!name) return null;
+            return {
+              uid,
+              name,
+              totalDuration,
+              sessionCount,
+              skills: Array.from(skills),
+            };
           })
-          .filter((item): item is AggregatedData => item !== null)
-          .filter((item) => item.name !== "Unknown User");
-
-        if (aggregatedData.length === 0) {
-          setError("No valid session data found for your college.");
-        }
+          .filter((item): item is AggregatedData => item !== null);
 
         setAggregated(aggregatedData);
+        setLoading(false);
       } catch (error) {
         console.error("Error fetching collections:", error);
-        setError("Failed to fetch session data.");
-      } finally {
         setLoading(false);
       }
     };
@@ -236,83 +188,56 @@ const DashboardPage: React.FC = () => {
 
   // CSV Download
   const downloadCSV = () => {
-    if (aggregated.length === 0) {
-      alert("No data available to download.");
-      return;
-    }
-    const headers = ["Name", "Total Duration"];
-    const rows = aggregated.map((item) => [item.name, item.totalDuration]);
+    const headers = ["Name", "Session Count", "Total Duration", "Skills"];
+    const rows = aggregated.map((item) => [
+      item.name,
+      item.sessionCount,
+      item.totalDuration,
+      item.skills.join("; "),
+    ]);
     const csvContent =
       "data:text/csv;charset=utf-8," +
       [headers, ...rows].map((e) => e.join(",")).join("\n");
     const link = document.createElement("a");
     link.href = encodeURI(csvContent);
-    link.download = `dashboard_data_${adminCollege || "all"}.csv`;
+    link.download = "dashboard_data.csv";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
-  // Google Sheets Download
-  const downloadGoogleSheet = async () => {
-    try {
-      if (!gapiInitialized) {
-        alert("Google API not initialized yet. Please wait a moment.");
-        return;
-      }
+  // ←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←
+  // NEW: Excel Download (XLSX) – NO API KEYS, PURE CLIENT-SIDE
+  // ←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←
+  const downloadExcel = () => {
+    const data = aggregated.map((item) => ({
+      Name: item.name,
+      "Session Count": item.sessionCount,
+      "Total Duration": item.totalDuration,
+      Skills: item.skills.length > 0 ? item.skills.join(", ") : "No skills listed",
+    }));
 
-      const authInstance = window.gapi.auth2.getAuthInstance();
-      if (!authInstance.isSignedIn.get()) {
-        await authInstance.signIn();
-      }
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Dashboard Data");
 
-      const spreadsheet = await window.gapi.client.sheets.spreadsheets.create({
-        properties: {
-          title: `Dashboard Data ${adminCollege || "All"} ${new Date().toISOString()}`,
-        },
-      });
+    // Auto-size columns
+    const colWidths = [
+      { wch: 20 }, // Name
+      { wch: 15 }, // Session Count
+      { wch: 15 }, // Total Duration
+      { wch: 40 }, // Skills
+    ];
+    worksheet["!cols"] = colWidths;
 
-      const spreadsheetId = spreadsheet.result.spreadsheetId;
-      const values = [
-        ["Name", "Total Duration"],
-        ...aggregated.map((a) => [a.name, a.totalDuration]),
-      ];
-
-      await window.gapi.client.sheets.spreadsheets.values.update({
-        spreadsheetId,
-        range: `Sheet1!A1:B${values.length}`,
-        valueInputOption: "RAW",
-        resource: { values },
-      });
-
-      alert(
-        `✅ Spreadsheet created: https://docs.google.com/spreadsheets/d/${spreadsheetId}`
-      );
-    } catch (error: any) {
-      console.error("Error exporting to Google Sheets:", error);
-      alert(`Failed to export to Google Sheets: ${error.message}`);
-    }
+    XLSX.writeFile(workbook, "dashboard_data.xlsx");
   };
+  // ←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←
 
-  // UI Rendering
-  if (loading)
+  if (loading || !adminCollege)
     return (
       <div className="flex justify-center items-center h-[80vh] text-lg text-gray-400">
         Loading dashboard data...
-      </div>
-    );
-
-  if (error)
-    return (
-      <div className="flex justify-center items-center h-[80vh] text-lg text-red-600">
-        Error: {error}
-      </div>
-    );
-
-  if (!adminCollege)
-    return (
-      <div className="flex justify-center items-center h-[80vh] text-lg text-red-600">
-        Error: Unable to determine admin college.
       </div>
     );
 
@@ -334,10 +259,10 @@ const DashboardPage: React.FC = () => {
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.2 }}
       >
-        Dashboard – {adminCollege}
+        Dashboard – Vishnu Institute of Technology
       </motion.h2>
 
-      {/* Summary Cards */}
+      {/* Summary Stats */}
       <div className="grid md:grid-cols-3 gap-6 mb-10">
         <Card className="bg-[hsl(60,100%,95%)] border-none shadow-xl">
           <CardContent className="p-5 text-center">
@@ -348,7 +273,7 @@ const DashboardPage: React.FC = () => {
         <Card className="bg-[hsl(60,100%,95%)] border-none shadow-xl">
           <CardContent className="p-5 text-center">
             <h3 className="text-lg font-semibold text-gray-700">
-              Total Duration (minutes)
+              Total Duration
             </h3>
             <p className="text-3xl font-bold mt-2">{totalDurationSum}</p>
           </CardContent>
@@ -359,116 +284,109 @@ const DashboardPage: React.FC = () => {
               Average Duration / User
             </h3>
             <p className="text-3xl font-bold mt-2">
-              {aggregated.length > 0
-                ? (totalDurationSum / aggregated.length).toFixed(1)
-                : 0}
+              {(totalDurationSum / aggregated.length).toFixed(1)}
             </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Charts */}
-      {aggregated.length > 0 && (
-        <>
-          <div className="grid md:grid-cols-2 gap-10">
-            <motion.div
-              className="bg-[hsl(60,100%,95%)] rounded-2xl shadow-lg p-5"
-              initial={{ x: -30, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: 0.3 }}
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <PieChartIcon className="text-blue-400" />
-                <h3 className="text-xl font-semibold">Distribution</h3>
-              </div>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={aggregated}
-                    dataKey="totalDuration"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={100}
-                    label
-                  >
-                    {aggregated.map((_, index) => (
-                      <Cell key={index} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            </motion.div>
-
-            <motion.div
-              className="bg-[hsl(60,100%,95%)] rounded-2xl shadow-lg p-5"
-              initial={{ x: 30, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: 0.4 }}
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <BarChart3 className="text-green-400" />
-                <h3 className="text-xl font-semibold">Bar Chart</h3>
-              </div>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={aggregated}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="totalDuration" fill="#82ca9d" />
-                </BarChart>
-              </ResponsiveContainer>
-            </motion.div>
+      {/* Charts Section */}
+      <div className="grid md:grid-cols-2 gap-10">
+        <motion.div
+          className="bg-[hsl(60,100%,95%)] rounded-2xl shadow-lg p-5"
+          initial={{ x: -30, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ delay: 0.3 }}
+        >
+          <div className="flex items-center gap-2 mb-2">
+            <PieChartIcon className="text-blue-400" />{" "}
+            <h3 className="text-xl font-semibold">Distribution (Pie Chart)</h3>
           </div>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={aggregated}
+                dataKey="totalDuration"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                outerRadius={100}
+                label
+              >
+                {aggregated.map((entry, index) => (
+                  <Cell key={index} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        </motion.div>
 
-          <motion.div
-            className="mt-10 bg-[hsl(60,100%,95%)] rounded-2xl shadow-lg p-5"
-            initial={{ y: 40, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.5 }}
-          >
-            <div className="flex items-center gap-2 mb-2">
-              <LineChartIcon className="text-purple-400" />
-              <h3 className="text-xl font-semibold">Trend (Line Chart)</h3>
-            </div>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={aggregated}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line
-                  type="monotone"
-                  dataKey="totalDuration"
-                  stroke="#8884d8"
-                  activeDot={{ r: 8 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </motion.div>
-        </>
-      )}
+        <motion.div
+          className="bg-[hsl(60,100%,95%)] rounded-2xl shadow-lg p-5"
+          initial={{ x: 30, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ delay: 0.4 }}
+        >
+          <div className="flex items-center gap-2 mb-2">
+            <BarChart3 className="text-green-400" />{" "}
+            <h3 className="text-xl font-semibold">Bar Chart</h3>
+          </div>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={aggregated}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="totalDuration" fill="#82ca9d" />
+            </BarChart>
+          </ResponsiveContainer>
+        </motion.div>
+      </div>
+
+      {/* Line Chart */}
+      <motion.div
+        className="mt-10 bg-[hsl(60,100%,95%)] rounded-2xl shadow-lg p-5"
+        initial={{ y: 40, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.5 }}
+      >
+        <div className="flex items-center gap-2 mb-2">
+          <LineChartIcon className="text-purple-400" />{" "}
+          <h3 className="text-xl font-semibold">Trend Analysis (Line Chart)</h3>
+        </div>
+        <ResponsiveContainer width="100%" height={300}>
+          <LineChart data={aggregated}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="name" />
+            <YAxis />
+            <Tooltip />
+            <Legend />
+            <Line
+              type="monotone"
+              dataKey="totalDuration"
+              stroke="#8884d8"
+              activeDot={{ r: 8 }}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </motion.div>
 
       {/* Download Buttons */}
       <div className="flex flex-wrap justify-center gap-4 mt-8">
         <Button
           onClick={downloadCSV}
           className="bg-green-600 hover:bg-green-700 text-white"
-          disabled={aggregated.length === 0}
         >
           <ArrowDownToLine className="mr-2 w-4 h-4" /> Download CSV
         </Button>
         <Button
-          onClick={downloadGoogleSheet}
+          onClick={downloadExcel}
           className="bg-blue-600 hover:bg-blue-700 text-white"
-          disabled={!gapiInitialized || aggregated.length === 0}
         >
-          <ArrowDownToLine className="mr-2 w-4 h-4" /> Export to Google Sheets
+          <ArrowDownToLine className="mr-2 w-4 h-4" /> Download Excel
         </Button>
       </div>
 
@@ -479,42 +397,33 @@ const DashboardPage: React.FC = () => {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.6 }}
       >
-        <table className="w-full text-left border-collapse text-black">
-          <thead>
-            <tr className="bg-[hsl(60,100%,95%)] text-black">
-              <th className="py-3 px-4 border-b border-gray-700">Name</th>
-              <th className="py-3 px-4 border-b border-gray-700">
-                Total Duration (minutes)
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {aggregated.length > 0 ? (
-              aggregated.map((item) => (
+        <div className="overflow-x-auto w-full">
+          <table className="w-full table-fixed border-collapse text-black text-center">
+            <thead>
+              <tr className="bg-[hsl(60,100%,95%)] text-black">
+                <th className="w-1/4 py-3 px-4 border-b border-gray-700">Name</th>
+                <th className="w-1/4 py-3 px-4 border-b border-gray-700">Session Count</th>
+                <th className="w-1/4 py-3 px-4 border-b border-gray-700">Total Duration</th>
+                <th className="w-1/4 py-3 px-4 border-b border-gray-700">Skills Taught</th>
+              </tr>
+            </thead>
+            <tbody>
+              {aggregated.map((item) => (
                 <tr
                   key={item.uid}
-                  className="hover:bg-[hsl(60,100%,90%)] transition duration-200"
+                  className="hover:bg-[hsl(60,100%,95%)] transition duration-200"
                 >
-                  <td className="py-3 px-4 border-b border-gray-700">
-                    {item.name}
-                  </td>
-                  <td className="py-3 px-4 border-b border-gray-700">
-                    {item.totalDuration}
+                  <td className="py-3 px-4 border-b border-gray-700 break-words">{item.name}</td>
+                  <td className="py-3 px-4 border-b border-gray-700">{item.sessionCount}</td>
+                  <td className="py-3 px-4 border-b border-gray-700">{item.totalDuration}</td>
+                  <td className="py-3 px-4 border-b border-gray-700 break-words">
+                    {item.skills.length > 0 ? item.skills.join(", ") : "No skills listed"}
                   </td>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td
-                  colSpan={2}
-                  className="py-3 px-4 text-center text-gray-600"
-                >
-                  No data available.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </motion.div>
     </motion.div>
   );

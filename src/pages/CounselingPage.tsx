@@ -670,7 +670,7 @@ export default function CounselingPage() {
                     <div className="relative">
                       <button
                         onClick={() => setOpenMenuId(openMenuId === session.id ? null : session.id)}
-                        className="text-white font-bold bg-primary rounded-full p-2 shadow-sm hover:bg-blue-900 transition"
+                        className="text-white font-bold bg-primary rounded-full p-2 shadow-sm hover:bg-blue-900 transition mt-5"
                       >
                         ⋮
                       </button>
@@ -727,7 +727,7 @@ export default function CounselingPage() {
         {userData?.role === "admin" && (
           <button
             onClick={() => setShowForm(true)}
-            className="fixed bottom-24 right-6 z-50 bg-blue-800 text-white rounded-[8px] w-12 h-12 flex items-center justify-center text-3xl shadow-lg hover:bg-blue-700"
+            className="fixed bottom-24 right-6 z-50 bg-blue-800 text-white rounded-full p-5 w-12 h-12 flex items-center justify-center text-3xl shadow-lg hover:bg-blue-700"
           >
             +
           </button>

@@ -337,14 +337,14 @@ const Header = () => {
                         Tutoring Services
                       </Link>
                       <Link
-                        to="/services/advising"
+                        to="/services/academic-advising"
                         className="px-4 py-2 text-sm hover:bg-muted"
                         onClick={() => setIsMenuOpen(false)}
                       >
                         Academic Advising
                       </Link>
                       <Link
-                        to="/services/workshops"
+                        to="/services/study-workshops"
                         className="px-4 py-2 text-sm hover:bg-muted"
                         onClick={() => setIsMenuOpen(false)}
                       >
@@ -358,7 +358,7 @@ const Header = () => {
                         Counseling Sessions
                       </Link>
                       <Link
-                        to="/services/psychology"
+                        to="/services/psychology-counseling"
                         className="px-4 py-2 text-sm hover:bg-muted rounded-b-md"
                         onClick={() => setIsMenuOpen(false)}
                       >
