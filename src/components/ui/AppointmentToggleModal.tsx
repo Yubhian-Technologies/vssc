@@ -219,32 +219,32 @@ const AppointmentToggleModal: React.FC<AppointmentToggleProps> = ({ userId }) =>
 
     // Tooltip
     tooltip: {
-      position: "absolute",
-      top: 35,
-      left: "50%",
-      transform: "translateX(-50%)",
-      background: "#333",
-      color: "#fff",
-      padding: "8px 12px",
-      borderRadius: 8,
-      fontSize: 12,
-      textAlign: "center",
-      whiteSpace: "pre-line",
-      width: 200,
-      boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
-      zIndex: 1000,
-    },
-    tooltipArrow: {
-      position: "absolute",
-      top: -6,
-      left: "50%",
-      transform: "translateX(-50%)",
-      width: 0,
-      height: 0,
-      borderLeft: "6px solid transparent",
-      borderRight: "6px solid transparent",
-      borderBottom: "6px solid #333",
-    },
+  position: "absolute",
+  top: 35,
+  right: 0, // 👈 anchor tooltip to the right edge of the toggle
+  transform: "none", // 👈 remove centering
+  background: "#333",
+  color: "#fff",
+  padding: "8px 12px",
+  borderRadius: 8,
+  fontSize: 12,
+  textAlign: "left",
+  whiteSpace: "pre-line",
+  width: 200,
+  boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
+  zIndex: 1000,
+},
+tooltipArrow: {
+  position: "absolute",
+  top: -6,
+  right: 10, // 👈 arrow now aligns to right side
+  width: 0,
+  height: 0,
+  borderLeft: "6px solid transparent",
+  borderRight: "6px solid transparent",
+  borderBottom: "6px solid #333",
+},
+
   };
 
   return (

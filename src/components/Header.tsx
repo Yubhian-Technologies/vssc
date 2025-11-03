@@ -123,7 +123,7 @@ const Header = () => {
   return (
     <header className="relative w-full bg-background border-b border-border z-[100]">
       {/* Decorative background */}
-      <div className="absolute top-0 right-0 h-full w-[250px] md:w-[500px] bg-primary z-0 [clip-path:polygon(20%_0,100%_0,100%_100%,0%_100%)] opacity-90 pointer-events-none"></div>
+      <div className="absolute top-0 right-0 h-full w-[250px] md:w-[450px] bg-primary z-0 [clip-path:polygon(20%_0,100%_0,100%_100%,0%_100%)] opacity-90 pointer-events-none"></div>
 
       {/* Header container */}
       <div className="container mx-auto px-4 sm:px-6 py-2 flex items-center justify-between relative z-20">
@@ -257,7 +257,7 @@ const Header = () => {
        
 
         {/* Desktop Right */}
-        {/* Desktop Right */}
+        
 <div className="hidden lg:flex items-center gap-4 relative z-20">
   {isLoggedIn ? (
     <>
