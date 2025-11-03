@@ -16,14 +16,8 @@ const colleges = [
   { name: "Vishnu Dental College", domain: "@vdc.edu.in" },
   { name: "Shri Vishnu College of Pharmacy", domain: "@svcp.edu.in" },
   { name: "BV Raju Institute of Technology", domain: "@bvrit.ac.in" },
-  {
-    name: "BVRIT Hyderabad College of Engineering",
-    domain: "@bvrithyderabad.ac.in",
-  },
-  {
-    name: "Shri Vishnu Engineering College for Women",
-    domain: "@svecw.edu.in",
-  },
+  { name: "BVRIT Hyderabad College of Engineering", domain: "@bvrithyderabad.ac.in" },
+  { name: "Shri Vishnu Engineering College for Women", domain: "@svecw.edu.in" },
 ];
 
 const generateKeywords = (name: string, email: string): string[] => {
@@ -63,8 +57,7 @@ export default function AuthPage() {
     setConfirmPassword("");
   }, []);
 
-  // Reset Password Handler
-  // Reset Password Handler
+  // ✅ Reset Password Handler
   const handleResetPassword = async () => {
     setError("");
 
@@ -73,14 +66,11 @@ export default function AuthPage() {
       return;
     }
 
-    // Extract domain from email
     const emailDomain = email.substring(email.lastIndexOf("@"));
-
-    // Check if domain is in the allowed colleges
     const validDomain = colleges.some((c) => c.domain === emailDomain);
 
     if (!validDomain) {
-      setError("❌ Email domain is not allowed. Use your college email.");
+      setError("❌ Email domain not allowed. Use your college email.");
       return;
     }
 
@@ -91,21 +81,33 @@ export default function AuthPage() {
       });
       setError("✅ Password reset email sent! Check your inbox/spam.");
       setIsReset(false);
+      setTimeout(() => setError(""), 5000);
     } catch (err: unknown) {
-      let message = "❌ Failed to send reset email.";
-      if (err && typeof err === "object") {
-        if (
-          "message" in err &&
-          typeof (err as { message?: string }).message === "string"
-        ) {
-          message = (err as { message: string }).message!;
+      let message = "❌ Failed to send reset email. Please try again.";
+
+      if (err && typeof err === "object" && "code" in err) {
+        const authError = err as AuthError;
+        switch (authError.code) {
+          case "auth/invalid-email":
+            message = "❌ Invalid email format.";
+            break;
+          case "auth/user-not-found":
+            message = "❌ No user found with this email.";
+            break;
+          case "auth/missing-email":
+            message = "❌ Please enter your email address.";
+            break;
+          default:
+            message = "⚠️ Unable to send reset link. Try again later.";
+            break;
         }
       }
+
       setError(message);
     }
   };
 
-  // Login/Register Handler
+  // ✅ Login / Register Handler
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -113,7 +115,16 @@ export default function AuthPage() {
 
     try {
       if (!isLogin && password !== confirmPassword) {
-        setError("Passwords do not match");
+        setError("❌ Passwords do not match.");
+        setLoading(false);
+        return;
+      }
+
+      const emailDomain = email.substring(email.lastIndexOf("@"));
+      const validDomain = colleges.some((c) => c.domain === emailDomain);
+
+      if (!validDomain) {
+        setError("❌ Only college emails are allowed for registration/login.");
         setLoading(false);
         return;
       }
@@ -122,11 +133,7 @@ export default function AuthPage() {
         await signInWithEmailAndPassword(auth, email, password);
         navigate("/");
       } else {
-        const userCredential = await createUserWithEmailAndPassword(
-          auth,
-          email,
-          password
-        );
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         await setDoc(doc(db, "users", userCredential.user.uid), {
           uid: userCredential.user.uid,
           name,
@@ -143,25 +150,41 @@ export default function AuthPage() {
         navigate("/", { state: { showCongrats: true } });
       }
     } catch (err: unknown) {
-      let message = "Something went wrong";
-      if (err && typeof err === "object") {
-        if ("code" in err && typeof (err as AuthError).code === "string") {
-          const authError = err as AuthError;
-          if (authError.code === "auth/email-already-in-use") {
+      let message = "⚠️ Something went wrong. Please try again.";
+
+      if (err && typeof err === "object" && "code" in err) {
+        const authError = err as AuthError;
+        switch (authError.code) {
+          case "auth/invalid-email":
+            message = "❌ Please enter a valid email address.";
+            break;
+          case "auth/user-disabled":
+            message = "❌ This account has been disabled. Contact admin.";
+            break;
+          case "auth/user-not-found":
+            message = "❌ No account found with this email.";
+            break;
+          case "auth/wrong-password":
+            message = "❌ Incorrect password. Please try again.";
+            break;
+          case "auth/email-already-in-use":
             message = "❌ Email already registered. Please log in.";
-          } else if (
-            "message" in authError &&
-            typeof authError.message === "string"
-          ) {
-            message = authError.message;
-          }
-        } else if (
-          "message" in err &&
-          typeof (err as { message?: string }).message === "string"
-        ) {
-          message = (err as { message: string }).message!;
+            break;
+          case "auth/weak-password":
+            message = "❌ Password too weak. Use at least 6 characters.";
+            break;
+          case "auth/missing-password":
+            message = "❌ Please enter your password.";
+            break;
+          case "auth/wrong-password":
+            message = "❌ Incorrect password. Please try again.";
+            break;
+          default:
+            message = "⚠️ Unexpected error. Please try again later.";
+            break;
         }
       }
+
       setError(message);
     }
 
@@ -182,19 +205,13 @@ export default function AuthPage() {
               isLogin || isReset ? "translateX(100%)" : "translateX(0%)",
           }}
         >
-          <img
-            src={LoginImg}
-            alt="cover"
-            className="w-full h-full object-cover"
-          />
+          <img src={LoginImg} alt="cover" className="w-full h-full object-cover" />
         </div>
 
         {/* Login Form */}
         <div
           className={`absolute left-0 top-0 w-1/2 h-full flex flex-col justify-center px-8 py-6 transition-all duration-700 ease-in-out ${
-            isLogin && !isReset
-              ? "opacity-100 translate-y-0"
-              : "opacity-0 -translate-y-8 pointer-events-none"
+            isLogin && !isReset ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-8 pointer-events-none"
           }`}
         >
           <h2 className="text-2xl font-bold mb-4">Login</h2>
@@ -203,7 +220,7 @@ export default function AuthPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Email"
+              placeholder="College Email"
               required
               className="w-full border rounded-md p-2 [background-color:hsl(60,100%,95%)]"
             />
@@ -216,11 +233,7 @@ export default function AuthPage() {
               className="w-full border rounded-md p-2 [background-color:hsl(60,100%,95%)]"
             />
             {error && (
-              <p
-                className={`text-sm mt-2 ${
-                  error.startsWith("✅") ? "text-green-600" : "text-red-500"
-                }`}
-              >
+              <p className={`text-sm mt-2 ${error.startsWith("✅") ? "text-green-600" : "text-red-500"}`}>
                 {error}
               </p>
             )}
@@ -234,13 +247,7 @@ export default function AuthPage() {
           </form>
           <p className="mt-4 text-sm text-gray-600">
             Don’t have an account?{" "}
-            <button
-              onClick={() => {
-                setIsLogin(false);
-                setError("");
-              }}
-              className="text-[#001A66] font-medium"
-            >
+            <button onClick={() => { setIsLogin(false); setError(""); }} className="text-[#001A66] font-medium">
               Register
             </button>
           </p>
@@ -250,9 +257,9 @@ export default function AuthPage() {
               onClick={() => {
                 setIsReset(true);
                 setError("");
-                setEmail(""); // Clear email input
-                setPassword(""); // Optional: clear password input
-                setConfirmPassword(""); // Optional: clear confirm password input
+                setEmail("");
+                setPassword("");
+                setConfirmPassword("");
               }}
               className="text-[#001A66] font-medium"
             >
@@ -264,9 +271,7 @@ export default function AuthPage() {
         {/* Reset Form */}
         <div
           className={`absolute left-0 top-0 w-1/2 h-full flex flex-col justify-center px-8 py-6 transition-all duration-700 ease-in-out ${
-            isReset
-              ? "opacity-100 translate-y-0"
-              : "opacity-0 translate-y-8 pointer-events-none"
+            isReset ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8 pointer-events-none"
           }`}
         >
           <h2 className="text-2xl font-bold mb-4">Forgot Password</h2>
@@ -279,11 +284,7 @@ export default function AuthPage() {
             required
           />
           {error && (
-            <p
-              className={`text-sm mt-2 ${
-                error.startsWith("✅") ? "text-green-600" : "text-red-500"
-              }`}
-            >
+            <p className={`text-sm mt-2 ${error.startsWith("✅") ? "text-green-600" : "text-red-500"}`}>
               {error}
             </p>
           )}
@@ -305,9 +306,7 @@ export default function AuthPage() {
         {/* Register Form */}
         <div
           className={`absolute right-0 top-0 w-1/2 h-full flex flex-col justify-center px-8 py-6 transition-all duration-700 ease-in-out ${
-            !isLogin && !isReset
-              ? "opacity-100"
-              : "opacity-0 pointer-events-none"
+            !isLogin && !isReset ? "opacity-100" : "opacity-0 pointer-events-none"
           }`}
         >
           <h2 className="text-2xl font-bold mb-4">Register</h2>
@@ -359,6 +358,11 @@ export default function AuthPage() {
               className="w-full border rounded-md p-2 [background-color:hsl(60,100%,95%)]"
               disabled={isLogin || isReset}
             />
+            {error && (
+              <p className={`text-sm mt-2 ${error.startsWith("✅") ? "text-green-600" : "text-red-500"}`}>
+                {error}
+              </p>
+            )}
             <button
               type="submit"
               disabled={loading}
@@ -369,10 +373,7 @@ export default function AuthPage() {
           </form>
           <p className="mt-4 text-sm text-gray-600">
             Already have an account?{" "}
-            <button
-              onClick={() => setIsLogin(true)}
-              className="text-[#001A66] font-medium"
-            >
+            <button onClick={() => setIsLogin(true)} className="text-[#001A66] font-medium">
               Login
             </button>
           </p>
