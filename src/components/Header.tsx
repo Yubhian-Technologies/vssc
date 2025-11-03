@@ -257,44 +257,65 @@ const Header = () => {
        
 
         {/* Desktop Right */}
-        <div className="hidden lg:flex items-center gap-4 relative z-20">
-          {isLoggedIn && role === "admin" ? (
-            <>
-              <ButtonGradient name="Appointments →" onClick={handleLoginClick} />
-            </>
-          ) : (
-            <ButtonGradient
-              name={isLoggedIn ? "Book an Appointment →" : "Login/Register"}
-              onClick={handleLoginClick}
-            />
-          )}
+        {/* Desktop Right */}
+<div className="hidden lg:flex items-center gap-4 relative z-20">
+  {isLoggedIn ? (
+    <>
+      {role === "admin+" ? (
+        <ButtonGradient
+          name="Dashboard →"
+          onClick={() => {
+            setIsMenuOpen(false);
+            navigate("/dashboard");
+          }}
+        />
+      ) : role === "admin" ? (
+        <ButtonGradient
+          name="Appointments →"
+          onClick={() => {
+            setIsMenuOpen(false);
+            navigate("/appointment");
+          }}
+        />
+      ) : (
+        <ButtonGradient
+          name="Book an Appointment →"
+          onClick={() => {
+            setIsMenuOpen(false);
+            navigate("/appointment");
+          }}
+        />
+      )}
 
-          {isLoggedIn && (
-            <>
-              <div
-                className="w-10 h-10 rounded-full overflow-hidden border-2 border-primary cursor-pointer"
-                onClick={() => navigate("/account")}
-              >
-                {profileUrl ? (
-                  <img
-                    src={profileUrl}
-                    alt="Profile"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gray-300 flex items-center justify-center">
-                    <span className="text-white">U</span>
-                  </div>
-                )}
-              </div>
+      {/* Profile Avatar */}
+      <div
+        className="w-10 h-10 rounded-full overflow-hidden border-2 border-primary cursor-pointer"
+        onClick={() => navigate("/account")}
+      >
+        {profileUrl ? (
+          <img src={profileUrl} alt="Profile" className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full bg-gray-300 flex items-center justify-center">
+            <span className="text-white font-bold">U</span>
+          </div>
+        )}
+      </div>
 
-              <PointsBadge />
-              {isLoggedIn && role === "admin" && uid && (
-              <AppointmentToggleModal userId={uid} />
-            )}
-            </>
-          )}
-        </div>
+      <PointsBadge />
+
+      {/* Only show toggle for regular admin */}
+      {role === "admin" && uid && <AppointmentToggleModal userId={uid} />}
+    </>
+  ) : (
+    <ButtonGradient
+      name="Login/Register"
+      onClick={() => {
+        setIsMenuOpen(false);
+        navigate("/auth");
+      }}
+    />
+  )}
+</div>
 
         {/* Mobile Menu Button */}
         <button
