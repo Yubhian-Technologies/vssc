@@ -138,7 +138,7 @@ const CoursesSection = () => {
       <div className="container mx-auto px-3 py-4 sm:px-4 sm:py-8 md:py-10">
         <div className="text-center mb-10">
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mt-2 mb-6">
-            Explore Our Courses by Category
+            Explore Our Events by Category
           </h2>
 
           <div className="flex flex-wrap justify-center gap-2 sm:gap-3 md:gap-4 mb-8">
