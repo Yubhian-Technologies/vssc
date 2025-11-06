@@ -17,6 +17,7 @@ import Services from "./pages/Services";
 import TourPage from "./pages/TourPage";
 import CampusPage from "./pages/CampusPage";
 import Tutoring from "./pages/TutoringPage";
+import { Toaster as HotToaster } from "react-hot-toast";
 import Help from "./pages/Help";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -32,7 +33,7 @@ import Pyschology from "./pages/PsychologyCounselingPage";
 import Academic from "./pages/AcademicAdvisingPage";
 import StudyWorkshop from "./pages/StudyWorkshopPage";
 import LeaderboardPage from "./pages/LeaderboardPage";
-import MyBookingsPage from "./pages/MyBookingsPage"; // ✅ ADD THIS IMPORT
+import MyBookingsPage from "./pages/MyBookingsPage";
 import ScrollToTopButton from "./components/ScrollToTopButton";
 import LoadingScreen from "./components/LoadingScreen";
 import EventsPage from "./pages/EventsPage";
@@ -72,10 +73,12 @@ const App = () => {
   if (loading) return <LoadingScreen></LoadingScreen>
 
   return (
+    
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Sonner />
+        <HotToaster position="top-center" reverseOrder={false} />
         <BrowserRouter>
           <AuthProvider>
             <Header />
