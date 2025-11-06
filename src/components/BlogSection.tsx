@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import heroStudent from "@/assets/hero-student.jpg";
-import { useNavigate } from "react-router-dom"; // ✅ Import navigate hook
+import { useNavigate } from "react-router-dom";
 
 const blogPost = {
   id: 1,
@@ -30,13 +30,19 @@ const categories = [
   "Lifestyle",
 ];
 
+const popularPosts = [
+  { id: 1, title: "5 Ways to Stay Productive", date: "Feb 1, 2024" },
+  { id: 2, title: "Top Online Learning Platforms", date: "Mar 10, 2024" },
+  { id: 3, title: "Balancing Study and Work", date: "Apr 5, 2024" },
+];
+
 const BlogPage = () => {
-  const navigate = useNavigate(); // ✅ Initialize navigation
+  const navigate = useNavigate();
 
   const handleMoreBlogs = () => {
-    navigate("/tour"); // ✅ Redirect to Tour page
+    navigate("/tour");
     setTimeout(() => {
-      window.scrollTo({ top: 0, behavior: "smooth" }); // ✅ Scroll to top after route change
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }, 100);
   };
 
@@ -90,16 +96,35 @@ const BlogPage = () => {
             {/* Tags */}
             <div className="bg-yellow-50 border border-gray-300 rounded-lg p-2">
               <h3 className="text-sm font-semibold mb-1">Tags</h3>
-              <div className="flex flex-wrap gap-1">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {blogPost.tags.map((tag) => (
                   <Badge
                     key={tag}
-                    className="border border-gray-300 text-xs cursor-pointer hover:bg-[#5371cb] px-1 py-[1px]"
+                    className="border border-gray-300 text-xs cursor-pointer hover:bg-[#5371cb] px-1 py-[1px] text-center"
                   >
                     {tag}
                   </Badge>
                 ))}
               </div>
+            </div>
+
+            {/* ✅ New Section: Popular Posts */}
+            <div className="bg-yellow-50 border border-gray-300 rounded-lg p-2">
+              <h3 className="text-sm font-semibold mb-1">Popular Posts</h3>
+              <ul className="flex flex-col gap-1">
+                {popularPosts.map((post) => (
+                  <li
+                    key={post.id}
+                    className="text-xs text-foreground hover:text-primary cursor-pointer"
+                  >
+                    <span className="font-medium">{post.title}</span>
+                    <br />
+                    <span className="text-[10px] text-muted-foreground">
+                      {post.date}
+                    </span>
+                  </li>
+                ))}
+              </ul>
             </div>
           </aside>
         </div>
@@ -107,7 +132,7 @@ const BlogPage = () => {
         {/* More Blogs Button */}
         <div className="text-center">
           <button
-            onClick={handleMoreBlogs} // ✅ Added click handler
+            onClick={handleMoreBlogs}
             className="text-white bg-[#1a3791] font-semibold border border-primary rounded px-3 py-1 text-sm hover:bg-black transition"
           >
             More Blogs →

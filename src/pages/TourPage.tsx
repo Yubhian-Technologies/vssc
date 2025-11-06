@@ -210,20 +210,33 @@ const TourPage: React.FC = () => {
 
               {/* Text block */}
               <div className="flex-1 flex flex-col justify-center items-center md:items-start text-center md:text-left gap-4 p-2 mt-10 md:mt-0">
-                <h2 className="text-4xl font-extrabold leading-tight text-blue-700">
-                  {campus.name}
-                </h2>
-                <p className="text-gray-700 max-w-md">{campus.description}</p>
-                <button
-                  onClick={() => {
-                    window.scrollTo(0, 0);
-                    navigate(`/campus/${campus.id}`);
-                  }}
-                  className="mt-4 bg-blue-700 text-white px-6 py-2 rounded-lg hover:bg-blue-900 transition"
-                >
-                  Explore
-                </button>
-              </div>
+  <h2
+    className="text-4xl font-extrabold leading-tight"
+    style={{ color: "hsl(220, 70%, 20%)" }}
+  >
+    {campus.name}
+  </h2>
+  <p className="text-gray-700 max-w-md">{campus.description}</p>
+  <button
+    onClick={() => {
+      window.scrollTo(0, 0);
+      navigate(`/campus/${campus.id}`);
+    }}
+    className="mt-4 text-white px-6 py-2 rounded-lg transition"
+    style={{
+      backgroundColor: "hsl(220, 70%, 20%)",
+    }}
+    onMouseOver={(e) =>
+      (e.currentTarget.style.backgroundColor = "hsl(220, 70%, 15%)")
+    }
+    onMouseOut={(e) =>
+      (e.currentTarget.style.backgroundColor = "hsl(220, 70%, 20%)")
+    }
+  >
+    Explore
+  </button>
+</div>
+
             </div>
           ))}
         </div>

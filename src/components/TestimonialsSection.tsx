@@ -62,9 +62,13 @@ const TestimonialsSection = () => {
       <div className="container mx-auto px-4">
        
         <div className="text-center mb-16">
-          <span className="text-blue-600 font-semibold text-5xl tracking-wide uppercase">
-            TESTIMONIALS
+          <span
+         style={{ color: 'hsl(220, 70%, 20%)' }}
+         className="font-semibold text-5xl tracking-wide uppercase"
+          >
+           TESTIMONIALS
           </span>
+
          
         </div>
 

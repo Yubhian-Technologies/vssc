@@ -11,6 +11,7 @@ import event3 from "@/assets/event3.png";
 import event4 from "@/assets/event4.png";
 import event5 from "@/assets/event5.png";
 import event6 from "@/assets/event6.png";
+import eventsbanner from "@/assets/eventsbanner.png";
 
 interface Service {
   id: string;
@@ -167,7 +168,7 @@ const Events = () => {
       {/* Hero Section */}
       <div className="relative w-full h-72 md:h-96 lg:h-[28rem]">
         <img
-          src={event1}
+          src={eventsbanner}
           alt="About Banner"
           className="w-full h-full object-contain object-top"
         />

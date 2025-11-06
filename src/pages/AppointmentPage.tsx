@@ -13,16 +13,19 @@ import {
   where,
   DocumentData,
   onSnapshot,
+  getDoc,
 } from "firebase/firestore";
 import { useAuth } from "../AuthContext";
 import red3 from "@/assets/red3.png";
 import { useNavigate } from "react-router-dom";
+import { User } from "lucide-react"; // ← ADDED
 
 interface Faculty {
   id: string;
   name: string;
   college: string;
   skills: string[];
+  profileUrl?: string; // ← NEW
 }
 
 interface Appointment {
@@ -53,7 +56,7 @@ const AppointmentPage = () => {
   const [scheduleTime, setScheduleTime] = useState("");
   const navigate = useNavigate();
 
-  // 🔹 Fetch user role + college
+  // Fetch user role + college
   useEffect(() => {
     const fetchUserDetails = async () => {
       if (!user) return;
@@ -63,12 +66,10 @@ const AppointmentPage = () => {
         );
         if (!snap.empty) {
           const data = snap.docs[0].data() as DocumentData;
-          console.log("User details:", { uid: user.uid, role: data.role, college: data.college, name: data.name });
           setRole(data.role || "student");
           setCollege(data.college || null);
           setName(data.name || null);
         } else {
-          console.error("No user document found for UID:", user.uid);
           toastError("User data not found");
         }
       } catch (error) {
@@ -79,7 +80,7 @@ const AppointmentPage = () => {
     fetchUserDetails();
   }, [user]);
 
-  // 🔹 Student: fetch faculty from same college
+  // Student: fetch faculty from same college + profile photo
   useEffect(() => {
     if (role !== "student" || !college) return;
 
@@ -89,13 +90,24 @@ const AppointmentPage = () => {
       where("isReady", "==", true)
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const list: Faculty[] = snapshot.docs.map((d) => ({
-        id: d.id,
-        ...(d.data() as Omit<Faculty, "id">),
-      }));
-      console.log("Fetched faculty for college:", college, list);
-      setFaculty(list);
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
+      const facultyList: Faculty[] = [];
+
+      for (const docSnap of snapshot.docs) {
+        const facultyData = docSnap.data();
+        const userDoc = await getDoc(doc(db, "users", docSnap.id));
+        const profileUrl = userDoc.exists() ? userDoc.data().profileUrl : undefined;
+
+        facultyList.push({
+          id: docSnap.id,
+          name: facultyData.name,
+          college: facultyData.college,
+          skills: facultyData.skills || [],
+          profileUrl,
+        });
+      }
+
+      setFaculty(facultyList);
     }, (error) => {
       console.error("Error fetching faculty:", error);
       toastError("Failed to fetch faculty list");
@@ -104,7 +116,7 @@ const AppointmentPage = () => {
     return () => unsubscribe();
   }, [role, college]);
 
-  // 🔹 Student: fetch appointments for this student
+  // Student: fetch appointments for this student
   useEffect(() => {
     if (role !== "student" || !user) return;
 
@@ -118,7 +130,6 @@ const AppointmentPage = () => {
         id: d.id,
         ...(d.data() as Omit<Appointment, "id">),
       }));
-      console.log("Fetched appointments for student UID:", user.uid, list);
       setAppointments(list);
     }, (error) => {
       console.error("Error fetching appointments:", error);
@@ -128,7 +139,7 @@ const AppointmentPage = () => {
     return () => unsubscribe();
   }, [role, user]);
 
-  // 🔹 Admin: fetch appointments for this faculty only
+  // Admin: fetch appointments for this faculty only
   useEffect(() => {
     if (role !== "admin" || !user) return;
 
@@ -142,7 +153,6 @@ const AppointmentPage = () => {
         id: d.id,
         ...(d.data() as Omit<Appointment, "id">),
       }));
-      console.log("Fetched appointments for faculty UID:", user.uid, list);
       setAppointments(list);
     }, (error) => {
       console.error("Error fetching appointments:", error);
@@ -152,7 +162,7 @@ const AppointmentPage = () => {
     return () => unsubscribe();
   }, [role, user]);
 
-  // 🔹 Check if appointment is expired
+  // Check if appointment is expired
   const isAppointmentExpired = (scheduledAt?: string) => {
     if (!scheduledAt) return true;
     const appointmentDate = new Date(scheduledAt);
@@ -160,7 +170,7 @@ const AppointmentPage = () => {
     return currentDate > appointmentDate;
   };
 
-  // 🔹 Get appointment status for a faculty
+  // Get appointment status for a faculty
   const getFacultyAppointmentStatus = (facultyId: string) => {
     const appointment = appointments.find(
       (a) => a.facultyId === facultyId && (a.status === "pending" || (a.status === "accepted" && !isAppointmentExpired(a.scheduledAt)))
@@ -168,7 +178,7 @@ const AppointmentPage = () => {
     return appointment ? { status: appointment.status, scheduledAt: appointment.scheduledAt } : null;
   };
 
-  // 🔹 Student: request appointment
+  // Student: request appointment
   const handleRequest = async () => {
     if (!user || !selectedFaculty) return;
 
@@ -196,7 +206,7 @@ const AppointmentPage = () => {
     }
   };
 
-  // 🔹 Admin: accept appointment
+  // Admin: accept appointment
   const handleAccept = async (id: string) => {
     if (!scheduleDate || !scheduleTime) {
       toastError("Select date and time");
@@ -241,7 +251,6 @@ const AppointmentPage = () => {
               },
               "EEoXK9gS-YnOA1hey"
             );
-            console.log("Email sent successfully!");
           } catch (error) {
             console.error("Error sending email:", error);
             toastError("Failed to send confirmation email");
@@ -254,12 +263,14 @@ const AppointmentPage = () => {
       setScheduleTime("");
       toastSuccess("Appointment accepted");
     } catch (error) {
-      console.error("Error accepting appointment:", error);
+      console.error
+
+("Error accepting appointment:", error);
       toastError("Failed to accept appointment");
     }
   };
 
-  // 🔹 Admin: reject appointment
+  // Admin: reject appointment
   const handleIgnore = async (id: string) => {
     try {
       await updateDoc(doc(db, "appointments", id), { status: "ignored" });
@@ -316,22 +327,32 @@ const AppointmentPage = () => {
                 return (
                   <li
                     key={f.id}
-                    className="flex justify-between items-center [background-color:hsl(60,100%,90%)] p-4 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300"
+                    className="flex items-center gap-4 [background-color:hsl(60,100%,90%)] p-4 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300"
                   >
-                    <div>
-                      <p className="text-xl font-semibold text-primary">
-                        {f.name}
-                      </p>
+                    {/* Profile Photo */}
+                    <div className="flex-shrink-0">
+                      {f.profileUrl ? (
+                        <img
+                          src={f.profileUrl}
+                          alt={f.name}
+                          className="w-16 h-16 rounded-full object-cover border-2 border-white shadow-md"
+                        />
+                      ) : (
+                        <div className="w-16 h-16 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center shadow-md">
+                          <User className="w-8 h-8 text-gray-400" />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Details */}
+                    <div className="flex-1">
+                      <p className="text-xl font-semibold text-primary">{f.name}</p>
                       <p className="text-md text-primary mb-1">{f.college}</p>
-                      <p className="text-sm text-primary">
-                        Skills: {f.skills.join(", ")}
-                      </p>
+                      <p className="text-sm text-primary">Skills: {f.skills.join(", ")}</p>
                       {appointmentStatus && (
                         <p className="text-sm mt-2">
                           {appointmentStatus.status === "pending" ? (
-                            <span className="text-yellow-700 font-medium">
-                              Pending Appointment
-                            </span>
+                            <span className="text-yellow-700 font-medium">Pending Appointment</span>
                           ) : (
                             <span className="text-green-700 font-medium">
                               Scheduled: {appointmentStatus.scheduledAt}
@@ -340,6 +361,8 @@ const AppointmentPage = () => {
                         </p>
                       )}
                     </div>
+
+                    {/* Request Button */}
                     <button
                       onClick={() => {
                         setSelectedFaculty(f);
