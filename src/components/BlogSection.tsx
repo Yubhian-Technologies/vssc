@@ -95,12 +95,12 @@ const BlogPage = () => {
 
             {/* Tags */}
             <div className="bg-yellow-50 border border-gray-300 rounded-lg p-2">
-              <h3 className="text-sm font-semibold mb-1">Tags</h3>
+              <h3 className="text-sm font-semibold  mb-1">Tags</h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {blogPost.tags.map((tag) => (
                   <Badge
                     key={tag}
-                    className="border border-gray-300 text-xs cursor-pointer hover:bg-[#5371cb] px-1 py-[1px] text-center"
+                    className="border border-gray-300 text-xs cursor-pointer hover:bg-[#5371cb] hover:text-white px-2 py-[2px] flex items-center justify-center text-center transition-colors rounded-10"
                   >
                     {tag}
                   </Badge>
