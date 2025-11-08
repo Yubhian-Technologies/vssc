@@ -1,3 +1,4 @@
+// AuthPage.tsx
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -8,27 +9,47 @@ import {
   onAuthStateChanged,
   type AuthError,
 } from "firebase/auth";
-import { auth } from "../firebase";
-import { toast } from "react-hot-toast";
+import { doc, setDoc } from "firebase/firestore";
+import { auth, db } from "../firebase";
 import LoginImg from "../assets/Login.png";
+import { toast } from "react-hot-toast";
 
 const colleges = [
   { name: "Vishnu Institute of Technology", domain: "@vishnu.edu.in" },
   { name: "Vishnu Dental College", domain: "@vdc.edu.in" },
   { name: "Shri Vishnu College of Pharmacy", domain: "@svcp.edu.in" },
   { name: "BV Raju Institute of Technology", domain: "@bvrit.ac.in" },
-  { name: "BVRIT Hyderabad College of Engineering", domain: "@bvrithyderabad.ac.in" },
-  { name: "Shri Vishnu Engineering College for Women", domain: "@svecw.edu.in" },
-  { name: "BVRIT Hyderabad College of Engineering", domain: "@bvrithyderabad.ac.in" },
-  { name: "Shri Vishnu Engineering College for Women", domain: "@svecw.edu.in" },
+  {
+    name: "BVRIT Hyderabad College of Engineering",
+    domain: "@bvrithyderabad.ac.in",
+  },
+  {
+    name: "Shri Vishnu Engineering College for Women",
+    domain: "@svecw.edu.in",
+  },
 ];
+
+const generateKeywords = (name: string, email: string): string[] => {
+  const keywords: string[] = [];
+  if (name) {
+    keywords.push(name.toLowerCase());
+    name.split(" ").forEach((part) => {
+      if (part.trim()) keywords.push(part.toLowerCase());
+    });
+  }
+  if (email) {
+    keywords.push(email.toLowerCase());
+    const localPart = email.split("@")[0];
+    if (localPart) keywords.push(localPart.toLowerCase());
+  }
+  return [...new Set(keywords)];
+};
 
 export default function AuthPage() {
   const navigate = useNavigate();
 
   const [isLogin, setIsLogin] = useState(true);
   const [isReset, setIsReset] = useState(false);
-  const [showVerify, setShowVerify] = useState(false);
   const [name, setName] = useState("");
   const [college, setCollege] = useState(colleges[0].name);
   const [email, setEmail] = useState("");
@@ -37,181 +58,203 @@ export default function AuthPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // ✅ Auto-redirect only verified users
+  // Redirect verified users only
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        await user.reload();
-        if (user.emailVerified) {
-          navigate("/");
-        } else {
-          // Unverified user — stay on the same page and show verify UI
-          setShowVerify(true);
-          await auth.signOut();
-        }
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user && user.emailVerified) {
+        navigate("/", { state: { showCongrats: true } });
       }
     });
     return () => unsubscribe();
   }, [navigate]);
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const emailFromQuery = params.get("email") || "";
-    if (emailFromQuery) setEmail(emailFromQuery);
-  }, []);
-
-  // ✅ Reset Password
+  // Reset Password Handler
   const handleResetPassword = async () => {
     setError("");
-    if (!email) return setError("Please enter your registered email.");
+
+    if (!email) {
+      setError("Please enter your registered email.");
+      return;
+    }
 
     const emailDomain = email.substring(email.lastIndexOf("@"));
     const validDomain = colleges.some((c) => c.domain === emailDomain);
-    if (!validDomain)
-      return setError("❌ Email domain is not allowed. Use your college email.");
+
+    if (!validDomain) {
+      setError("❌ Email domain is not allowed. Use your college email.");
+      return;
+    }
 
     try {
-      await sendPasswordResetEmail(auth, email);
+      await sendPasswordResetEmail(auth, email, {
+        url: "http://localhost:8080/auth",
+        handleCodeInApp: false,
+      });
       setError("✅ Password reset email sent! Check your inbox/spam.");
       setIsReset(false);
-    } catch (err) {
-      setError(err.message || "❌ Failed to send reset email.");
+    } catch (err: unknown) {
+      let message = "❌ Failed to send reset email.";
+      if (err && typeof err === "object") {
+        if (
+          "message" in err &&
+          typeof (err as { message?: string }).message === "string"
+        ) {
+          message = (err as { message: string }).message!;
+        }
+      }
+      setError(message);
     }
   };
 
-  // ✅ Send Verification Email
-  const handleSendVerification = async () => {
-    if (!auth.currentUser) {
-      toast.error("No user is currently logged in.");
-      return;
-    }
-    try {
-      await sendEmailVerification(auth.currentUser);
-      toast.success("Verification email sent! Please check your inbox.");
-    } catch (err) {
-      toast.error("Failed to send verification email.");
-    }
-  };
-
-  // ✅ Re-check verification status
-  const handleCheckVerification = async () => {
-    if (!auth.currentUser) {
-      toast.error("No user is logged in.");
-      return;
-    }
-
-    await auth.currentUser.reload();
-    if (auth.currentUser.emailVerified) {
-      toast.success("Email verified! You can now log in.");
-      setShowVerify(false);
-    } else {
-      toast.error("Email still not verified. Please check your inbox.");
-    }
-  };
-
-  // ✅ Login/Register
-  const handleSubmit = async (e) => {
+  // ✅ Handle Login
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
     try {
-      // Password match check during registration
-      if (!isLogin && password !== confirmPassword) {
-        setError("Passwords do not match");
+      const userCred = await signInWithEmailAndPassword(auth, email, password);
+
+      if (!userCred.user.emailVerified) {
+        toast.error(
+          "⚠️ Please verify your email before logging in. Check your inbox/spam."
+        );
+        await auth.signOut();
         setLoading(false);
         return;
       }
 
-      if (isLogin) {
-        // 🔹 LOGIN FLOW
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-
-        await user.reload(); // refresh emailVerified status
-
-        if (!user.emailVerified) {
-          await auth.signOut(); // Sign out immediately
-          toast.error("Please verify your email before logging in.");
-          setShowVerify(true);
-          setLoading(false);
-          return; // ⛔ stop navigation
-        }
-
-        toast.success("Login successful! Redirecting...");
-        navigate("/");
-      } else {
-        // 🔹 REGISTER FLOW
-        const emailDomain = email.substring(email.lastIndexOf("@"));
-        const validDomain = colleges.some((c) => c.domain === emailDomain);
-        if (!validDomain) {
-          setError("❌ Email domain is not allowed. Use your college email.");
-          setLoading(false);
-          return;
-        }
-
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-
-        await sendEmailVerification(user);
-        toast.success("Verification email sent! Please check your inbox.");
-        setShowVerify(true);
-        setError("Please verify your email before logging in.");
-
-        await auth.signOut();
-      }
-    } catch (err) {
-      let message = "Something went wrong";
-      if (err && typeof err === "object") {
-        if ("code" in err && typeof err.code === "string") {
-          const authError = err;
-          if (authError.code === "auth/email-already-in-use")
-            message = "❌ Email already registered. Please log in.";
-          else if (authError.code === "auth/invalid-credential")
-            message = "❌ Invalid credentials. Please try again.";
-          else message = authError.message || message;
-        }
+      navigate("/", { state: { showCongrats: true } });
+    } catch (err: unknown) {
+      let message = "Login failed. Please check your credentials.";
+      if (err && typeof err === "object" && "message" in err) {
+        message = (err as { message: string }).message;
       }
       setError(message);
-   } 
+    }
 
     setLoading(false);
+  };
+
+  // ✅ Handle Register
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    try {
+      if (password !== confirmPassword) {
+        setError("Passwords do not match.");
+        setLoading(false);
+        return;
+      }
+
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+
+      // Send verification email
+      await sendEmailVerification(userCredential.user);
+      console.log("Verification email sent to:", email);
+
+      // Store user info in Firestore
+      await setDoc(doc(db, "users", userCredential.user.uid), {
+        uid: userCredential.user.uid,
+        name,
+        email,
+        college,
+        role: "student",
+        points: 10,
+        keywords: generateKeywords(name, email),
+        isNewUser: true,
+      });
+
+      localStorage.removeItem("dailyGameClaim");
+
+      // ✅ Show long toast
+      toast.success(
+        "✅ Registration successful! A verification link has been sent to your inbox/spam. Please verify your email before logging in.",
+        { duration: 6000 }
+      );
+
+      // ✅ Prevent auto-login
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      await auth.signOut();
+
+      // ✅ Switch to login form (stay on AuthPage)
+      setIsLogin(true);
+      setPassword("");
+      setConfirmPassword("");
+      setEmail("");
+    } catch (err: unknown) {
+      let message = "Registration failed.";
+      if (err && typeof err === "object" && "message" in err) {
+        message = (err as { message: string }).message;
+      }
+      setError(message);
+    }
+
+    setLoading(false);
+  };
+
+  // ✅ Resend Verification Email
+  const handleResendVerification = async () => {
+    try {
+      const user = auth.currentUser;
+      if (user && !user.emailVerified) {
+        await sendEmailVerification(user);
+        toast.success("📧 Verification email resent! Check your inbox/spam.");
+      } else {
+        toast.error(
+          "Login first to resend verification or you're already verified."
+        );
+      }
+    } catch (error) {
+      toast.error("Failed to resend verification email.");
+      console.error(error);
+    }
   };
 
   return (
     <div className="relative flex items-center justify-center min-h-screen [background-color:hsl(60,100%,95%)]">
       <div
-        className="hidden md:flex relative w-[800px] h-[520px] shadow-xl rounded-xl overflow-hidden"
+        className="hidden md:flex relative w-[800px] h-[500px] shadow-xl rounded-xl overflow-hidden"
         style={{ backgroundColor: "hsl(60,100%,90%)" }}
       >
-        {/* Image Section */}
+        {/* Image Panel */}
         <div
           className="absolute top-0 h-full w-1/2 transition-transform duration-700 ease-in-out z-20"
           style={{
-            transform: isLogin || isReset ? "translateX(100%)" : "translateX(0%)",
+            transform:
+              isLogin || isReset ? "translateX(100%)" : "translateX(0%)",
           }}
         >
-          <img src={LoginImg} alt="cover" className="w-full h-full object-cover" />
-          <img src={LoginImg} alt="cover" className="w-full h-full object-cover" />
+          <img
+            src={LoginImg}
+            alt="cover"
+            className="w-full h-full object-cover"
+          />
         </div>
 
-        {/* LOGIN FORM */}
+        {/* Login Form */}
         <div
           className={`absolute left-0 top-0 w-1/2 h-full flex flex-col justify-center px-8 py-6 transition-all duration-700 ease-in-out ${
             isLogin && !isReset
-              ? "opacity-100 translate-y-0"
-              : "opacity-0 -translate-y-8 pointer-events-none"
+              ? "opacity-100"
+              : "opacity-0 pointer-events-none"
           }`}
         >
           <h2 className="text-2xl font-bold mb-4">Login</h2>
-          <form onSubmit={handleSubmit} className="space-y-3">
+          <form onSubmit={handleLogin} className="space-y-3">
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Email"
               required
-              className="w-full border rounded-md p-2 [background-color:hsl(60,100%,95%)]"
+              className="w-full border rounded-md p-2 bg-[hsl(60,100%,95%)]"
             />
             <input
               type="password"
@@ -219,7 +262,7 @@ export default function AuthPage() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Password"
               required
-              className="w-full border rounded-md p-2 [background-color:hsl(60,100%,95%)]"
+              className="w-full border rounded-md p-2 bg-[hsl(60,100%,95%)]"
             />
             {error && (
               <p
@@ -230,26 +273,6 @@ export default function AuthPage() {
                 {error}
               </p>
             )}
-
-            {showVerify && (
-              <div className="space-y-2">
-                <button
-                  type="button"
-                  onClick={handleSendVerification}
-                  className="w-full bg-yellow-500 hover:bg-yellow-600 text-white py-2 rounded-md transition"
-                >
-                  Resend Verification Email
-                </button>
-                <button
-                  type="button"
-                  onClick={handleCheckVerification}
-                  className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-md transition"
-                >
-                  Check Verification Again
-                </button>
-              </div>
-            )}
-
             <button
               type="submit"
               disabled={loading}
@@ -258,6 +281,14 @@ export default function AuthPage() {
               {loading ? "Processing..." : "Login"}
             </button>
           </form>
+
+          {/* Resend Verification Email */}
+          <button
+            onClick={handleResendVerification}
+            className="mt-3 text-sm text-blue-700 hover:underline"
+          >
+            Resend Verification Email
+          </button>
 
           <p className="mt-4 text-sm text-gray-600">
             Don’t have an account?{" "}
@@ -273,80 +304,43 @@ export default function AuthPage() {
           </p>
 
           <p className="mt-3 text-sm text-gray-600">
-            Forgot password?{" "}
+            Forgot your password?{" "}
             <button
               onClick={() => {
                 setIsReset(true);
                 setError("");
+                setEmail("");
+                setPassword("");
+                setConfirmPassword("");
               }}
               className="text-[#001A66] font-medium"
             >
-              Reset
+              Reset Password
             </button>
           </p>
         </div>
 
-        {/* RESET FORM */}
-        <div
-          className={`absolute left-0 top-0 w-1/2 h-full flex flex-col justify-center px-8 py-6 transition-all duration-700 ease-in-out ${
-            isReset
-              ? "opacity-100 translate-y-0"
-              : "opacity-0 translate-y-8 pointer-events-none"
-          }`}
-        >
-          <h2 className="text-2xl font-bold mb-4">Forgot Password</h2>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Enter your registered email"
-            className="w-full border rounded-md p-2 [background-color:hsl(60,100%,95%)] mb-[5px]"
-            required
-          />
-          {error && (
-            <p
-              className={`text-sm mt-2 ${
-                error.startsWith("✅") ? "text-green-600" : "text-red-500"
-              }`}
-            >
-              {error}
-            </p>
-          )}
-          <button
-            onClick={handleResetPassword}
-            disabled={loading}
-            className="w-full bg-[#001A66] hover:bg-blue-900 text-white py-2 rounded-md transition"
-          >
-            {loading ? "Sending..." : "Reset Password"}
-          </button>
-          <button
-            onClick={() => setIsReset(false)}
-            className="w-full bg-gray-300 hover:bg-gray-400 text-black py-2 rounded-md transition mt-2"
-          >
-            Back to Login
-          </button>
-        </div>
-
-        {/* REGISTER FORM */}
+        {/* Register Form */}
         <div
           className={`absolute right-0 top-0 w-1/2 h-full flex flex-col justify-center px-8 py-6 transition-all duration-700 ease-in-out ${
-            !isLogin && !isReset ? "opacity-100" : "opacity-0 pointer-events-none"
-            !isLogin && !isReset ? "opacity-100" : "opacity-0 pointer-events-none"
+            !isLogin && !isReset
+              ? "opacity-100"
+              : "opacity-0 pointer-events-none"
           }`}
         >
           <h2 className="text-2xl font-bold mb-4">Register</h2>
-          <form onSubmit={handleSubmit} className="space-y-3">
+          <form onSubmit={handleRegister} className="space-y-3">
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Full Name"
-              className="w-full border rounded-md p-2 [background-color:hsl(60,100%,95%)]"
+              className="w-full border rounded-md p-2 bg-[hsl(60,100%,95%)]"
             />
             <select
               value={college}
               onChange={(e) => setCollege(e.target.value)}
-              className="w-full border rounded-md p-2 [background-color:hsl(60,100%,95%)]"
+              className="w-full border rounded-md p-2 bg-[hsl(60,100%,95%)]"
             >
               {colleges.map((c, i) => (
                 <option key={i} value={c.name}>
@@ -359,43 +353,22 @@ export default function AuthPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="College Email"
-              className="w-full border rounded-md p-2 [background-color:hsl(60,100%,95%)]"
+              className="w-full border rounded-md p-2 bg-[hsl(60,100%,95%)]"
             />
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Password"
-              className="w-full border rounded-md p-2 [background-color:hsl(60,100%,95%)]"
+              className="w-full border rounded-md p-2 bg-[hsl(60,100%,95%)]"
             />
             <input
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="Confirm Password"
-              className="w-full border rounded-md p-2 [background-color:hsl(60,100%,95%)]"
+              className="w-full border rounded-md p-2 bg-[hsl(60,100%,95%)]"
             />
-
-            {error && (
-              <p
-                className={`text-sm mt-2 ${
-                  error.startsWith("✅") ? "text-green-600" : "text-red-500"
-                }`}
-              >
-                {error}
-              </p>
-            )}
-
-            {showVerify && (
-              <button
-                type="button"
-                onClick={handleSendVerification}
-                className="w-full bg-yellow-500 hover:bg-yellow-600 text-white py-2 rounded-md transition"
-              >
-                Resend Verification Email
-              </button>
-            )}
-
             <button
               type="submit"
               disabled={loading}
@@ -408,10 +381,7 @@ export default function AuthPage() {
           <p className="mt-4 text-sm text-gray-600">
             Already have an account?{" "}
             <button
-              onClick={() => {
-                setIsLogin(true);
-                setError("");
-              }}
+              onClick={() => setIsLogin(true)}
               className="text-[#001A66] font-medium"
             >
               Login

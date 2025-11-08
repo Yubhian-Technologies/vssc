@@ -4,12 +4,12 @@ import { Card, CardContent } from "@/components/ui/card";
 
 import event6 from "@/assets/event6.png";
 
-import hidden1 from "@/assets/hidden1.jpg";
-import hidden2 from "@/assets/hidden2.jpg";
-import hidden3 from "@/assets/hidden3.jpg";
-import hidden4 from "@/assets/hidden4.jpg";
-import hidden5 from "@/assets/hidden5.jpg";
-import hidden6 from "@/assets/hidden6.jpg";
+import hidden1 from "@/assets/hidden1.png";
+import hidden2 from "@/assets/hidden2.png";
+import hidden3 from "@/assets/hidden3.png";
+import hidden4 from "@/assets/hidden4.png";
+import hidden5 from "@/assets/hidden5.png";
+import hidden6 from "@/assets/hidden6.png";
 
 const sessions = [
   {

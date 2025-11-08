@@ -24,17 +24,22 @@ const games = [
   { name: "Sudoku", component: Sudoku },
   { name: "Minesweeper", component: Minesweeper },
   { name: "Math Quiz Game", component: MathQuizGame },
-  { name: "Color Match Game", component: ColorMatchGame },
-  { name: "Reflex Game", component: ReflexGame },
-  { name: "Simon Memory Game", component: SimonMemoryGame },
-  { name: "Number Sequence Game", component: NumberSequenceGame },
-  { name: "Reaction Chain Game", component: ReactionChainGame },
-  { name: "Spot the Difference", component: SpotTheDifference },
+  //{ name: "Color Match Game", component: ColorMatchGame },
+  // { name: "Reflex Game", component: ReflexGame },
+  //{ name: "Simon Memory Game", component: SimonMemoryGame },
+  //{ name: "Number Sequence Game", component: NumberSequenceGame },
+  //{ name: "Reaction Chain Game", component: ReactionChainGame },
+  // { name: "Spot the Difference", component: SpotTheDifference },
 ];
 
-const DailyGameModal: React.FC<DailyGameModalProps> = ({ onComplete, onClose }) => {
+const DailyGameModal: React.FC<DailyGameModalProps> = ({
+  onComplete,
+  onClose,
+}) => {
   const [claimedToday, setClaimedToday] = useState(false);
-  const [selectedGame, setSelectedGame] = useState<typeof games[0] | null>(null);
+  const [selectedGame, setSelectedGame] = useState<(typeof games)[0] | null>(
+    null
+  );
 
   useEffect(() => {
     const checkEligibility = async () => {
@@ -53,9 +58,14 @@ const DailyGameModal: React.FC<DailyGameModalProps> = ({ onComplete, onClose }) 
         if (userSnap.exists()) {
           const data = userSnap.data();
           const lastClaimed = data.lastDailyClaim?.toDate?.() || null;
-          const isEligible = !lastClaimed || lastClaimed.toDateString() !== today;
+          const isEligible =
+            !lastClaimed || lastClaimed.toDateString() !== today;
 
-          console.log("DailyGameModal Firestore check:", { isEligible, lastClaimed, today });
+          console.log("DailyGameModal Firestore check:", {
+            isEligible,
+            lastClaimed,
+            today,
+          });
 
           if (!isEligible) {
             console.log("Game already claimed today (Firestore)");
@@ -99,7 +109,10 @@ const DailyGameModal: React.FC<DailyGameModalProps> = ({ onComplete, onClose }) 
   };
 
   if (claimedToday || !selectedGame) {
-    console.log("DailyGameModal not rendering:", { claimedToday, selectedGame });
+    console.log("DailyGameModal not rendering:", {
+      claimedToday,
+      selectedGame,
+    });
     return null;
   }
 
@@ -119,7 +132,9 @@ const DailyGameModal: React.FC<DailyGameModalProps> = ({ onComplete, onClose }) 
         <h2 className="text-2xl font-bold mb-2 text-blue-600">
           🎮 {selectedGame.name}
         </h2>
-        <p className="text-gray-700 mb-4">Solve this game to earn <b>5 points!</b></p>
+        <p className="text-gray-700 mb-4">
+          Solve this game to earn <b>5 points!</b>
+        </p>
 
         <div className="mt-4 flex justify-center">
           <GameComponent onSolve={handleComplete} />
