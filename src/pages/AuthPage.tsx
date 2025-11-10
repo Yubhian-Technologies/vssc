@@ -388,6 +388,63 @@ export default function AuthPage() {
             </button>
           </p>
         </div>
+
+        {/* ✅ Reset Password Form (NEWLY ADDED) */}
+        <div
+          className={`absolute left-0 top-0 w-1/2 h-full flex flex-col justify-center px-8 py-6 transition-all duration-700 ease-in-out ${
+            isReset ? "opacity-100" : "opacity-0 pointer-events-none"
+          }`}
+        >
+          <h2 className="text-2xl font-bold mb-4">Reset Password</h2>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleResetPassword();
+            }}
+            className="space-y-3"
+          >
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your registered college email"
+              required
+              className="w-full border rounded-md p-2 bg-[hsl(60,100%,95%)]"
+            />
+
+            {error && (
+              <p
+                className={`text-sm mt-2 ${
+                  error.startsWith("✅") ? "text-green-600" : "text-red-500"
+                }`}
+              >
+                {error}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-[#001A66] hover:bg-blue-900 text-white py-2 rounded-md transition"
+            >
+              {loading ? "Processing..." : "Send Reset Link"}
+            </button>
+          </form>
+
+          <p className="mt-4 text-sm text-gray-600">
+            Remembered your password?{" "}
+            <button
+              onClick={() => {
+                setIsReset(false);
+                setIsLogin(true);
+                setError("");
+              }}
+              className="text-[#001A66] font-medium"
+            >
+              Back to Login
+            </button>
+          </p>
+        </div>
       </div>
     </div>
   );

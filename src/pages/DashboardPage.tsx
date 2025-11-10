@@ -122,7 +122,8 @@ const DashboardPage: React.FC = () => {
         const allDocs = results.flat();
 
         const filteredDocs = allDocs.filter(
-          (doc) => doc.colleges?.includes(adminCollege) && doc.validated === true
+          (doc) =>
+            doc.colleges?.includes(adminCollege) && doc.validated === true
         );
 
         const statsByCreator: Record<
@@ -139,7 +140,8 @@ const DashboardPage: React.FC = () => {
                 skills: new Set(),
               };
             }
-            statsByCreator[doc.createdBy].totalDuration += doc.totalDuration || 0;
+            statsByCreator[doc.createdBy].totalDuration +=
+              doc.totalDuration || 0;
             statsByCreator[doc.createdBy].sessionCount += 1;
             if (Array.isArray(doc.skills)) {
               doc.skills.forEach((skill) =>
@@ -214,7 +216,8 @@ const DashboardPage: React.FC = () => {
       Name: item.name,
       "Session Count": item.sessionCount,
       "Total Duration": item.totalDuration,
-      Skills: item.skills.length > 0 ? item.skills.join(", ") : "No skills listed",
+      Skills:
+        item.skills.length > 0 ? item.skills.join(", ") : "No skills listed",
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(data);
@@ -259,7 +262,7 @@ const DashboardPage: React.FC = () => {
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.2 }}
       >
-        Dashboard – Vishnu Institute of Technology
+        Dashboard – {adminCollege || "Loading..."}
       </motion.h2>
 
       {/* Summary Stats */}
@@ -401,10 +404,18 @@ const DashboardPage: React.FC = () => {
           <table className="w-full table-fixed border-collapse text-black text-center">
             <thead>
               <tr className="bg-[hsl(60,100%,95%)] text-black">
-                <th className="w-1/4 py-3 px-4 border-b border-gray-700">Name</th>
-                <th className="w-1/4 py-3 px-4 border-b border-gray-700">Session Count</th>
-                <th className="w-1/4 py-3 px-4 border-b border-gray-700">Total Duration</th>
-                <th className="w-1/4 py-3 px-4 border-b border-gray-700">Skills Taught</th>
+                <th className="w-1/4 py-3 px-4 border-b border-gray-700">
+                  Name
+                </th>
+                <th className="w-1/4 py-3 px-4 border-b border-gray-700">
+                  Session Count
+                </th>
+                <th className="w-1/4 py-3 px-4 border-b border-gray-700">
+                  Total Duration
+                </th>
+                <th className="w-1/4 py-3 px-4 border-b border-gray-700">
+                  Skills Taught
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -413,11 +424,19 @@ const DashboardPage: React.FC = () => {
                   key={item.uid}
                   className="hover:bg-[hsl(60,100%,95%)] transition duration-200"
                 >
-                  <td className="py-3 px-4 border-b border-gray-700 break-words">{item.name}</td>
-                  <td className="py-3 px-4 border-b border-gray-700">{item.sessionCount}</td>
-                  <td className="py-3 px-4 border-b border-gray-700">{item.totalDuration}</td>
                   <td className="py-3 px-4 border-b border-gray-700 break-words">
-                    {item.skills.length > 0 ? item.skills.join(", ") : "No skills listed"}
+                    {item.name}
+                  </td>
+                  <td className="py-3 px-4 border-b border-gray-700">
+                    {item.sessionCount}
+                  </td>
+                  <td className="py-3 px-4 border-b border-gray-700">
+                    {item.totalDuration}
+                  </td>
+                  <td className="py-3 px-4 border-b border-gray-700 break-words">
+                    {item.skills.length > 0
+                      ? item.skills.join(", ")
+                      : "No skills listed"}
                   </td>
                 </tr>
               ))}
