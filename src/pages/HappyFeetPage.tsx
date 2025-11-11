@@ -1,438 +1,874 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { toastSuccess, toastError } from "@/components/ui/sonner";
 import { auth, db } from "../firebase";
+import event3 from "@/assets/event3.png";
 import {
   collection,
   addDoc,
   query,
-  where,
   onSnapshot,
-  serverTimestamp,
   doc,
+  updateDoc,
+  serverTimestamp,
   getDoc,
+  where,
+  deleteDoc,
 } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
+import { format } from "date-fns";
+import {
+  Plus,
+  Edit,
+  Users,
+  Calendar,
+  Clock,
+  MoreVertical,
+  Trash2,
+  MessageSquare,
+} from "lucide-react";
+import { uploadToCloudinary } from "../utils/cloudinary";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
-import event3 from "@/assets/event3.png";
-import maroon1 from "@/assets/maroon1.png";
-import maroon2 from "@/assets/maroon2.png";
-import maroon3 from "@/assets/maroon3.png";
-import maroon4 from "@/assets/maroon4.png";
-import maroon5 from "@/assets/maroon5.png";
+// === PAGE‑SPECIFIC CONFIG ===
+const PAGE_NAME = "HappyFeet";
+const EVENTS_COLLECTION = "happyfeet_events";
+const REGISTRATIONS_COLLECTION = "eventRegistrations";
 
-const sessions = [
-  {
-    id: 1,
-    name: "Stress Management Workshop",
-    cover: event3,
-    description:
-      "Learn effective techniques to manage stress and maintain mental well-being during challenging times.",
-  },
-];
+interface Event {
+  id: string;
+  name: string;
+  description: string;
+  imageUrl: string;
+  eventDate: string;
+  eventTime: string;
+  createdAt: any;
+  createdBy: string;
+  college?: string;
+}
 
-const courses = [
-  {
-    focus: "Mindfulness and Meditation Sessions",
-    desc: "Wellness & Self-Care",
-    image: maroon1,
-  },
-  {
-    focus: "Hacking into physical wellbeing (Yoga, Zumba, etc.)",
-    desc: "Wellness & Self-Care",
-    image: maroon2,
-  },
-  {
-    focus: "Peer-driven Fitness Bootcamps",
-    desc: "Wellness & Self-Care",
-    image: maroon3,
-  },
-  {
-    focus: "Digital Detox Sessions",
-    desc: "Wellness & Self-Care",
-    image: maroon4,
-  },
-  {
-    focus: "Work-life Balance Workshops",
-    desc: "Wellness & Self-Care",
-    image: maroon5,
-  },
-  {
-    focus: "Student-led health and hygiene circle to promote peer-awareness",
-    desc: "Wellness & Self-Care",
-    image: maroon1,
-  },
-];
+interface Registration {
+  id: string;
+  userId: string;
+  name: string;
+  email: string;
+  profileUrl?: string;
+  message?: string;
+}
 
 const HappyFeetPage: React.FC = () => {
   const navigate = useNavigate();
+
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [userRole, setUserRole] = useState<string>("student");
-  const [formData, setFormData] = useState({
-    name: "",
-    option: "",
-    course: "",
-    message: "",
-  });
-  const [showForm, setShowForm] = useState(false);
-  const [selectedCourse, setSelectedCourse] = useState("");
-  const [registeredCourses, setRegisteredCourses] = useState<Set<string>>(new Set());
-  const [participants, setParticipants] = useState<any[]>([]);
-  const [showParticipants, setShowParticipants] = useState(false);
+  const [userCollege, setUserCollege] = useState<string>("");
+  const [events, setEvents] = useState<Event[]>([]);
+  const [registrations, setRegistrations] = useState<Set<string>>(new Set());
+  const [participants, setParticipants] = useState<Registration[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Auth state
+  // Modals
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showParticipants, setShowParticipants] = useState(false);
+  const [showRegModal, setShowRegModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+
+  // Forms
+  const [addForm, setAddForm] = useState({
+    name: "",
+    description: "",
+    eventDate: "",
+    eventTime: "",
+    image: null as File | null,
+  });
+  const [editForm, setEditForm] = useState({ eventDate: "", eventTime: "" });
+  const [regForm, setRegForm] = useState({ name: "", message: "" });
+
+  /* -------------------------- AUTH & ROLE --------------------------- */
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    const unsub = onAuthStateChanged(auth, async (user) => {
       if (user && user.emailVerified) {
         setCurrentUser(user);
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        if (userDoc.exists()) {
-          setUserRole(userDoc.data().role || "student");
-          setFormData((prev) => ({ ...prev, name: userDoc.data().name || "" }));
+        const snap = await getDoc(doc(db, "users", user.uid));
+        if (snap.exists()) {
+          const data = snap.data();
+          setUserRole(data.role || "student");
+          setUserCollege(data.college || "");
+          setRegForm((prev) => ({
+            ...prev,
+            name: data.name || user.displayName || "",
+          }));
         }
       } else {
         setCurrentUser(null);
         setUserRole("student");
+        setUserCollege("");
       }
     });
-    return () => unsubscribe();
+    return () => unsub();
   }, []);
 
-  // Load registered courses
+  /* --------------------- PAGE‑SPECIFIC EVENTS ---------------------- */
   useEffect(() => {
-    if (!currentUser) {
-      setRegisteredCourses(new Set());
-      return;
+    let q: any;
+
+    if (userRole === "admin+" || !currentUser) {
+      q = query(collection(db, EVENTS_COLLECTION));
+    } else if (userRole === "admin") {
+      q = query(
+        collection(db, EVENTS_COLLECTION),
+        where("createdBy", "==", currentUser.uid)
+      );
+    } else {
+      q = query(
+        collection(db, EVENTS_COLLECTION),
+        where("college", "==", userCollege)
+      );
     }
 
-    const q = query(
-      collection(db, "eventRegistrations"),
-      where("userId", "==", currentUser.uid),
-      where("eventName", "==", "HappyFeet")
-    );
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const registered = new Set<string>();
-      snapshot.forEach((doc) => {
-        registered.add(doc.data().course);
-      });
-      setRegisteredCourses(registered);
+    const unsub = onSnapshot(q, (snap) => {
+      const list: Event[] = [];
+      snap.forEach((d) => list.push({ id: d.id, ...d.data() } as Event));
+      setEvents(list);
     });
+    return () => unsub();
+  }, [currentUser, userRole, userCollege]);
 
-    return () => unsubscribe();
+  /* ----------------- PAGE‑SPECIFIC REGISTRATIONS ------------------- */
+  useEffect(() => {
+    if (!currentUser) {
+      setRegistrations(new Set());
+      return;
+    }
+    const q = query(
+      collection(db, REGISTRATIONS_COLLECTION),
+      where("userId", "==", currentUser.uid),
+      where("pageName", "==", PAGE_NAME)
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      const reg = new Set<string>();
+      snap.forEach((d) => reg.add(d.data().eventId));
+      setRegistrations(reg);
+    });
+    return () => unsub();
   }, [currentUser]);
 
-  const handleRegister = async (e: React.FormEvent) => {
+  /* ------------------------------- HELPERS ------------------------- */
+  const getISTNow = () => {
+    return new Date(
+      new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" })
+    );
+  };
+
+  const isExpired = (date: string, time: string) => {
+    const dt = new Date(`${date}T${time}:00`);
+    return dt < getISTNow();
+  };
+
+  const isFutureDate = (date: string) => {
+    const today = getISTNow();
+    today.setHours(0, 0, 0, 0);
+    return new Date(date) >= today;
+  };
+
+  // Validate edit datetime >= original AND >= now (IST)
+  const isAfterOriginal = (
+    newDate: string,
+    newTime: string,
+    origDate: string,
+    origTime: string
+  ) => {
+    const newDt = new Date(`${newDate}T${newTime}:00`);
+    const origDt = new Date(`${origDate}T${origTime}:00`);
+    return newDt >= origDt && newDt >= getISTNow();
+  };
+
+  /* ----------------------------- ADD EVENT ------------------------- */
+  const handleAddEvent = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentUser) {
-      alert("Please log in first to register.");
-      navigate("/auth");
-      return;
+    if (!currentUser || userRole !== "admin") return;
+    if (!addForm.image) return toastError("Please select an image");
+
+    const eventDt = new Date(`${addForm.eventDate}T${addForm.eventTime}:00`);
+    if (eventDt <= getISTNow()) {
+      return toastError("Event date & time must be in the future (IST)");
     }
 
     setLoading(true);
     try {
-      await addDoc(collection(db, "eventRegistrations"), {
-        eventName: "HappyFeet",
-        course: selectedCourse,
-        userId: currentUser.uid,
-        name: formData.name,
-        email: currentUser.email,
-        option: formData.option,
-        message: formData.message,
-        timestamp: serverTimestamp(),
+      const imageUrl = await uploadToCloudinary(addForm.image);
+      await addDoc(collection(db, EVENTS_COLLECTION), {
+        name: addForm.name,
+        description: addForm.description,
+        imageUrl,
+        eventDate: addForm.eventDate,
+        eventTime: addForm.eventTime,
+        createdBy: currentUser.uid,
+        college: userCollege,
+        createdAt: serverTimestamp(),
       });
-
-      alert("Registration successful!");
-      setShowForm(false);
-      setFormData({ ...formData, option: "", message: "" });
-    } catch (error) {
-      alert("Registration failed. Try again.");
+      toastSuccess("Event added successfully!");
+      setShowAddModal(false);
+      setAddForm({
+        name: "",
+        description: "",
+        eventDate: "",
+        eventTime: "",
+        image: null,
+      });
+    } catch (err: any) {
+      toastError(err.message || "Failed to add event");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
-  const openRegisterModal = (courseName: string) => {
+  /* ----------------------------- EDIT EVENT ------------------------ */
+  const openEdit = (ev: Event) => {
+    setSelectedEvent(ev);
+    setEditForm({ eventDate: ev.eventDate, eventTime: ev.eventTime });
+    setShowEditModal(true);
+  };
+
+  const handleEditEvent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedEvent || userRole !== "admin") return;
+
+    if (
+      !isAfterOriginal(
+        editForm.eventDate,
+        editForm.eventTime,
+        selectedEvent.eventDate,
+        selectedEvent.eventTime
+      )
+    ) {
+      return toastError(
+        "New date & time must be after the original event and not in the past (IST)"
+      );
+    }
+
+    setLoading(true);
+    try {
+      await updateDoc(doc(db, EVENTS_COLLECTION, selectedEvent.id), {
+        eventDate: editForm.eventDate,
+        eventTime: editForm.eventTime,
+      });
+      toastSuccess("Event updated!");
+      setShowEditModal(false);
+    } catch {
+      toastError("Update failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /* ----------------------------- REGISTER -------------------------- */
+  const openRegister = (event: Event) => {
     if (!currentUser) {
-      alert("Please log in first to register.");
+      toastError("Please log in");
       navigate("/auth");
       return;
     }
-    setSelectedCourse(courseName);
-    setFormData({ ...formData, course: courseName });
-    setShowForm(true);
+    setSelectedEvent(event);
+    setRegForm({
+      name: currentUser.displayName || "",
+      message: "",
+    });
+    setShowRegModal(true);
   };
 
-  const openParticipantsModal = async (courseName: string) => {
-    setSelectedCourse(courseName);
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentUser || !selectedEvent) return;
+
+    setLoading(true);
+    try {
+      await addDoc(collection(db, REGISTRATIONS_COLLECTION), {
+        eventId: selectedEvent.id,
+        pageName: PAGE_NAME,
+        userId: currentUser.uid,
+        name: regForm.name,
+        email: currentUser.email,
+        message: regForm.message || null,
+        timestamp: serverTimestamp(),
+      });
+      toastSuccess("Registered successfully!");
+      setShowRegModal(false);
+    } catch {
+      toastError("Registration failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /* ----------------------------- DELETE EVENT ----------------------- */
+  const confirmDelete = (event: Event) => {
+    setSelectedEvent(event);
+    setShowDeleteConfirm(true);
+  };
+
+  const handleDelete = async () => {
+    if (!selectedEvent) return;
+    setLoading(true);
+    try {
+      await deleteDoc(doc(db, EVENTS_COLLECTION, selectedEvent.id));
+      toastSuccess("Event deleted!");
+      setShowDeleteConfirm(false);
+    } catch {
+      toastError("Delete failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /* ----------------------- VIEW PARTICIPANTS ----------------------- */
+  const openParticipants = (eventId: string) => {
+    const event = events.find((e) => e.id === eventId);
+    if (!event) return;
+    setSelectedEvent(event);
     setShowParticipants(true);
 
     const q = query(
-      collection(db, "eventRegistrations"),
-      where("eventName", "==", "HappyFeet"),
-      where("course", "==", courseName)
+      collection(db, REGISTRATIONS_COLLECTION),
+      where("eventId", "==", eventId),
+      where("pageName", "==", PAGE_NAME)
     );
 
-    const unsubscribe = onSnapshot(q, async (snapshot) => {
-      const list = await Promise.all(
-        snapshot.docs.map(async (d) => {
+    const unsub = onSnapshot(q, async (snap) => {
+      const list: Registration[] = await Promise.all(
+        snap.docs.map(async (d) => {
           const data = d.data();
-          let profileUrl = null;
+          let profileUrl: string | undefined;
           try {
-            const userDoc = await getDoc(doc(db, "users", data.userId));
-            if (userDoc.exists()) {
-              profileUrl = userDoc.data().profileUrl || null;
-            }
-          } catch (err) {}
-          return { ...data, profileUrl };
+            const userSnap = await getDoc(doc(db, "users", data.userId));
+            if (userSnap.exists()) profileUrl = userSnap.data().profileUrl;
+          } catch {}
+          return {
+            id: d.id,
+            userId: data.userId,
+            name: data.name,
+            email: data.email,
+            profileUrl,
+            message: data.message,
+          };
         })
       );
       setParticipants(list);
     });
 
-    return () => unsubscribe();
+    return () => unsub();
   };
 
+  const isAdmin = userRole === "admin";
+  const isAdminPlus = userRole === "admin+";
+
+  // Add form validity
+  const isAddFormValid =
+    addForm.name &&
+    addForm.description &&
+    addForm.eventDate &&
+    addForm.eventTime &&
+    addForm.image &&
+    new Date(`${addForm.eventDate}T${addForm.eventTime}:00`) > getISTNow();
+
+  /* ----------------------------------------------------------------- */
   return (
     <div className="bg-gray-50">
+      {/* HEADER */}
       <section className="[background-color:hsl(60,100%,90%)] w-full py-8">
-        <section className="[background-color:hsl(60,100%,90%)] w-full ">
-          <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center gap-8 px-5">
-            {sessions.map((session) => (
-              <div
-                key={session.id}
-                className="flex flex-col md:flex-row items-center md:items-stretch w-full gap-6"
-              >
-                <div className="flex-1 flex justify-center">
-                  <img
-                    src={session.cover}
-                    alt={session.name}
-                    className="w-full h-full object-cover max-w-xs md:max-w-sm"
-                  />
-                </div>
-
-                <div className="flex-1 flex flex-col justify-center items-center md:items-start text-center md:text-left gap-4 p-2 max-h-[300px] mt-20">
-                  <h2
-                    className="text-5xl font-extrabold leading-tight text-green-800"
-                    style={{
-                      fontFamily:
-                        "'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif",
-                      margin: 0,
-                      padding: 0,
-                    }}
-                  >
-                    Wellness &
-                    <br />
-                    Self-Care
-                  </h2>
-                  <h2
-                    className="text-4xl font-extrabold leading-tight text-pink-700"
-                    style={{
-                      fontFamily:
-                        "'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif",
-                      margin: 0,
-                      padding: 0,
-                    }}
-                  >
-                    Head
-                    <br />
-                    Hustle
-                    <br />
-                    Heal
-                  </h2>
-                </div>
-              </div>
-            ))}
+        <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center gap-8 px-5">
+          <div className="flex-1 flex justify-center">
+            <img
+              src={event3}
+              alt="Wellness & Self-Care"
+              className="w-full h-full object-cover max-w-xs md:max-w-sm rounded-lg"
+            />
           </div>
-        </section>
+          <div className="flex-1 flex flex-col justify-center items-center md:items-start text-center md:text-left gap-4 p-2 max-h-[300px] mt-20">
+            <h2
+              className="text-5xl font-extrabold leading-tight text-green-800"
+              style={{
+                fontFamily:
+                  "'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif",
+              }}
+            >
+              Wellness &
+              <br />
+              Self-Care
+            </h2>
+            <h2
+              className="text-4xl font-extrabold leading-tight text-pink-700"
+              style={{
+                fontFamily:
+                  "'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif",
+              }}
+            >
+              Head
+              <br />
+              Hustle
+              <br />
+              Heal
+            </h2>
+          </div>
+        </div>
       </section>
 
+      {/* DESCRIPTION */}
       <section className="w-full bg-gray-50 pt-2 pb-8 px-6 md:px-12 lg:px-20 [background-color:hsl(60,100%,90%)]">
         <div className="container mx-auto text-center">
           <p className="text-lg md:text-xl text-gray-700 leading-relaxed max-w-4xl mx-auto">
-            Your wellbeing is our priority. From zumba for your limbs to a
-            digital detox for your mind, we have got it all covered. Listen to
-            your needs, stay active, and rejuvenate yourself. Join us to
-            cultivate a balanced and healthy lifestyle
+            Your wellbeing is our priority. From zumba for your limbs to a digital detox for your mind, we have got it all covered. Listen to your needs, stay active, and rejuvenate yourself. Join us to cultivate a balanced and healthy lifestyle.
           </p>
         </div>
       </section>
 
+      {/* DYNAMIC EVENT GRID */}
       <section className="w-full bg-gray-50 py-12 px-6 md:px-12 lg:px-20 [background-color:hsl(60,100%,95%)]">
         <div className="container mx-auto">
           <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">
             Here are some of the areas we focus on
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {courses.map((course, index) => {
-              const isRegistered = registeredCourses.has(course.focus);
-              const isAdmin = userRole === "admin" || userRole === "admin+";
+          {events.length === 0 ? (
+            <p className="text-center text-gray-500">
+              No events yet. Admin can add using the + button.
+            </p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {events.map((event) => {
+                const expired = isExpired(event.eventDate, event.eventTime);
+                const registered = registrations.has(event.id);
+                const canRegister = !expired && !registered && currentUser;
 
-              return (
-                <Card
-                  key={index}
-                  className="flex flex-col [background-color:hsl(60,100%,95%)] transition-all duration-300 overflow-hidden rounded-2xl cursor-pointer"
-                >
-                  <img
-                    src={course.image}
-                    alt={course.focus}
-                    className="w-full h-48 object-contain"
-                  />
-                  <CardContent className="flex flex-col flex-1 p-4">
-                    <h3 className="font-semibold text-gray-900 text-base mb-2">
-                      {course.focus}
-                    </h3>
-                    <p className="text-gray-700 text-sm mb-4">{course.desc}</p>
-                    <button
-                      onClick={() =>
-                        isAdmin
-                          ? openParticipantsModal(course.focus)
-                          : openRegisterModal(course.focus)
-                      }
-                      disabled={isRegistered && !isAdmin}
-                      className={`mt-auto w-full px-4 py-2 rounded-lg transition ${
-                        isRegistered && !isAdmin
-                          ? "bg-gray-400 text-gray-700 cursor-not-allowed"
-                          : isAdmin
-                          ? "bg-purple-700 text-white hover:bg-purple-800"
-                          : "bg-primary text-white hover:bg-blue-900"
-                      }`}
-                    >
-                      {isAdmin
-                        ? "View Participants"
-                        : isRegistered
-                        ? "Registered"
-                        : "Register"}
-                    </button>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+                return (
+                  <Card
+                    key={event.id}
+                    className="relative flex flex-col [background-color:hsl(60,100%,95%)] transition-all duration-300 overflow-hidden rounded-2xl"
+                  >
+                    {/* Expired Badge */}
+                    {expired && (
+                      <span className="absolute top-2 left-2 bg-red-600 text-white text-xs px-2 py-1 rounded-full z-10">
+                        Expired
+                      </span>
+                    )}
+
+                    {/* 3‑Dot Menu */}
+                    {(isAdmin || isAdminPlus) && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute top-2 right-2 z-10 "
+                          >
+                            <MoreVertical className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {isAdmin && (
+                            <DropdownMenuItem onClick={() => openEdit(event)}>
+                              <Edit className="w-4 h-4 mr-2" />
+                              Edit
+                            </DropdownMenuItem>
+                          )}
+                          {isAdminPlus && (
+                            <DropdownMenuItem
+                              onClick={() => confirmDelete(event)}
+                              className="text-red-600"
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Delete
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+
+                    <img
+                      src={event.imageUrl}
+                      alt={event.name}
+                      className="w-full h-48 object-contain"
+                    />
+                    <CardContent className="flex flex-col flex-1 p-4">
+                      <h3 className="font-semibold text-gray-900 text-base mb-2">
+                        {event.name}
+                      </h3>
+                      <p className="text-gray-700 text-sm mb-4">
+                        {event.description}
+                      </p>
+
+                      <div className="flex items-center gap-2 text-sm text-gray-700 mb-4">
+                        <Calendar className="w-4 h-4" />
+                        <span>
+                          {format(new Date(event.eventDate), "MMM dd, yyyy")}
+                        </span>
+                        <Clock className="w-4 h-4 ml-3" />
+                        <span>{event.eventTime}</span>
+                      </div>
+
+                      {/* STUDENT */}
+                      {!isAdmin && !isAdminPlus && (
+                        <Button
+                          onClick={() => openRegister(event)}
+                          disabled={!canRegister || loading}
+                          className={`mt-auto w-full px-4 py-2 rounded-lg transition ${
+                            expired
+                              ? "bg-primary text-white cursor-not-allowed"
+                              : registered
+                              ? "bg-primary text-white"
+                              : "bg-primary text-white hover:bg-blue-900"
+                          }`}
+                        >
+                          {expired
+                            ? "Register"
+                            : registered
+                            ? "Registered"
+                            : "Register"}
+                        </Button>
+                      )}
+
+                      {/* ADMIN+ */}
+                      {isAdminPlus && (
+                        <Button
+                          onClick={() => openParticipants(event.id)}
+                          className="mt-auto w-full bg-primary text-white hover:bg-blue-900"
+                        >
+                          <Users className="w-4 h-4 mr-2 inline" />
+                          View Participants
+                        </Button>
+                      )}
+
+                      {/* ADMIN */}
+                      {isAdmin && (
+                        <div className="mt-auto flex gap-2">
+                          {/* <Button
+                            onClick={() => openEdit(event)}
+                            className="flex-1 bg-orange-600 text-white hover:bg-orange-700"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button> */}
+                          <Button
+                            onClick={() => openParticipants(event.id)}
+                            className="flex-1 bg-primary text-white hover:bg-blue-900"
+                          >
+                            View Participents
+                          </Button>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
         </div>
       </section>
 
-      {showForm && currentUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-[hsl(60,100%,95%)] p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
-            <h3 className="text-xl font-bold mb-4">
-              Register for {selectedCourse}
-            </h3>
-            <form onSubmit={handleRegister} className="space-y-4">
-              <input
-                type="text"
-                placeholder="Full Name"
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-                className="w-full p-3 border rounded-lg bg-[hsl(60,100%,90%)]"
-                required
-              />
-              {/* <p className="text-sm text-gray-600">
-                Email: <strong>{currentUser.email}</strong>
-              </p> */}
-              <select
-                value={formData.option}
-                onChange={(e) =>
-                  setFormData({ ...formData, option: e.target.value })
-                }
-                className="w-full p-3 border rounded-lg bg-[hsl(60,100%,90%)]"
-                required
-              >
-                <option value="" disabled>
-                  Select an option
-                </option>
-                <option value="Option 1">Option 1</option>
-                <option value="Option 2">Option 2</option>
-                <option value="Option 3">Option 3</option>
-                <option value="Option 4">Option 4</option>
-                <option value="Option 5">Option 5</option>
-                <option value="Option 6">Option 6</option>
-              </select>
-              <textarea
-                placeholder="Additional Message (Optional)"
-                value={formData.message}
-                onChange={(e) =>
-                  setFormData({ ...formData, message: e.target.value })
-                }
-                className="w-full p-3 border rounded-lg bg-[hsl(60,100%,90%)] h-24 resize-none"
-              />
-              <div className="flex justify-between gap-4">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="bg-green-800 text-white px-6 py-2 rounded-lg hover:bg-green-900 disabled:opacity-50"
-                >
-                  {loading ? "Submitting..." : "Submit"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowForm(false)}
-                  className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-800"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+      {/* FAB – ADMIN ONLY */}
+      {isAdmin && (
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="fixed bottom-8 right-8 bg-blue-600 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center hover:bg-blue-700 transition z-40"
+        >
+          <Plus className="w-8 h-8" />
+        </button>
       )}
 
-      {showParticipants && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-[hsl(60,100%,95%)] p-6 rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
-            <h3 className="text-xl font-bold mb-4">
-              Participants: {selectedCourse}
-            </h3>
-            {participants.length === 0 ? (
-              <p className="text-gray-600 text-center py-8">
-                No participants yet.
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {participants.map((p, i) => (
-                  <div
-                    key={i}
-                    className="p-3 bg-white rounded-lg border border-gray-200 flex items-center gap-3"
-                  >
-                    {p.profileUrl ? (
-                      <img
-                        src={p.profileUrl}
-                        alt={p.name}
-                        className="w-10 h-10 rounded-full object-cover border"
-                      />
-                    ) : (
-                      <div className="w-10 h-10 rounded-full bg-gray-300 border flex items-center justify-center">
-                        <span className="text-xs text-gray-600">
-                          {p.name.charAt(0).toUpperCase()}
-                        </span>
+      {/* ADD EVENT MODAL */}
+      <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl text-primary">
+              Add New Event
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleAddEvent} className="space-y-4">
+            <div>
+              <Label>Event Name</Label>
+              <Input
+                value={addForm.name}
+                className="[background-color:hsl(60,100%,95%)]"
+                onChange={(e) =>
+                  setAddForm({ ...addForm, name: e.target.value })
+                }
+                required
+              />
+            </div>
+            <div>
+              <Label>Description</Label>
+              <Textarea
+                value={addForm.description}
+                className="[background-color:hsl(60,100%,95%)]"
+                onChange={(e) =>
+                  setAddForm({ ...addForm, description: e.target.value })
+                }
+                required
+              />
+            </div>
+            <div>
+              <Label>Event Date</Label>
+              <Input
+                type="date"
+                value={addForm.eventDate}
+                className="[background-color:hsl(60,100%,95%)]"
+                onChange={(e) =>
+                  setAddForm({ ...addForm, eventDate: e.target.value })
+                }
+                min={getISTNow().toISOString().split("T")[0]}
+                required
+              />
+            </div>
+            <div>
+              <Label>Event Time</Label>
+              <Input
+                type="time"
+                value={addForm.eventTime}
+                className="[background-color:hsl(60,100%,95%)]"
+                onChange={(e) =>
+                  setAddForm({ ...addForm, eventTime: e.target.value })
+                }
+                required
+              />
+            </div>
+            <div>
+              <Label>Image</Label>
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={(e) =>
+                  setAddForm({
+                    ...addForm,
+                    image: e.target.files?.[0] || null,
+                  })
+                }
+                className="[background-color:hsl(60,100%,95%)]"
+                required
+              />
+            </div>
+            <div className="flex gap-3">
+              <Button
+                type="submit"
+                disabled={loading || !isAddFormValid}
+                className="bg-green-700 hover:bg-green-600 text-white"
+              >
+                {loading ? "Uploading..." : "Add Event"}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowAddModal(false)}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                Cancel
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* EDIT MODAL */}
+      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Event Date & Time</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleEditEvent} className="space-y-4">
+            <div>
+              <Label>Date</Label>
+              <Input
+                type="date"
+                value={editForm.eventDate}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, eventDate: e.target.value })
+                }
+                min={
+                  selectedEvent?.eventDate ??
+                  getISTNow().toISOString().split("T")[0]
+                }
+                className="[background-color:hsl(60,100%,95%)]"
+                required
+              />
+            </div>
+            <div>
+              <Label>Time</Label>
+              <Input
+                type="time"
+                value={editForm.eventTime}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, eventTime: e.target.value })
+                }
+                required
+              />
+            </div>
+            <div className="flex gap-3">
+              <Button
+                type="submit"
+                disabled={loading}
+                className="bg-green-700 hover:bg-green-600 text-white"
+              >
+                Update
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowEditModal(false)}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                Cancel
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* REGISTER MODAL */}
+      <Dialog open={showRegModal} onOpenChange={setShowRegModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Register for {selectedEvent?.name}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleRegister} className="space-y-4">
+            <div>
+              <Label>Name</Label>
+              <Input
+                value={regForm.name}
+                className="[background-color:hsl(60,100%,95%)]"
+                onChange={(e) =>
+                  setRegForm({ ...regForm, name: e.target.value })
+                }
+                required
+              />
+            </div>
+            <div>
+              <Label>Message (Optional)</Label>
+              <Textarea
+                placeholder="Why are you joining? Any questions?"
+                value={regForm.message}
+                className="[background-color:hsl(60,100%,95%)]"
+                onChange={(e) =>
+                  setRegForm({ ...regForm, message: e.target.value })
+                }
+              />
+            </div>
+            <DialogFooter>
+              <Button type="submit" disabled={loading} className="bg-green-700 text-white">
+                {loading ? "Registering..." : "Register"}
+              </Button>
+              <Button className="bg-red-600 text-white"
+                variant="outline"
+                onClick={() => setShowRegModal(false)}
+              >
+                Cancel
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* DELETE CONFIRM MODAL */}
+      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Event?</DialogTitle>
+            <DialogDescription>
+              This will permanently delete "
+              <strong>{selectedEvent?.name}</strong>". This action cannot be
+              undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteConfirm(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={loading}
+            >
+              {loading ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* PARTICIPANTS MODAL */}
+      <Dialog open={showParticipants} onOpenChange={setShowParticipants}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Participants: {selectedEvent?.name}
+            </DialogTitle>
+          </DialogHeader>
+          {participants.length === 0 ? (
+            <p className="text-center py-8 text-gray-500">
+              No participants yet.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {participants.map((p) => (
+                <div
+                  key={p.id}
+                  className="p-3 bg-white rounded-lg border border-gray-200 flex items-center gap-3"
+                >
+                  {p.profileUrl ? (
+                    <img
+                      src={p.profileUrl}
+                      alt={p.name}
+                      className="w-10 h-10 rounded-full object-cover border"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-gray-300 border flex items-center justify-center">
+                      <span className="text-xs text-gray-600">
+                        {p.name[0].toUpperCase()}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <p className="font-medium">{p.name}</p>
+                    <p className="text-sm text-gray-600">{p.email}</p>
+                    {p.message && (
+                      <div className="mt-2 p-2 bg-gray-50 rounded-lg text-sm text-gray-700 flex items-start gap-1">
+                        <MessageSquare className="w-4 h-4 text-gray-500 mt-0.5" />
+                        <span>{p.message}</span>
                       </div>
                     )}
-                    <div className="flex-1">
-                      <p className="font-medium">{p.name}</p>
-                      <p className="text-sm text-gray-600">{p.email}</p>
-                      {p.option && (
-                        <p className="text-xs text-gray-500 mt-1">
-                          Option: {p.option}
-                        </p>
-                      )}
-                    </div>
                   </div>
-                ))}
-              </div>
-            )}
-            <button
-              onClick={() => setShowParticipants(false)}
-              className="mt-6 w-full bg-red-600 text-white py-2 rounded-lg hover:bg-red-700"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
+                </div>
+              ))}
+            </div>
+          )}
+          <Button
+            className="mt-6 w-full bg-red-600 text-white"
+            variant="outline"
+            onClick={() => setShowParticipants(false)}
+          >
+            Close
+          </Button>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
