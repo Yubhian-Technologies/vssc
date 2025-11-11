@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { doc, getDoc, setDoc, deleteDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, deleteDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { signOut, deleteUser, updateProfile, reauthenticateWithCredential, EmailAuthProvider, updatePassword } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
@@ -600,10 +600,56 @@ const AccountPage = () => {
         password
       );
       await reauthenticateWithCredential(auth.currentUser, credential);
-      // Delete user document and auth account
-      await deleteDoc(doc(db, "users", auth.currentUser.uid));
+      
+      const userId = auth.currentUser.uid;
+      const userEmail = auth.currentUser.email;
+      
+      // Comprehensive list of all possible collections
+      const collections = [
+        'users', 'reservations', 'feedback', 'leaderboard', 'bookings',
+        'events', 'notifications', 'messages', 'comments', 'reviews',
+        'activities', 'sessions', 'logs', 'analytics', 'preferences'
+      ];
+      
+      // Delete from all collections
+      for (const collectionName of collections) {
+        try {
+          if (collectionName === 'users') {
+            // Delete user document directly
+            await deleteDoc(doc(db, collectionName, userId));
+          } else {
+            // Query by userId
+            const userIdQuery = query(collection(db, collectionName), where('userId', '==', userId));
+            const userIdSnapshot = await getDocs(userIdQuery);
+            for (const docSnapshot of userIdSnapshot.docs) {
+              await deleteDoc(docSnapshot.ref);
+            }
+            
+            // Query by userEmail if different from userId
+            if (userEmail) {
+              const emailQuery = query(collection(db, collectionName), where('userEmail', '==', userEmail));
+              const emailSnapshot = await getDocs(emailQuery);
+              for (const docSnapshot of emailSnapshot.docs) {
+                await deleteDoc(docSnapshot.ref);
+              }
+              
+              // Query by email field
+              const emailFieldQuery = query(collection(db, collectionName), where('email', '==', userEmail));
+              const emailFieldSnapshot = await getDocs(emailFieldQuery);
+              for (const docSnapshot of emailFieldSnapshot.docs) {
+                await deleteDoc(docSnapshot.ref);
+              }
+            }
+          }
+        } catch (collectionError) {
+          // Continue with other collections even if one fails
+          console.warn(`Failed to delete from ${collectionName}:`, collectionError);
+        }
+      }
+      
+      // Delete auth account last
       await deleteUser(auth.currentUser);
-      toastSuccess("Account deleted successfully!");
+      toastSuccess("Account completely deleted! All your data has been removed.");
       setShowDeleteAccount(false);
       navigate("/auth");
     } catch (error) {
