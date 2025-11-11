@@ -126,7 +126,7 @@ const Header = () => {
       <div className="absolute top-0 right-0 h-full w-[250px] md:w-[450px] bg-primary z-0 [clip-path:polygon(20%_0,100%_0,100%_100%,0%_100%)] opacity-90 pointer-events-none"></div>
 
       {/* Header container */}
-      <div className="container mx-auto px-4 sm:px-6 py-2 flex items-center justify-between relative z-20">
+<div className="w-full pl-3 pr-0 md:pl-5 md:pr-0 py-1 flex items-center justify-between relative z-20">
         {/* Logo */}
         <div
           className={`flex items-center transition-all duration-500 ${
@@ -317,13 +317,21 @@ const Header = () => {
   )}
 </div>
 
-        {/* Mobile Menu Button */}
-        <button
-          className="lg:hidden flex items-center justify-center w-10 h-10 rounded-md border border-border text-white relative z-[200]"
-          onClick={toggleMenu}
-        >
-          {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
+        {/* Mobile Menu Button and Admin Toggle */}
+        <div className="lg:hidden flex items-center gap-2 relative z-[200]">
+          {/* Admin Toggle for mobile */}
+          {isLoggedIn && role === "admin" && uid && (
+            <AppointmentToggleModal userId={uid} />
+          )}
+          
+          {/* Hamburger Menu Button */}
+          <button
+            className="flex items-center justify-center w-10 h-10 rounded-md border border-border text-white"
+            onClick={toggleMenu}
+          >
+            {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile Menu */}
@@ -463,9 +471,7 @@ const Header = () => {
                 </Link>
               )
             )}
-            {isLoggedIn && role === "admin" && uid && (
-              <AppointmentToggleModal userId={uid} />
-            )}
+
             
 
             <ButtonGradient
