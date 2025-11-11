@@ -22,9 +22,12 @@ const HeroSection = () => {
   const [showGame, setShowGame] = useState(false);
   const [showCongrats, setShowCongrats] = useState(false);
   const [showGameCongrats, setShowGameCongrats] = useState(false); // New for GameCongratsPopup
-  const [congratsMessage, setCongratsMessage] = useState<string | undefined>(undefined);
+  const [congratsMessage, setCongratsMessage] = useState<string | undefined>(
+    undefined
+  );
   const [points, setPoints] = useState(0);
-  const [shouldShowGameAfterCongrats, setShouldShowGameAfterCongrats] = useState(false);
+  const [shouldShowGameAfterCongrats, setShouldShowGameAfterCongrats] =
+    useState(false);
   const [isFirstGame, setIsFirstGame] = useState(false);
 
   const firstPart = "Learn. Grow.";
@@ -57,7 +60,8 @@ const HeroSection = () => {
               window.history.replaceState({}, document.title);
             }
 
-            const isEligible = !lastClaimed || lastClaimed.toDateString() !== todayKey;
+            const isEligible =
+              !lastClaimed || lastClaimed.toDateString() !== todayKey;
 
             if (isEligible) {
               if (newUser || location.state?.showCongrats) {
@@ -107,7 +111,7 @@ const HeroSection = () => {
   const handleGameSkip = () => {
     setShowGame(false);
     if (isFirstGame) {
-      navigate("/leaderboard", { state: { showArrow: true } });
+      //navigate("/leaderboard", { state: { showArrow: true } });
       setIsFirstGame(false);
     }
   };
@@ -134,8 +138,18 @@ const HeroSection = () => {
       className="relative h-auto py-10 sm:py-14 [background-color:hsl(60,100%,95%)]"
     >
       {/* Popups */}
-      {showCongrats && <CongratsPopup onClose={handleCongratsClose} message={congratsMessage} />}
-      {showGame && <DailyGameModal onComplete={handleGameComplete} onClose={handleGameSkip} />}
+      {showCongrats && (
+        <CongratsPopup
+          onClose={handleCongratsClose}
+          message={congratsMessage}
+        />
+      )}
+      {showGame && (
+        <DailyGameModal
+          onComplete={handleGameComplete}
+          onClose={handleGameSkip}
+        />
+      )}
       {showGameCongrats && (
         <GameCongratsPopup
           onClose={() => setShowGameCongrats(false)}
@@ -168,7 +182,10 @@ const HeroSection = () => {
                 animate="visible"
                 variants={{
                   hidden: { opacity: 1 },
-                  visible: { opacity: 1, transition: { staggerChildren: 0.02 } },
+                  visible: {
+                    opacity: 1,
+                    transition: { staggerChildren: 0.02 },
+                  },
                 }}
               >
                 {firstPart.split("").map((char, index) => (
@@ -179,7 +196,9 @@ const HeroSection = () => {
                       visible: { opacity: 1, y: "0em" },
                     }}
                     transition={{ duration: 0.01 }}
-                    className={`text-yellow-500 ${char === " " ? "inline-block w-2" : ""}`}
+                    className={`text-yellow-500 ${
+                      char === " " ? "inline-block w-2" : ""
+                    }`}
                   >
                     {char}
                   </motion.span>
@@ -192,7 +211,9 @@ const HeroSection = () => {
                       visible: { opacity: 1, y: "0em" },
                     }}
                     transition={{ duration: 0.01 }}
-                    className={`text-primary ${char === " " ? "inline-block w-2" : ""}`}
+                    className={`text-primary ${
+                      char === " " ? "inline-block w-2" : ""
+                    }`}
                   >
                     {char}
                   </motion.span>
@@ -200,7 +221,8 @@ const HeroSection = () => {
               </motion.h1>
 
               <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-xs sm:max-w-md md:max-w-lg">
-                The Vishnu Student Success Centre is dedicated to supporting and empowering students on their academic and personal journeys.
+                The Vishnu Student Success Centre is dedicated to supporting and
+                empowering students on their academic and personal journeys.
               </p>
             </div>
 

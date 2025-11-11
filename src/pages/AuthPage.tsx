@@ -7,7 +7,7 @@ import {
   sendPasswordResetEmail,
   sendEmailVerification,
   onAuthStateChanged,
-  type AuthError,
+  fetchSignInMethodsForEmail,
 } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { auth, db } from "../firebase";
@@ -50,6 +50,7 @@ export default function AuthPage() {
 
   const [isLogin, setIsLogin] = useState(true);
   const [isReset, setIsReset] = useState(false);
+  const [isResend, setIsResend] = useState(false); // ✅ NEW STATE for resend verification form
   const [name, setName] = useState("");
   const [college, setCollege] = useState(colleges[0].name);
   const [email, setEmail] = useState("");
@@ -68,7 +69,7 @@ export default function AuthPage() {
     return () => unsubscribe();
   }, [navigate]);
 
-  // Reset Password Handler
+  // ✅ Reset Password Handler
   const handleResetPassword = async () => {
     setError("");
 
@@ -86,23 +87,11 @@ export default function AuthPage() {
     }
 
     try {
-      await sendPasswordResetEmail(auth, email, {
-        url: "http://localhost:8080/auth",
-        handleCodeInApp: false,
-      });
+      await sendPasswordResetEmail(auth, email);
       setError("✅ Password reset email sent! Check your inbox/spam.");
       setIsReset(false);
-    } catch (err: unknown) {
-      let message = "❌ Failed to send reset email.";
-      if (err && typeof err === "object") {
-        if (
-          "message" in err &&
-          typeof (err as { message?: string }).message === "string"
-        ) {
-          message = (err as { message: string }).message!;
-        }
-      }
-      setError(message);
+    } catch (err: any) {
+      setError(err.message || "❌ Failed to send reset email.");
     }
   };
 
@@ -124,16 +113,12 @@ export default function AuthPage() {
         return;
       }
 
-      navigate("/", { state: { showCongrats: true } });
-    } catch (err: unknown) {
-      let message = "Login failed. Please check your credentials.";
-      if (err && typeof err === "object" && "message" in err) {
-        message = (err as { message: string }).message;
-      }
-      setError(message);
+      navigate("/");
+    } catch (err: any) {
+      setError(err.message || "Login failed. Please check your credentials.");
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   // ✅ Handle Register
@@ -155,11 +140,9 @@ export default function AuthPage() {
         password
       );
 
-      // Send verification email
       await sendEmailVerification(userCredential.user);
       console.log("Verification email sent to:", email);
 
-      // Store user info in Firestore
       await setDoc(doc(db, "users", userCredential.user.uid), {
         uid: userCredential.user.uid,
         name,
@@ -173,47 +156,63 @@ export default function AuthPage() {
 
       localStorage.removeItem("dailyGameClaim");
 
-      // ✅ Show long toast
       toast.success(
-        "✅ Registration successful! A verification link has been sent to your inbox/spam. Please verify your email before logging in.",
+        "✅ Registration successful! Please verify your email before logging in.",
         { duration: 6000 }
       );
 
-      // ✅ Prevent auto-login
-      await new Promise((resolve) => setTimeout(resolve, 400));
       await auth.signOut();
-
-      // ✅ Switch to login form (stay on AuthPage)
       setIsLogin(true);
       setPassword("");
       setConfirmPassword("");
       setEmail("");
-    } catch (err: unknown) {
-      let message = "Registration failed.";
-      if (err && typeof err === "object" && "message" in err) {
-        message = (err as { message: string }).message;
-      }
-      setError(message);
+    } catch (err: any) {
+      setError(err.message || "Registration failed.");
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
-  // ✅ Resend Verification Email
-  const handleResendVerification = async () => {
+  // ✅ Handle Resend Verification (Email input version)
+  const handleResendVerification = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    if (!email) {
+      setError("Please enter your registered email.");
+      setLoading(false);
+      return;
+    }
+
     try {
-      const user = auth.currentUser;
-      if (user && !user.emailVerified) {
-        await sendEmailVerification(user);
-        toast.success("📧 Verification email resent! Check your inbox/spam.");
-      } else {
-        toast.error(
-          "Login first to resend verification or you're already verified."
-        );
+      const signInMethods = await fetchSignInMethodsForEmail(auth, email);
+
+      if (signInMethods.length === 0) {
+        setError("❌ Email not registered. Please register first.");
+        setLoading(false);
+        return;
       }
-    } catch (error) {
-      toast.error("Failed to resend verification email.");
-      console.error(error);
+
+      // Send a new verification email
+      const tempUser = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      ).catch(() => null);
+
+      if (tempUser && tempUser.user && !tempUser.user.emailVerified) {
+        await sendEmailVerification(tempUser.user);
+        toast.success("📧 Verification email sent! Check your inbox/spam.");
+        await auth.signOut();
+        setIsResend(false);
+      } else {
+        setError("⚠️ This email is already verified or invalid credentials.");
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to resend verification email.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -228,7 +227,9 @@ export default function AuthPage() {
           className="absolute top-0 h-full w-1/2 transition-transform duration-700 ease-in-out z-20"
           style={{
             transform:
-              isLogin || isReset ? "translateX(100%)" : "translateX(0%)",
+              isLogin || isReset || isResend
+                ? "translateX(100%)"
+                : "translateX(0%)",
           }}
         >
           <img
@@ -238,10 +239,10 @@ export default function AuthPage() {
           />
         </div>
 
-        {/* Login Form */}
+        {/* ✅ Login Form */}
         <div
           className={`absolute left-0 top-0 w-1/2 h-full flex flex-col justify-center px-8 py-6 transition-all duration-700 ease-in-out ${
-            isLogin && !isReset
+            isLogin && !isReset && !isResend
               ? "opacity-100"
               : "opacity-0 pointer-events-none"
           }`}
@@ -282,9 +283,12 @@ export default function AuthPage() {
             </button>
           </form>
 
-          {/* Resend Verification Email */}
           <button
-            onClick={handleResendVerification}
+            onClick={() => {
+              setIsResend(true);
+              setError("");
+              setEmail("");
+            }}
             className="mt-3 text-sm text-blue-700 hover:underline"
           >
             Resend Verification Email
@@ -293,10 +297,7 @@ export default function AuthPage() {
           <p className="mt-4 text-sm text-gray-600">
             Don’t have an account?{" "}
             <button
-              onClick={() => {
-                setIsLogin(false);
-                setError("");
-              }}
+              onClick={() => setIsLogin(false)}
               className="text-[#001A66] font-medium"
             >
               Register
@@ -320,10 +321,10 @@ export default function AuthPage() {
           </p>
         </div>
 
-        {/* Register Form */}
+        {/* ✅ Register Form */}
         <div
           className={`absolute right-0 top-0 w-1/2 h-full flex flex-col justify-center px-8 py-6 transition-all duration-700 ease-in-out ${
-            !isLogin && !isReset
+            !isLogin && !isReset && !isResend
               ? "opacity-100"
               : "opacity-0 pointer-events-none"
           }`}
@@ -389,7 +390,7 @@ export default function AuthPage() {
           </p>
         </div>
 
-        {/* ✅ Reset Password Form (NEWLY ADDED) */}
+        {/* ✅ Reset Password Form */}
         <div
           className={`absolute left-0 top-0 w-1/2 h-full flex flex-col justify-center px-8 py-6 transition-all duration-700 ease-in-out ${
             isReset ? "opacity-100" : "opacity-0 pointer-events-none"
@@ -411,7 +412,6 @@ export default function AuthPage() {
               required
               className="w-full border rounded-md p-2 bg-[hsl(60,100%,95%)]"
             />
-
             {error && (
               <p
                 className={`text-sm mt-2 ${
@@ -421,7 +421,6 @@ export default function AuthPage() {
                 {error}
               </p>
             )}
-
             <button
               type="submit"
               disabled={loading}
@@ -442,6 +441,63 @@ export default function AuthPage() {
               className="text-[#001A66] font-medium"
             >
               Back to Login
+            </button>
+          </p>
+        </div>
+
+        {/* ✅ Resend Verification Form */}
+        <div
+          className={`absolute left-0 top-0 w-1/2 h-full flex flex-col justify-center px-8 py-6 transition-all duration-700 ease-in-out ${
+            isResend ? "opacity-100" : "opacity-0 pointer-events-none"
+          }`}
+        >
+          <h2 className="text-2xl font-bold mb-4">Resend Verification Email</h2>
+          <form onSubmit={handleResendVerification} className="space-y-3">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your registered college email"
+              required
+              className="w-full border rounded-md p-2 bg-[hsl(60,100%,95%)]"
+            />
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter your password"
+              required
+              className="w-full border rounded-md p-2 bg-[hsl(60,100%,95%)]"
+            />
+            {error && (
+              <p
+                className={`text-sm mt-2 ${
+                  error.startsWith("✅") ? "text-green-600" : "text-red-500"
+                }`}
+              >
+                {error}
+              </p>
+            )}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-[#001A66] hover:bg-blue-900 text-white py-2 rounded-md transition"
+            >
+              {loading ? "Processing..." : "Send Verification Email"}
+            </button>
+          </form>
+
+          <p className="mt-4 text-sm text-gray-600">
+            Back to{" "}
+            <button
+              onClick={() => {
+                setIsResend(false);
+                setIsLogin(true);
+                setError("");
+              }}
+              className="text-[#001A66] font-medium"
+            >
+              Login
             </button>
           </p>
         </div>

@@ -45,8 +45,6 @@ const DailyGameModal: React.FC<DailyGameModalProps> = ({
     const checkEligibility = async () => {
       const user = auth.currentUser;
       if (!user) {
-        console.log("No user logged in for DailyGameModal");
-        setClaimedToday(true);
         return;
       }
 
