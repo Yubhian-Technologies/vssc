@@ -907,7 +907,7 @@ const FindingNemoPage: React.FC = () => {
               disabled={participants.length === 0}
               className="flex-1 bg-green-600 hover:bg-green-700 text-white"
             >
-              Download Excel (.xlsx)
+              Download Excel
             </Button>
             <Button
               variant="outline"

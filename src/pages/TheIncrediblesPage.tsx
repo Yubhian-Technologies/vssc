@@ -788,7 +788,7 @@ const TheIncrediblesPage: React.FC = () => {
           )}
           <div className="flex gap-3 mt-6">
             <Button onClick={downloadExcel} disabled={participants.length === 0} className="flex-1 bg-green-600 hover:bg-green-700 text-white">
-              Download Excel (.xlsx)
+              Download Excel
             </Button>
             <Button
               className="flex-1 bg-red-600 text-white"
