@@ -39,6 +39,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import * as ExcelJS from "exceljs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // === PAGE-SPECIFIC CONFIG ===
 const PAGE_NAME = "TheIncredibles";
@@ -71,11 +78,15 @@ const TheIncrediblesPage: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [userRole, setUserRole] = useState<string>("student");
   const [userCollege, setUserCollege] = useState<string>("");
-  const [userName, setUserName] = useState<string>(""); // From users collection
+  const [userName, setUserName] = useState<string>("");
   const [events, setEvents] = useState<Event[]>([]);
   const [registrations, setRegistrations] = useState<Set<string>>(new Set());
   const [participants, setParticipants] = useState<Registration[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // Admin+ filter
+  const [selectedCollege, setSelectedCollege] = useState<string>("");
+  const [availableColleges, setAvailableColleges] = useState<string[]>([]);
 
   // Modals
   const [showAddModal, setShowAddModal] = useState(false);
@@ -105,27 +116,58 @@ const TheIncrediblesPage: React.FC = () => {
           setUserRole(data.role || "student");
           setUserCollege(data.college || "");
           setUserName(data.name || user.displayName || "Student");
+
+          // Default filter for admin+
+          if (data.role === "admin+") {
+            setSelectedCollege(data.college || "All colleges");
+          }
         }
       } else {
         setCurrentUser(null);
         setUserRole("student");
         setUserCollege("");
         setUserName("");
+        setSelectedCollege("");
+        setAvailableColleges([]);
       }
     });
     return () => unsub();
   }, []);
 
+  /* --------------------- COLLEGES FOR FILTER ---------------------- */
+  useEffect(() => {
+    if (userRole !== "admin+") return;
+
+    const q = query(collection(db, EVENTS_COLLECTION));
+    const unsub = onSnapshot(q, (snap) => {
+      const colleges = new Set<string>();
+      snap.forEach((d) => {
+        const data = d.data();
+        if (data.college) colleges.add(data.college);
+      });
+      const list = Array.from(colleges).sort();
+      setAvailableColleges(["All colleges", ...list]);
+    });
+    return () => unsub();
+  }, [userRole]);
+
   /* --------------------- PAGE-SPECIFIC EVENTS ---------------------- */
   useEffect(() => {
     let q: any;
 
-    if (userRole === "admin+" || !currentUser) {
+    if (userRole === "admin+" && selectedCollege && selectedCollege !== "All colleges") {
+      q = query(
+        collection(db, EVENTS_COLLECTION),
+        where("college", "==", selectedCollege)
+      );
+    } else if (userRole === "admin+") {
       q = query(collection(db, EVENTS_COLLECTION));
     } else if (userRole === "admin") {
       q = query(collection(db, EVENTS_COLLECTION), where("createdBy", "==", currentUser.uid));
-    } else {
+    } else if (userRole === "student" && currentUser) {
       q = query(collection(db, EVENTS_COLLECTION), where("college", "==", userCollege));
+    } else {
+      q = query(collection(db, EVENTS_COLLECTION));
     }
 
     const unsub = onSnapshot(q, (snap) => {
@@ -134,7 +176,7 @@ const TheIncrediblesPage: React.FC = () => {
       setEvents(list);
     });
     return () => unsub();
-  }, [currentUser, userRole, userCollege]);
+  }, [currentUser, userRole, userCollege, selectedCollege]);
 
   /* ----------------- PAGE-SPECIFIC REGISTRATIONS ------------------- */
   useEffect(() => {
@@ -231,7 +273,7 @@ const TheIncrediblesPage: React.FC = () => {
     }
   };
 
-  /* --------------------------- AUTO REGISTER WITH ALERT ----------------------- */
+  /* --------------------------- AUTO REGISTER ----------------------- */
   const handleAutoRegister = async (event: Event) => {
     if (!currentUser) {
       toastError("Please log in to register");
@@ -285,7 +327,7 @@ const TheIncrediblesPage: React.FC = () => {
     }
   };
 
-  /* ----------------------- VIEW PARTICIPANTS (REAL NAMES) ----------------------- */
+  /* ----------------------- VIEW PARTICIPANTS ----------------------- */
   const openParticipants = (eventId: string) => {
     const event = events.find((e) => e.id === eventId);
     if (!event) return;
@@ -340,7 +382,7 @@ const TheIncrediblesPage: React.FC = () => {
     addForm.image &&
     new Date(`${addForm.eventDate}T${addForm.eventTime}:00`) > new Date();
 
-  /* ----------------------- DOWNLOAD REAL EXCEL (.xlsx) ----------------------- */
+  /* ----------------------- DOWNLOAD EXCEL ----------------------- */
   const downloadExcel = async () => {
     if (participants.length === 0) return;
 
@@ -372,7 +414,7 @@ const TheIncrediblesPage: React.FC = () => {
   return (
     <div className="bg-gray-50">
       {/* HEADER */}
-      <section className="[background-color:hsl(60,100%,90%)] w-full py-8">
+      <section className="[background-color:hsl(60,100%,95%)] w-full py-8">
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center gap-8 px-5">
           <div className="flex-1 flex justify-center">
             <img
@@ -411,7 +453,7 @@ const TheIncrediblesPage: React.FC = () => {
       </section>
 
       {/* DESCRIPTION */}
-      <section className="w-full bg-gray-50 pt-2 pb-8 px-6 md:px-12 lg:px-20 [background-color:hsl(60,100%,90%)]">
+      <section className="w-full bg-gray-50 pt-2 pb-8 px-6 md:px-12 lg:px-20 [background-color:hsl(60,100%,95%)]">
         <div className="container mx-auto text-center">
           <p className="text-lg md:text-xl text-gray-700 leading-relaxed max-w-4xl mx-auto">
             We are here to equip you with essential tools for success. Whether you need subject-focused recap sessions or help with improving your writing skills, you’ll find our unwavering support right here. Visit us and let us help you achieve your goals.
@@ -420,11 +462,51 @@ const TheIncrediblesPage: React.FC = () => {
       </section>
 
       {/* DYNAMIC EVENT GRID */}
-      <section className="w-full bg-gray-50 py-12 px-6 md:px-12 lg:px-20 [background-color:hsl(60,100%,95%)]">
+      <section className="w-full bg-gray-50 py-12 px-6 md:px-12 lg:px-20 [background-color:hsl(60,100%,90%)]">
         <div className="container mx-auto">
           <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">
             Here are some of the areas we focus on
           </h2>
+
+          {/* COLLEGE FILTER – ADMIN+ ONLY */}
+          {isAdminPlus && (
+            <div className="mb-6 flex justify-center">
+              <div className="max-w-xs w-full">
+                <Label htmlFor="college-filter">Filter by College</Label>
+
+                <Select
+                  value={selectedCollege}
+                  onValueChange={(value) => setSelectedCollege(value)}
+                >
+                  <SelectTrigger
+                    id="college-filter"
+                    className="mt-1 [background-color:hsl(60,100%,95%)]"
+                  >
+                    <SelectValue placeholder="Select a college" />
+                  </SelectTrigger>
+
+                  <SelectContent>
+                    {availableColleges.map((c) => (
+                      <SelectItem key={c} value={c}>
+                        {c}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {/* {selectedCollege && selectedCollege !== "All colleges" && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedCollege("All colleges")}
+                    className="mt-2 text-xs"
+                  >
+                    Clear filter
+                  </Button>
+                )} */}
+              </div>
+            </div>
+          )}
 
           {events.length === 0 ? (
             <p className="text-center text-gray-500">
@@ -454,7 +536,7 @@ const TheIncrediblesPage: React.FC = () => {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="absolute top-2 right-2 z-10 "
+                            className="absolute top-2 right-2 z-10"
                           >
                             <MoreVertical className="w-4 h-4" />
                           </Button>
@@ -514,23 +596,13 @@ const TheIncrediblesPage: React.FC = () => {
                         </Button>
                       )}
 
-                      {/* ADMIN+ */}
-                      {isAdminPlus && (
+                      {/* ADMIN / ADMIN+ */}
+                      {(isAdmin || isAdminPlus) && (
                         <Button
                           onClick={() => openParticipants(event.id)}
                           className="mt-auto w-full bg-primary text-white hover:bg-blue-900"
                         >
                           <Users className="w-4 h-4 mr-2 inline" />
-                          View Participants
-                        </Button>
-                      )}
-
-                      {/* ADMIN */}
-                      {isAdmin && (
-                        <Button
-                          onClick={() => openParticipants(event.id)}
-                          className="mt-auto w-full bg-primary text-white hover:bg-blue-900"
-                        >
                           View Participants
                         </Button>
                       )}
