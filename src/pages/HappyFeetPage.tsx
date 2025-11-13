@@ -30,16 +30,7 @@ import {
 } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { format } from "date-fns";
-import {
-  Plus,
-  Edit,
-  Users,
-  Calendar,
-  Clock,
-  MoreVertical,
-  Trash2,
-  MessageSquare,
-} from "lucide-react";
+import { Plus, Edit, Users, Calendar, Clock, MoreVertical, Trash2 } from "lucide-react";
 import { uploadToCloudinary } from "../utils/cloudinary";
 import {
   DropdownMenu,
@@ -47,6 +38,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import * as ExcelJS from "exceljs";
 
 // === PAGE‑SPECIFIC CONFIG ===
 const PAGE_NAME = "HappyFeet";
@@ -71,7 +63,6 @@ interface Registration {
   name: string;
   email: string;
   profileUrl?: string;
-  message?: string;
 }
 
 const HappyFeetPage: React.FC = () => {
@@ -80,6 +71,7 @@ const HappyFeetPage: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [userRole, setUserRole] = useState<string>("student");
   const [userCollege, setUserCollege] = useState<string>("");
+  const [userName, setUserName] = useState<string>(""); // From users.name
   const [events, setEvents] = useState<Event[]>([]);
   const [registrations, setRegistrations] = useState<Set<string>>(new Set());
   const [participants, setParticipants] = useState<Registration[]>([]);
@@ -89,7 +81,6 @@ const HappyFeetPage: React.FC = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showParticipants, setShowParticipants] = useState(false);
-  const [showRegModal, setShowRegModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
@@ -102,7 +93,11 @@ const HappyFeetPage: React.FC = () => {
     image: null as File | null,
   });
   const [editForm, setEditForm] = useState({ eventDate: "", eventTime: "" });
-  const [regForm, setRegForm] = useState({ name: "", message: "" });
+
+  /* -------------------------- IST TIME HELPERS --------------------------- */
+  const getISTNow = () => {
+    return new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+  };
 
   /* -------------------------- AUTH & ROLE --------------------------- */
   useEffect(() => {
@@ -112,17 +107,15 @@ const HappyFeetPage: React.FC = () => {
         const snap = await getDoc(doc(db, "users", user.uid));
         if (snap.exists()) {
           const data = snap.data();
-          setUserRole(data.role || "student");
+          setUserRole(data.role || "playground");
           setUserCollege(data.college || "");
-          setRegForm((prev) => ({
-            ...prev,
-            name: data.name || user.displayName || "",
-          }));
+          setUserName(data.name || user.displayName || "Student");
         }
       } else {
         setCurrentUser(null);
         setUserRole("student");
         setUserCollege("");
+        setUserName("");
       }
     });
     return () => unsub();
@@ -135,15 +128,9 @@ const HappyFeetPage: React.FC = () => {
     if (userRole === "admin+" || !currentUser) {
       q = query(collection(db, EVENTS_COLLECTION));
     } else if (userRole === "admin") {
-      q = query(
-        collection(db, EVENTS_COLLECTION),
-        where("createdBy", "==", currentUser.uid)
-      );
+      q = query(collection(db, EVENTS_COLLECTION), where("createdBy", "==", currentUser.uid));
     } else {
-      q = query(
-        collection(db, EVENTS_COLLECTION),
-        where("college", "==", userCollege)
-      );
+      q = query(collection(db, EVENTS_COLLECTION), where("college", "==", userCollege));
     }
 
     const unsub = onSnapshot(q, (snap) => {
@@ -174,30 +161,12 @@ const HappyFeetPage: React.FC = () => {
   }, [currentUser]);
 
   /* ------------------------------- HELPERS ------------------------- */
-  const getISTNow = () => {
-    return new Date(
-      new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" })
-    );
-  };
-
   const isExpired = (date: string, time: string) => {
     const dt = new Date(`${date}T${time}:00`);
     return dt < getISTNow();
   };
 
-  const isFutureDate = (date: string) => {
-    const today = getISTNow();
-    today.setHours(0, 0, 0, 0);
-    return new Date(date) >= today;
-  };
-
-  // Validate edit datetime >= original AND >= now (IST)
-  const isAfterOriginal = (
-    newDate: string,
-    newTime: string,
-    origDate: string,
-    origTime: string
-  ) => {
+  const isAfterOriginal = (newDate: string, newTime: string, origDate: string, origTime: string) => {
     const newDt = new Date(`${newDate}T${newTime}:00`);
     const origDt = new Date(`${origDate}T${origTime}:00`);
     return newDt >= origDt && newDt >= getISTNow();
@@ -229,13 +198,7 @@ const HappyFeetPage: React.FC = () => {
       });
       toastSuccess("Event added successfully!");
       setShowAddModal(false);
-      setAddForm({
-        name: "",
-        description: "",
-        eventDate: "",
-        eventTime: "",
-        image: null,
-      });
+      setAddForm({ name: "", description: "", eventDate: "", eventTime: "", image: null });
     } catch (err: any) {
       toastError(err.message || "Failed to add event");
     } finally {
@@ -254,17 +217,8 @@ const HappyFeetPage: React.FC = () => {
     e.preventDefault();
     if (!selectedEvent || userRole !== "admin") return;
 
-    if (
-      !isAfterOriginal(
-        editForm.eventDate,
-        editForm.eventTime,
-        selectedEvent.eventDate,
-        selectedEvent.eventTime
-      )
-    ) {
-      return toastError(
-        "New date & time must be after the original event and not in the past (IST)"
-      );
+    if (!isAfterOriginal(editForm.eventDate, editForm.eventTime, selectedEvent.eventDate, selectedEvent.eventTime)) {
+      return toastError("New date & time must be after the original event and not in the past (IST)");
     }
 
     setLoading(true);
@@ -282,40 +236,35 @@ const HappyFeetPage: React.FC = () => {
     }
   };
 
-  /* ----------------------------- REGISTER -------------------------- */
-  const openRegister = (event: Event) => {
+  /* --------------------------- AUTO REGISTER WITH ALERT ----------------------- */
+  const handleAutoRegister = async (event: Event) => {
     if (!currentUser) {
-      toastError("Please log in");
+      toastError("Please log in to register");
       navigate("/auth");
       return;
     }
-    setSelectedEvent(event);
-    setRegForm({
-      name: currentUser.displayName || "",
-      message: "",
-    });
-    setShowRegModal(true);
-  };
 
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!currentUser || !selectedEvent) return;
+    if (registrations.has(event.id)) {
+      alert("You are already registered for this event!");
+      return;
+    }
+
+    const confirmRegister = window.confirm(`Register for "${event.name}"?`);
+    if (!confirmRegister) return;
 
     setLoading(true);
     try {
       await addDoc(collection(db, REGISTRATIONS_COLLECTION), {
-        eventId: selectedEvent.id,
+        eventId: event.id,
         pageName: PAGE_NAME,
         userId: currentUser.uid,
-        name: regForm.name,
+        name: userName,
         email: currentUser.email,
-        message: regForm.message || null,
         timestamp: serverTimestamp(),
       });
-      toastSuccess("Registered successfully!");
-      setShowRegModal(false);
+      alert("Successfully registered!");
     } catch {
-      toastError("Registration failed");
+      alert("Registration failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -341,7 +290,7 @@ const HappyFeetPage: React.FC = () => {
     }
   };
 
-  /* ----------------------- VIEW PARTICIPANTS ----------------------- */
+  /* ----------------------- VIEW PARTICIPANTS (REAL NAMES) ----------------------- */
   const openParticipants = (eventId: string) => {
     const event = events.find((e) => e.id === eventId);
     if (!event) return;
@@ -358,18 +307,24 @@ const HappyFeetPage: React.FC = () => {
       const list: Registration[] = await Promise.all(
         snap.docs.map(async (d) => {
           const data = d.data();
-          let profileUrl: string | undefined;
+          let finalName = data.name;
+          let profileUrl = "";
+
           try {
             const userSnap = await getDoc(doc(db, "users", data.userId));
-            if (userSnap.exists()) profileUrl = userSnap.data().profileUrl;
+            if (userSnap.exists()) {
+              const userData = userSnap.data();
+              finalName = userData.name || data.name;
+              profileUrl = userData.profileUrl || "";
+            }
           } catch {}
+
           return {
             id: d.id,
+            name: finalName,
             userId: data.userId,
-            name: data.name,
             email: data.email,
             profileUrl,
-            message: data.message,
           };
         })
       );
@@ -382,7 +337,6 @@ const HappyFeetPage: React.FC = () => {
   const isAdmin = userRole === "admin";
   const isAdminPlus = userRole === "admin+";
 
-  // Add form validity
   const isAddFormValid =
     addForm.name &&
     addForm.description &&
@@ -390,6 +344,34 @@ const HappyFeetPage: React.FC = () => {
     addForm.eventTime &&
     addForm.image &&
     new Date(`${addForm.eventDate}T${addForm.eventTime}:00`) > getISTNow();
+
+  /* ----------------------- DOWNLOAD REAL EXCEL (.xlsx) ----------------------- */
+  const downloadExcel = async () => {
+    if (participants.length === 0) return;
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Participants");
+
+    worksheet.columns = [
+      { header: "Name", key: "name", width: 30 },
+      { header: "Email", key: "email", width: 35 },
+    ];
+
+    participants.forEach(p => {
+      worksheet.addRow({ name: p.name, email: p.email });
+    });
+
+    worksheet.getRow(1).font = { bold: true };
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: "application/octet-stream" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${selectedEvent?.name.replace(/[^a-z0-9]/gi, "_") || "event"}_participants.xlsx`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
 
   /* ----------------------------------------------------------------- */
   return (
@@ -465,14 +447,12 @@ const HappyFeetPage: React.FC = () => {
                     key={event.id}
                     className="relative flex flex-col [background-color:hsl(60,100%,95%)] transition-all duration-300 overflow-hidden rounded-2xl"
                   >
-                    {/* Expired Badge */}
                     {expired && (
                       <span className="absolute top-2 left-2 bg-red-600 text-white text-xs px-2 py-1 rounded-full z-10">
                         Expired
                       </span>
                     )}
 
-                    {/* 3‑Dot Menu */}
                     {(isAdmin || isAdminPlus) && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -529,21 +509,17 @@ const HappyFeetPage: React.FC = () => {
                       {/* STUDENT */}
                       {!isAdmin && !isAdminPlus && (
                         <Button
-                          onClick={() => openRegister(event)}
+                          onClick={() => handleAutoRegister(event)}
                           disabled={!canRegister || loading}
                           className={`mt-auto w-full px-4 py-2 rounded-lg transition ${
                             expired
-                              ? "bg-primary text-white cursor-not-allowed"
+                              ? "bg-gray-900 text-white cursor-not-allowed"
                               : registered
                               ? "bg-primary text-white"
                               : "bg-primary text-white hover:bg-blue-900"
                           }`}
                         >
-                          {expired
-                            ? "Register"
-                            : registered
-                            ? "Registered"
-                            : "Register"}
+                          {expired ? "Expired" : registered ? "Registered" : "Register Now"}
                         </Button>
                       )}
 
@@ -560,20 +536,12 @@ const HappyFeetPage: React.FC = () => {
 
                       {/* ADMIN */}
                       {isAdmin && (
-                        <div className="mt-auto flex gap-2">
-                          {/* <Button
-                            onClick={() => openEdit(event)}
-                            className="flex-1 bg-orange-600 text-white hover:bg-orange-700"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button> */}
-                          <Button
-                            onClick={() => openParticipants(event.id)}
-                            className="flex-1 bg-primary text-white hover:bg-blue-900"
-                          >
-                            View Participents
-                          </Button>
-                        </div>
+                        <Button
+                          onClick={() => openParticipants(event.id)}
+                          className="mt-auto w-full bg-primary text-white hover:bg-blue-900"
+                        >
+                          View Participants
+                        </Button>
                       )}
                     </CardContent>
                   </Card>
@@ -608,9 +576,7 @@ const HappyFeetPage: React.FC = () => {
               <Input
                 value={addForm.name}
                 className="[background-color:hsl(60,100%,95%)]"
-                onChange={(e) =>
-                  setAddForm({ ...addForm, name: e.target.value })
-                }
+                onChange={(e) => setAddForm({ ...addForm, name: e.target.value })}
                 required
               />
             </div>
@@ -619,9 +585,7 @@ const HappyFeetPage: React.FC = () => {
               <Textarea
                 value={addForm.description}
                 className="[background-color:hsl(60,100%,95%)]"
-                onChange={(e) =>
-                  setAddForm({ ...addForm, description: e.target.value })
-                }
+                onChange={(e) => setAddForm({ ...addForm, description: e.target.value })}
                 required
               />
             </div>
@@ -631,9 +595,7 @@ const HappyFeetPage: React.FC = () => {
                 type="date"
                 value={addForm.eventDate}
                 className="[background-color:hsl(60,100%,95%)]"
-                onChange={(e) =>
-                  setAddForm({ ...addForm, eventDate: e.target.value })
-                }
+                onChange={(e) => setAddForm({ ...addForm, eventDate: e.target.value })}
                 min={getISTNow().toISOString().split("T")[0]}
                 required
               />
@@ -644,9 +606,7 @@ const HappyFeetPage: React.FC = () => {
                 type="time"
                 value={addForm.eventTime}
                 className="[background-color:hsl(60,100%,95%)]"
-                onChange={(e) =>
-                  setAddForm({ ...addForm, eventTime: e.target.value })
-                }
+                onChange={(e) => setAddForm({ ...addForm, eventTime: e.target.value })}
                 required
               />
             </div>
@@ -655,12 +615,7 @@ const HappyFeetPage: React.FC = () => {
               <Input
                 type="file"
                 accept="image/*"
-                onChange={(e) =>
-                  setAddForm({
-                    ...addForm,
-                    image: e.target.files?.[0] || null,
-                  })
-                }
+                onChange={(e) => setAddForm({ ...addForm, image: e.target.files?.[0] || null })}
                 className="[background-color:hsl(60,100%,95%)]"
                 required
               />
@@ -698,13 +653,8 @@ const HappyFeetPage: React.FC = () => {
               <Input
                 type="date"
                 value={editForm.eventDate}
-                onChange={(e) =>
-                  setEditForm({ ...editForm, eventDate: e.target.value })
-                }
-                min={
-                  selectedEvent?.eventDate ??
-                  getISTNow().toISOString().split("T")[0]
-                }
+                onChange={(e) => setEditForm({ ...editForm, eventDate: e.target.value })}
+                min={selectedEvent?.eventDate ?? getISTNow().toISOString().split("T")[0]}
                 className="[background-color:hsl(60,100%,95%)]"
                 required
               />
@@ -714,9 +664,7 @@ const HappyFeetPage: React.FC = () => {
               <Input
                 type="time"
                 value={editForm.eventTime}
-                onChange={(e) =>
-                  setEditForm({ ...editForm, eventTime: e.target.value })
-                }
+                onChange={(e) => setEditForm({ ...editForm, eventTime: e.target.value })}
                 required
               />
             </div>
@@ -741,73 +689,20 @@ const HappyFeetPage: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* REGISTER MODAL */}
-      <Dialog open={showRegModal} onOpenChange={setShowRegModal}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Register for {selectedEvent?.name}</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleRegister} className="space-y-4">
-            <div>
-              <Label>Name</Label>
-              <Input
-                value={regForm.name}
-                className="[background-color:hsl(60,100%,95%)]"
-                onChange={(e) =>
-                  setRegForm({ ...regForm, name: e.target.value })
-                }
-                required
-              />
-            </div>
-            <div>
-              <Label>Message (Optional)</Label>
-              <Textarea
-                placeholder="Why are you joining? Any questions?"
-                value={regForm.message}
-                className="[background-color:hsl(60,100%,95%)]"
-                onChange={(e) =>
-                  setRegForm({ ...regForm, message: e.target.value })
-                }
-              />
-            </div>
-            <DialogFooter>
-              <Button type="submit" disabled={loading} className="bg-green-700 text-white">
-                {loading ? "Registering..." : "Register"}
-              </Button>
-              <Button className="bg-red-600 text-white"
-                variant="outline"
-                onClick={() => setShowRegModal(false)}
-              >
-                Cancel
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
       {/* DELETE CONFIRM MODAL */}
       <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Delete Event?</DialogTitle>
             <DialogDescription>
-              This will permanently delete "
-              <strong>{selectedEvent?.name}</strong>". This action cannot be
-              undone.
+              This will permanently delete "<strong>{selectedEvent?.name}</strong>". This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowDeleteConfirm(false)}
-            >
+            <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>
               Cancel
             </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={loading}
-            >
+            <Button variant="destructive" onClick={handleDelete} disabled={loading}>
               {loading ? "Deleting..." : "Delete"}
             </Button>
           </DialogFooter>
@@ -818,14 +713,10 @@ const HappyFeetPage: React.FC = () => {
       <Dialog open={showParticipants} onOpenChange={setShowParticipants}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
-              Participants: {selectedEvent?.name}
-            </DialogTitle>
+            <DialogTitle>Participants: {selectedEvent?.name}</DialogTitle>
           </DialogHeader>
           {participants.length === 0 ? (
-            <p className="text-center py-8 text-gray-500">
-              No participants yet.
-            </p>
+            <p className="text-center py-8 text-gray-500">No participants yet.</p>
           ) : (
             <div className="space-y-3">
               {participants.map((p) => (
@@ -841,32 +732,29 @@ const HappyFeetPage: React.FC = () => {
                     />
                   ) : (
                     <div className="w-10 h-10 rounded-full bg-gray-300 border flex items-center justify-center">
-                      <span className="text-xs text-gray-600">
-                        {p.name[0].toUpperCase()}
-                      </span>
+                      <span className="text-xs text-gray-600">{p.name[0]?.toUpperCase()}</span>
                     </div>
                   )}
                   <div className="flex-1">
                     <p className="font-medium">{p.name}</p>
                     <p className="text-sm text-gray-600">{p.email}</p>
-                    {p.message && (
-                      <div className="mt-2 p-2 bg-gray-50 rounded-lg text-sm text-gray-700 flex items-start gap-1">
-                        <MessageSquare className="w-4 h-4 text-gray-500 mt-0.5" />
-                        <span>{p.message}</span>
-                      </div>
-                    )}
                   </div>
                 </div>
               ))}
             </div>
           )}
-          <Button
-            className="mt-6 w-full bg-red-600 text-white"
-            variant="outline"
-            onClick={() => setShowParticipants(false)}
-          >
-            Close
-          </Button>
+          <div className="flex gap-3 mt-6">
+            <Button onClick={downloadExcel} disabled={participants.length === 0} className="flex-1 bg-green-600 hover:bg-green-700 text-white">
+              Download Excel (.xlsx)
+            </Button>
+            <Button
+              className="flex-1 bg-red-600 text-white"
+              variant="outline"
+              onClick={() => setShowParticipants(false)}
+            >
+              Close
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

@@ -38,6 +38,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import * as ExcelJS from "exceljs";
 
 // === PAGE-SPECIFIC CONFIG ===
 const PAGE_NAME = "TheIncredibles";
@@ -62,7 +63,6 @@ interface Registration {
   name: string;
   email: string;
   profileUrl?: string;
-  message?: string;
 }
 
 const TheIncrediblesPage: React.FC = () => {
@@ -71,6 +71,7 @@ const TheIncrediblesPage: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [userRole, setUserRole] = useState<string>("student");
   const [userCollege, setUserCollege] = useState<string>("");
+  const [userName, setUserName] = useState<string>(""); // From users collection
   const [events, setEvents] = useState<Event[]>([]);
   const [registrations, setRegistrations] = useState<Set<string>>(new Set());
   const [participants, setParticipants] = useState<Registration[]>([]);
@@ -80,7 +81,6 @@ const TheIncrediblesPage: React.FC = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showParticipants, setShowParticipants] = useState(false);
-  const [showRegModal, setShowRegModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
@@ -93,7 +93,6 @@ const TheIncrediblesPage: React.FC = () => {
     image: null as File | null,
   });
   const [editForm, setEditForm] = useState({ eventDate: "", eventTime: "" });
-  const [regForm, setRegForm] = useState({ name: "", message: "" });
 
   /* -------------------------- AUTH & ROLE --------------------------- */
   useEffect(() => {
@@ -105,12 +104,13 @@ const TheIncrediblesPage: React.FC = () => {
           const data = snap.data();
           setUserRole(data.role || "student");
           setUserCollege(data.college || "");
-          setRegForm((prev) => ({ ...prev, name: data.name || user.displayName || "" }));
+          setUserName(data.name || user.displayName || "Student");
         }
       } else {
         setCurrentUser(null);
         setUserRole("student");
         setUserCollege("");
+        setUserName("");
       }
     });
     return () => unsub();
@@ -161,13 +161,6 @@ const TheIncrediblesPage: React.FC = () => {
     return dt < new Date();
   };
 
-  const isFutureDate = (date: string) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return new Date(date) >= today;
-  };
-
-  // NEW: Validate edit datetime >= original AND >= now
   const isAfterOriginal = (newDate: string, newTime: string, origDate: string, origTime: string) => {
     const newDt = new Date(`${newDate}T${newTime}:00`);
     const origDt = new Date(`${origDate}T${origTime}:00`);
@@ -238,40 +231,35 @@ const TheIncrediblesPage: React.FC = () => {
     }
   };
 
-  /* ----------------------------- REGISTER -------------------------- */
-  const openRegister = (event: Event) => {
+  /* --------------------------- AUTO REGISTER WITH ALERT ----------------------- */
+  const handleAutoRegister = async (event: Event) => {
     if (!currentUser) {
-      toastError("Please log in");
+      toastError("Please log in to register");
       navigate("/auth");
       return;
     }
-    setSelectedEvent(event);
-    setRegForm({
-      name: currentUser.displayName || "",
-      message: "",
-    });
-    setShowRegModal(true);
-  };
 
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!currentUser || !selectedEvent) return;
+    if (registrations.has(event.id)) {
+      alert("You are already registered for this event!");
+      return;
+    }
+
+    const confirmRegister = window.confirm(`Register for "${event.name}"?`);
+    if (!confirmRegister) return;
 
     setLoading(true);
     try {
       await addDoc(collection(db, REGISTRATIONS_COLLECTION), {
-        eventId: selectedEvent.id,
+        eventId: event.id,
         pageName: PAGE_NAME,
         userId: currentUser.uid,
-        name: regForm.name,
+        name: userName,
         email: currentUser.email,
-        message: regForm.message || null,
         timestamp: serverTimestamp(),
       });
-      toastSuccess("Registered successfully!");
-      setShowRegModal(false);
+      alert("Successfully registered!");
     } catch {
-      toastError("Registration failed");
+      alert("Registration failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -297,7 +285,7 @@ const TheIncrediblesPage: React.FC = () => {
     }
   };
 
-  /* ----------------------- VIEW PARTICIPANTS ----------------------- */
+  /* ----------------------- VIEW PARTICIPANTS (REAL NAMES) ----------------------- */
   const openParticipants = (eventId: string) => {
     const event = events.find((e) => e.id === eventId);
     if (!event) return;
@@ -314,18 +302,24 @@ const TheIncrediblesPage: React.FC = () => {
       const list: Registration[] = await Promise.all(
         snap.docs.map(async (d) => {
           const data = d.data();
-          let profileUrl: string | undefined;
+          let finalName = data.name;
+          let profileUrl = "";
+
           try {
             const userSnap = await getDoc(doc(db, "users", data.userId));
-            if (userSnap.exists()) profileUrl = userSnap.data().profileUrl;
+            if (userSnap.exists()) {
+              const userData = userSnap.data();
+              finalName = userData.name || data.name;
+              profileUrl = userData.profileUrl || "";
+            }
           } catch {}
+
           return {
             id: d.id,
+            name: finalName,
             userId: data.userId,
-            name: data.name,
             email: data.email,
             profileUrl,
-            message: data.message,
           };
         })
       );
@@ -338,7 +332,6 @@ const TheIncrediblesPage: React.FC = () => {
   const isAdmin = userRole === "admin";
   const isAdminPlus = userRole === "admin+";
 
-  // Add form validity
   const isAddFormValid =
     addForm.name &&
     addForm.description &&
@@ -346,6 +339,34 @@ const TheIncrediblesPage: React.FC = () => {
     addForm.eventTime &&
     addForm.image &&
     new Date(`${addForm.eventDate}T${addForm.eventTime}:00`) > new Date();
+
+  /* ----------------------- DOWNLOAD REAL EXCEL (.xlsx) ----------------------- */
+  const downloadExcel = async () => {
+    if (participants.length === 0) return;
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Participants");
+
+    worksheet.columns = [
+      { header: "Name", key: "name", width: 30 },
+      { header: "Email", key: "email", width: 35 },
+    ];
+
+    participants.forEach(p => {
+      worksheet.addRow({ name: p.name, email: p.email });
+    });
+
+    worksheet.getRow(1).font = { bold: true };
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: "application/octet-stream" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${selectedEvent?.name.replace(/[^a-z0-9]/gi, "_") || "event"}_participants.xlsx`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
 
   /* ----------------------------------------------------------------- */
   return (
@@ -421,14 +442,12 @@ const TheIncrediblesPage: React.FC = () => {
                     key={event.id}
                     className="relative flex flex-col [background-color:hsl(60,100%,95%)] transition-all duration-300 overflow-hidden rounded-2xl"
                   >
-                    {/* Expired Badge */}
                     {expired && (
                       <span className="absolute top-2 left-2 bg-red-600 text-white text-xs px-2 py-1 rounded-full z-10">
                         Expired
                       </span>
                     )}
 
-                    {/* 3-Dot Menu */}
                     {(isAdmin || isAdminPlus) && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -481,17 +500,17 @@ const TheIncrediblesPage: React.FC = () => {
                       {/* STUDENT */}
                       {!isAdmin && !isAdminPlus && (
                         <Button
-                          onClick={() => openRegister(event)}
+                          onClick={() => handleAutoRegister(event)}
                           disabled={!canRegister || loading}
                           className={`mt-auto w-full px-4 py-2 rounded-lg transition ${
                             expired
-                              ? "bg-primary text-white cursor-not-allowed"
+                              ? "bg-gray-900 text-white cursor-not-allowed"
                               : registered
                               ? "bg-primary text-white"
                               : "bg-primary text-white hover:bg-blue-900"
                           }`}
                         >
-                          {expired ? "Register" : registered ? "Registered" : "Register"}
+                          {expired ? "Expired" : registered ? "Registered" : "Register Now"}
                         </Button>
                       )}
 
@@ -508,15 +527,12 @@ const TheIncrediblesPage: React.FC = () => {
 
                       {/* ADMIN */}
                       {isAdmin && (
-                        <div className="mt-auto flex gap-2">
-                          
-                          <Button
-                            onClick={() => openParticipants(event.id)}
-                            className="flex-1 bg-primary text-white hover:bg-blue-900"
-                          >
-                            View Participents
-                          </Button>
-                        </div>
+                        <Button
+                          onClick={() => openParticipants(event.id)}
+                          className="mt-auto w-full bg-primary text-white hover:bg-blue-900"
+                        >
+                          View Participants
+                        </Button>
                       )}
                     </CardContent>
                   </Card>
@@ -644,43 +660,6 @@ const TheIncrediblesPage: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* REGISTER MODAL */}
-      <Dialog open={showRegModal} onOpenChange={setShowRegModal}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Register for {selectedEvent?.name}</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleRegister} className="space-y-4">
-            <div>
-              <Label>Name</Label>
-              <Input
-                value={regForm.name}
-                onChange={(e) => setRegForm({ ...regForm, name: e.target.value })}
-                className="[background-color:hsl(60,100%,95%)]"
-                required
-              />
-            </div>
-            <div>
-              <Label>Message (Optional)</Label>
-              <Textarea
-                placeholder="Why are you joining? Any questions?"
-                value={regForm.message}
-                className="[background-color:hsl(60,100%,95%)]"
-                onChange={(e) => setRegForm({ ...regForm, message: e.target.value })}
-              />
-            </div>
-            <DialogFooter>
-              <Button type="submit" disabled={loading} className="bg-green-700 text-white hover:bg-green-800">
-                {loading ? "Registering..." : "Register"}
-              </Button>
-              <Button variant="outline" onClick={() => setShowRegModal(false)} className="bg-red-600 text-white">
-                Cancel
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
       {/* DELETE CONFIRM MODAL */}
       <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <DialogContent>
@@ -724,25 +703,29 @@ const TheIncrediblesPage: React.FC = () => {
                     />
                   ) : (
                     <div className="w-10 h-10 rounded-full bg-gray-300 border flex items-center justify-center">
-                      <span className="text-xs text-gray-600">{p.name[0].toUpperCase()}</span>
+                      <span className="text-xs text-gray-600">{p.name[0]?.toUpperCase()}</span>
                     </div>
                   )}
                   <div className="flex-1">
                     <p className="font-medium">{p.name}</p>
                     <p className="text-sm text-gray-600">{p.email}</p>
-                    {p.message && <p className="text-xs text-gray-500 mt-1">"{p.message}"</p>}
                   </div>
                 </div>
               ))}
             </div>
           )}
-          <Button
-            className="mt-6 w-full bg-red-600 text-white"
-            variant="outline"
-            onClick={() => setShowParticipants(false)}
-          >
-            Close
-          </Button>
+          <div className="flex gap-3 mt-6">
+            <Button onClick={downloadExcel} disabled={participants.length === 0} className="flex-1 bg-green-600 hover:bg-green-700 text-white">
+              Download Excel (.xlsx)
+            </Button>
+            <Button
+              className="flex-1 bg-red-600 text-white"
+              variant="outline"
+              onClick={() => setShowParticipants(false)}
+            >
+              Close
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
