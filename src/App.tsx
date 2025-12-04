@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -44,8 +43,23 @@ import ThePursuitOfHappinessPage from "./pages/ThePursuitOfHappinessPage";
 import HappyFeetPage from "./pages/HappyFeetPage";
 import HiddenFiguresPage from "./pages/HiddenFiguresPage";
 import DashboardPage from "./pages/DashboardPage";
+import { useAuth } from "./AuthContext";
 
 const queryClient = new QueryClient();
+
+const AdminPlusRoute = ({ children }: { children: React.ReactNode }) => {
+  const { userData, loading } = useAuth();
+
+  if (loading) {
+    return <LoadingScreen />;
+  }
+
+  if (!userData || userData.role !== "admin+") {
+    return <Navigate to="/" replace />;
+  }
+
+  return <>{children}</>;
+};
 
 const App = () => {
   const [user, setUser] = useState<any>(null);
@@ -70,10 +84,9 @@ const App = () => {
     return () => unsubscribe();
   }, []);
 
-  if (loading) return <LoadingScreen></LoadingScreen>
+  if (loading) return <LoadingScreen></LoadingScreen>;
 
   return (
-    
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
@@ -92,16 +105,25 @@ const App = () => {
               <Route path="/help" element={<Help />} />
               <Route path="/Events" element={<EventsPage />} />
               <Route path="/Events/FindingNemo" element={<FindingNemoPage />} />
-              <Route path="/Events/TheIncredibles" element={<TheIncrediblesPage />} />
+              <Route
+                path="/Events/TheIncredibles"
+                element={<TheIncrediblesPage />}
+              />
               <Route path="/Events/InsideOut" element={<InsideOutPage />} />
-              <Route path="/Events/ThePursuitOfHappiness" element={<ThePursuitOfHappinessPage />} />
+              <Route
+                path="/Events/ThePursuitOfHappiness"
+                element={<ThePursuitOfHappinessPage />}
+              />
               <Route path="/Events/HappyFeet" element={<HappyFeetPage />} />
-              <Route path="/Events/HiddenFigures" element={<HiddenFiguresPage />} />
+              <Route
+                path="/Events/HiddenFigures"
+                element={<HiddenFiguresPage />}
+              />
 
               {/* Auth Routes */}
-              <Route 
-                path="/auth" 
-                element={!user ? <Auth /> : <Navigate to="/" replace />} 
+              <Route
+                path="/auth"
+                element={!user ? <Auth /> : <Navigate to="/" replace />}
               />
 
               {/* Protected Service Routes */}
@@ -146,63 +168,63 @@ const App = () => {
                 }
               />
 
-              
-              
-
               {/* Other Protected Routes */}
-              <Route 
-                path="/account" 
+              <Route
+                path="/account"
                 element={
                   <ProtectedRoute>
                     <AccountPage />
                   </ProtectedRoute>
-                } 
+                }
               />
-              <Route 
-                path="/dashboard" 
+              <Route
+                path="/dashboard"
                 element={
                   <ProtectedRoute>
                     <DashboardPage />
                   </ProtectedRoute>
-                } 
+                }
               />
-              <Route 
-                path="/appointment" 
+              <Route
+                path="/appointment"
                 element={
                   <ProtectedRoute>
                     <Appointment />
                   </ProtectedRoute>
-                } 
+                }
               />
-              <Route 
-                path="/reservations" 
+              <Route
+                path="/reservations"
                 element={
                   <ProtectedRoute>
                     <Reservations />
                   </ProtectedRoute>
-                } 
+                }
               />
-              <Route 
-                path="/leaderboard" 
+              <Route
+                path="/leaderboard"
                 element={
                   <ProtectedRoute>
                     <LeaderboardPage />
                   </ProtectedRoute>
-                } 
+                }
               />
-              <Route 
-                path="/addAdmin" 
+
+              <Route
+                path="/addAdmin"
                 element={
                   <ProtectedRoute>
-                    <AddAdmin />
+                    <AdminPlusRoute>
+                      <AddAdmin />
+                    </AdminPlusRoute>
                   </ProtectedRoute>
-                } 
+                }
               />
 
               {/* Catch-all */}
               <Route path="*" element={<NotFound />} />
             </Routes>
-            
+
             <Footer />
             <ScrollToTopButton />
           </AuthProvider>
