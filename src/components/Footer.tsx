@@ -100,7 +100,7 @@ const Footer = () => {
 
           {/* Navigation & Services & Subscribe */}
           <div className="p-6 rounded-xl shadow-lg shadow-black/20">
-            <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-6">
               <div>
                 <h3 className="text-base font-semibold mb-3">Navigate</h3>
                 <ul className="space-y-1">
@@ -133,17 +133,21 @@ const Footer = () => {
                 </ul>
               </div>
 
-              <div>
+              <div className="col-span-2 sm:col-span-2 md:col-span-3 text-center">
                 <h3 className="text-base font-semibold mb-3">Subscribe Now</h3>
-                <p className="text-white/70 mb-3 text-sm">
+
+                <p className="text-white/70 mb-3 text-sm mx-auto max-w-xs">
                   Get the latest updates directly to your inbox.
                 </p>
-                <div className="flex flex-col sm:flex-row gap-2 mb-4">
+
+                <div className="flex flex-col sm:flex-row gap-2 mb-4 justify-center">
                   <Input
                     type="email"
                     placeholder="Email"
-                    className="bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:bg-white/20 h-9 text-sm flex-1"
+                    className="bg-white/10 border-white/20 text-white placeholder:text-white/60 
+                 focus:bg-white/20 h-9 text-sm flex-1 max-w-xs sm:max-w-sm"
                   />
+
                   <Button className="bg-white text-primary hover:bg-white/90 font-medium h-9 px-3 text-sm">
                     Go
                   </Button>
@@ -156,10 +160,10 @@ const Footer = () => {
         {/* Marquee */}
         <div className="w-full overflow-hidden bg-primary py-2 mt-10">
           <div className="flex whitespace-nowrap animate-marquee">
-            <p className="text-xl sm:text-20xl md:text-7xl lg:text-10xl font-bold mr-20 opacity-60">
+            <p className="text-xl sm:text-30xl md:text-7xl lg:text-15xl font-bold mr-20 opacity-60">
               VISHNU STUDENT SUCCESS CENTRE
             </p>
-            <p className="text-xl sm:text-20xl md:text-7xl lg:text-10xl font-bold mr-20 opacity-60">
+            <p className="text-xl sm:text-30xl md:text-7xl lg:text-15xl font-bold mr-20 opacity-60">
               VISHNU STUDENT SUCCESS CENTRE
             </p>
           </div>
