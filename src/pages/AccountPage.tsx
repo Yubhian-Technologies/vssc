@@ -1,8 +1,27 @@
-
 import { useEffect, useState } from "react";
-import { doc, getDoc, setDoc, deleteDoc, collection, query, where, getDocs } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  setDoc,
+  deleteDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+  addDoc,
+  serverTimestamp,
+  onSnapshot,
+} from "firebase/firestore";
+
 import { db, auth } from "../firebase";
-import { signOut, deleteUser, updateProfile, reauthenticateWithCredential, EmailAuthProvider, updatePassword } from "firebase/auth";
+import {
+  signOut,
+  deleteUser,
+  updateProfile,
+  reauthenticateWithCredential,
+  EmailAuthProvider,
+  updatePassword,
+} from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import { toastSuccess, toastError } from "@/components/ui/sonner";
 import {
@@ -57,11 +76,14 @@ const ChangePasswordModal = ({
       <div className="bg-[hsl(60,100%,95%)] rounded-lg p-6 max-w-md w-full mx-4">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold">Change Password</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -75,7 +97,7 @@ const ChangePasswordModal = ({
               required
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               New Password
@@ -88,7 +110,7 @@ const ChangePasswordModal = ({
               required
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Confirm New Password
@@ -101,7 +123,7 @@ const ChangePasswordModal = ({
               required
             />
           </div>
-          
+
           <div className="flex gap-2 pt-2">
             <button
               type="button"
@@ -115,7 +137,7 @@ const ChangePasswordModal = ({
               disabled={loading}
               className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
             >
-              {loading ? 'Updating...' : 'Update Password'}
+              {loading ? "Updating..." : "Update Password"}
             </button>
           </div>
         </form>
@@ -151,16 +173,24 @@ const DeleteAccountModal = ({
       <div className="bg-[hsl(60,100%,95%)] rounded-lg p-6 max-w-md w-full mx-4">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold">Delete Account</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <p className="text-sm text-gray-700">This will permanently delete your account and all associated data. This action cannot be undone.</p>
+          <p className="text-sm text-gray-700">
+            This will permanently delete your account and all associated data.
+            This action cannot be undone.
+          </p>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Confirm Password
+            </label>
             <input
               type="password"
               value={password}
@@ -229,28 +259,28 @@ const AvatarPicker = ({
 
   const handleSaveAdjustedImage = async () => {
     if (!selectedImage) return;
-    
+
     setUploading(true);
     try {
       // Validate data URL format
-      if (!selectedImage.startsWith('data:image/')) {
-        throw new Error('Invalid image format');
+      if (!selectedImage.startsWith("data:image/")) {
+        throw new Error("Invalid image format");
       }
-      
+
       // Convert data URL to blob
       const response = await fetch(selectedImage);
       if (!response.ok) {
-        throw new Error('Failed to process image');
+        throw new Error("Failed to process image");
       }
-      
+
       const blob = await response.blob();
-      const file = new File([blob], 'profile.jpg', { type: 'image/jpeg' });
-      
+      const file = new File([blob], "profile.jpg", { type: "image/jpeg" });
+
       const imageUrl = await uploadToCloudinary(file);
       if (!imageUrl) {
-        throw new Error('Upload failed');
+        throw new Error("Upload failed");
       }
-      
+
       onSelect(imageUrl);
     } catch (error) {
       console.error("Upload failed:", error);
@@ -264,7 +294,9 @@ const AvatarPicker = ({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-[hsl(60,100%,95%)] rounded-lg p-6 max-w-md w-full mx-4">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold">{selectedImage ? 'Adjust Photo' : 'Upload Profile'}</h3>
+          <h3 className="text-lg font-semibold">
+            {selectedImage ? "Adjust Photo" : "Upload Profile"}
+          </h3>
           <button
             onClick={() => {
               setSelectedImage(null);
@@ -275,7 +307,7 @@ const AvatarPicker = ({
             <X className="w-5 h-5" />
           </button>
         </div>
-        
+
         {selectedImage ? (
           /* Photo Adjustment View */
           <div className="space-y-4">
@@ -285,11 +317,17 @@ const AvatarPicker = ({
                 alt="Selected"
                 className="absolute inset-0 w-full h-full object-cover"
                 style={{
-                  transform: `scale(${Math.max(0.1, Math.min(5, scale))}) translate(${Math.max(-100, Math.min(100, position.x))}px, ${Math.max(-100, Math.min(100, position.y))}px)`
+                  transform: `scale(${Math.max(
+                    0.1,
+                    Math.min(5, scale)
+                  )}) translate(${Math.max(
+                    -100,
+                    Math.min(100, position.x)
+                  )}px, ${Math.max(-100, Math.min(100, position.y))}px)`,
                 }}
               />
             </div>
-            
+
             <div className="space-y-3">
               <div>
                 <label className="block text-sm font-medium mb-1">Zoom</label>
@@ -306,10 +344,12 @@ const AvatarPicker = ({
                   className="w-full"
                 />
               </div>
-              
+
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-sm font-medium mb-1">Position X</label>
+                  <label className="block text-sm font-medium mb-1">
+                    Position X
+                  </label>
                   <input
                     type="range"
                     min="-50"
@@ -317,13 +357,16 @@ const AvatarPicker = ({
                     value={position.x}
                     onChange={(e) => {
                       const value = parseInt(e.target.value);
-                      if (!isNaN(value)) setPosition(prev => ({ ...prev, x: value }));
+                      if (!isNaN(value))
+                        setPosition((prev) => ({ ...prev, x: value }));
                     }}
                     className="w-full"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Position Y</label>
+                  <label className="block text-sm font-medium mb-1">
+                    Position Y
+                  </label>
                   <input
                     type="range"
                     min="-50"
@@ -331,14 +374,15 @@ const AvatarPicker = ({
                     value={position.y}
                     onChange={(e) => {
                       const value = parseInt(e.target.value);
-                      if (!isNaN(value)) setPosition(prev => ({ ...prev, y: value }));
+                      if (!isNaN(value))
+                        setPosition((prev) => ({ ...prev, y: value }));
                     }}
                     className="w-full"
                   />
                 </div>
               </div>
             </div>
-            
+
             <div className="flex gap-2">
               <button
                 onClick={() => setSelectedImage(null)}
@@ -351,7 +395,7 @@ const AvatarPicker = ({
                 disabled={uploading}
                 className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
               >
-                {uploading ? 'Saving...' : 'Done'}
+                {uploading ? "Saving..." : "Done"}
               </button>
             </div>
           </div>
@@ -361,7 +405,7 @@ const AvatarPicker = ({
             <div className="mb-4 flex gap-2">
               <label className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg cursor-pointer transition-colors">
                 <Upload className="w-4 h-4" />
-                {uploading ? 'Uploading...' : 'Upload Image'}
+                {uploading ? "Uploading..." : "Upload Image"}
                 <input
                   type="file"
                   accept="image/*"
@@ -371,16 +415,18 @@ const AvatarPicker = ({
                 />
               </label>
               <button
-                onClick={() => onSelect('')}
+                onClick={() => onSelect("")}
                 className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
               >
                 <Trash2 className="w-4 h-4" />
                 Remove
               </button>
             </div>
-            
+
             <div className="border-t pt-4">
-              <p className="text-sm text-gray-500 mb-3">Or choose from presets:</p>
+              <p className="text-sm text-gray-500 mb-3">
+                Or choose from presets:
+              </p>
               <div className="grid grid-cols-3 gap-4">
                 {avatars.map((url) => (
                   <img
@@ -455,7 +501,7 @@ interface UserData {
   clubs?: Club[];
   skills?: string[];
   accounts?: { platform: string; url: string }[];
-  role?:string
+  role?: string;
 }
 
 const AccountPage = () => {
@@ -465,6 +511,207 @@ const AccountPage = () => {
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [showTestimonial, setShowTestimonial] = useState(false);
+
+  const handleSubmitTestimonial = async (payload: {
+    name?: string;
+    Batch?: string;
+    rating: number;
+    review: string;
+  }) => {
+    if (!auth.currentUser) {
+      toastError("You must be signed in to submit a testimonial.");
+      return;
+    }
+
+    try {
+      // Use collection(...) to get a reference to the testimonials collection
+      const testimonialsColRef = collection(db, "testimonials");
+
+      // addDoc will create a new doc with a generated id inside that collection
+      await addDoc(testimonialsColRef, {
+        name:
+          (payload.name && payload.name.trim()) ||
+          userData?.name ||
+          "Anonymous",
+        Batch:
+          (payload.Batch && payload.Batch.trim()) ||
+          userData?.college ||
+          "Student",
+        rating: Number(payload.rating) || 0,
+        review: payload.review?.trim() || "",
+        profileUrl: userData?.profileUrl || "",
+        userId: auth.currentUser.uid,
+        userEmail: auth.currentUser.email || "",
+        createdAt: serverTimestamp(),
+      });
+
+      toastSuccess("Testimonial created successfully");
+      setShowTestimonial(false);
+    } catch (error) {
+      console.error("Submit testimonial error:", error);
+      toastError("Failed to submit testimonial. See console for details.");
+    }
+  };
+  const TestimonialModal = ({
+    onClose,
+    onSubmit,
+    defaultName = "",
+    defaultBatch = "",
+  }: {
+    onClose: () => void;
+    onSubmit: (data: {
+      name?: string;
+      Batch?: string;
+      rating: number;
+      review: string;
+    }) => void;
+    defaultName?: string;
+    defaultBatch?: string;
+  }) => {
+    const [name, setName] = useState(defaultName);
+    const [Batch, setBatch] = useState(defaultBatch);
+    const [rating, setRating] = useState<number>(5);
+    const [review, setReview] = useState("");
+    const [loading, setLoading] = useState(false);
+
+    const handleSubmit = (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!review.trim()) {
+        toastError("Please write a review.");
+        return;
+      }
+      setLoading(true);
+      onSubmit({ name, Batch, rating, review });
+      setLoading(false);
+    };
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-yellow-100 rounded-lg p-6 max-w-md w-full mx-4">
+          <div className="relative mb-4 flex justify-center">
+            <h3 className="text-3xl font-semibold text-blue-900 tracking-wide uppercase text-center">
+              Add Testimonial
+            </h3>
+
+            <button
+              onClick={onClose}
+              className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Name
+              </label>
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full border rounded-[20px] px-3 py-2"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Batch
+              </label>
+
+              <div className="grid grid-cols-2 gap-2">
+                {/* Start Year */}
+                <select
+                  value={Batch?.split(" - ")[0] || ""}
+                  onChange={(e) => {
+                    const start = e.target.value;
+                    const end = Batch?.split(" - ")[1] || "";
+                    setBatch(start && end ? `${start} - ${end}` : start);
+                  }}
+                  className="w-full border rounded-[20px] px-3 py-2"
+                >
+                  <option value="">Start Year</option>
+                  {Array.from({ length: 30 }, (_, i) => 2010 + i).map(
+                    (year) => (
+                      <option key={year} value={year}>
+                        {year}
+                      </option>
+                    )
+                  )}
+                </select>
+
+                {/* End Year */}
+                <select
+                  value={Batch?.split(" - ")[1] || ""}
+                  onChange={(e) => {
+                    const end = e.target.value;
+                    const start = Batch?.split(" - ")[0] || "";
+                    setBatch(start && end ? `${start} - ${end}` : end);
+                  }}
+                  className="w-full border rounded-[20px] px-3 py-2"
+                >
+                  <option value="">End Year</option>
+                  {Array.from({ length: 30 }, (_, i) => 2010 + i).map(
+                    (year) => (
+                      <option key={year} value={year}>
+                        {year}
+                      </option>
+                    )
+                  )}
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Rating
+              </label>
+              <select
+                value={rating}
+                onChange={(e) => setRating(Number(e.target.value))}
+                className="w-full border rounded-[20px] px-3 py-2"
+              >
+                {[5, 4, 3, 2, 1].map((r) => (
+                  <option key={r} value={r}>
+                    {r} star{r > 1 ? "s" : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Review
+              </label>
+              <textarea
+                value={review}
+                onChange={(e) => setReview(e.target.value)}
+                className="w-full border rounded-[20px] px-3 py-2"
+                rows={4}
+              />
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 bg-gray-200 px-4 py-2 rounded-[20px]"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex-1 bg-blue-900 text-white px-4 py-2 rounded-[20px]"
+              >
+                {loading ? "Saving..." : "Save Testimonial"}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  };
 
   // Form states
   const [editName, setEditName] = useState("");
@@ -480,41 +727,64 @@ const AccountPage = () => {
   const [experiences, setExperiences] = useState<Experience[]>([]);
   const [clubs, setClubs] = useState<Club[]>([]);
   const [skills, setSkills] = useState<string[]>([]);
-  const [accounts, setAccounts] = useState<{ platform: string; url: string }[]>([]);
+  const [accounts, setAccounts] = useState<{ platform: string; url: string }[]>(
+    []
+  );
   const [feedback, setFeedback] = useState<string>("");
 
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      if (auth.currentUser) {
-        const docRef = doc(db, "users", auth.currentUser.uid);
-        const docSnap = await getDoc(docRef);
+    let unsub: (() => void) | undefined;
 
-        if (docSnap.exists()) {
-          const data = docSnap.data() as UserData;
-          setUserData(data);
-          setEditName(data.name || "");
-          setEditCollege(data.college || "");
-          setBio(data.bio || "");
-          setGraduationYear(data.graduationYear || "");
-          setDepartment(data.department || "");
-          setSection(data.section || "");
-          setGithub(data.github || "");
-          setHackerRank(data.hackerRank || "");
-          setLinkedIn(data.linkedIn || "");
-          setResumeDrive(data.resumeDrive || "");
-          setExperiences(data.experiences || []);
-          setClubs(data.clubs || []);
-          setSkills(data.skills || []);
-          setAccounts(data.accounts || []);
+    if (auth.currentUser) {
+      const docRef = doc(db, "users", auth.currentUser.uid);
+
+      // Realtime listener (auto refresh)
+      unsub = onSnapshot(
+        docRef,
+        (docSnap) => {
+          if (docSnap.exists()) {
+            const data = docSnap.data() as UserData;
+
+            setUserData(data);
+
+            // Sync form fields only when NOT editing
+            if (!isEditing) {
+              setEditName(data.name || "");
+              setEditCollege(data.college || "");
+              setBio(data.bio || "");
+              setGraduationYear(data.graduationYear || "");
+              setDepartment(data.department || "");
+              setSection(data.section || "");
+              setGithub(data.github || "");
+              setHackerRank(data.hackerRank || "");
+              setLinkedIn(data.linkedIn || "");
+              setResumeDrive(data.resumeDrive || "");
+              setExperiences(data.experiences || []);
+              setClubs(data.clubs || []);
+              setSkills(data.skills || []);
+              setAccounts(data.accounts || []);
+            }
+          } else {
+            setUserData(null);
+          }
+
+          setLoading(false);
+        },
+        (error) => {
+          console.error("User snapshot error:", error);
+          setLoading(false);
         }
-      }
+      );
+    } else {
       setLoading(false);
-    };
+    }
 
-    fetchUserData();
-  }, []);
+    return () => {
+      if (unsub) unsub();
+    };
+  }, [isEditing]);
 
   const handleSignOut = async () => {
     try {
@@ -577,18 +847,26 @@ const AccountPage = () => {
     }
   };
 
-  const handleChangePassword = async (currentPassword: string, newPassword: string) => {
+  const handleChangePassword = async (
+    currentPassword: string,
+    newPassword: string
+  ) => {
     if (!auth.currentUser) return;
-    
+
     try {
-      const credential = EmailAuthProvider.credential(auth.currentUser.email!, currentPassword);
+      const credential = EmailAuthProvider.credential(
+        auth.currentUser.email!,
+        currentPassword
+      );
       await reauthenticateWithCredential(auth.currentUser, credential);
       await updatePassword(auth.currentUser, newPassword);
       setShowChangePassword(false);
       toastSuccess("✅ Password updated successfully!");
     } catch (error) {
       console.error("Password update error:", error);
-      toastError("Failed to update password. Please check your current password.");
+      toastError(
+        "Failed to update password. Please check your current password."
+      );
     }
   };
 
@@ -600,41 +878,62 @@ const AccountPage = () => {
         password
       );
       await reauthenticateWithCredential(auth.currentUser, credential);
-      
+
       const userId = auth.currentUser.uid;
       const userEmail = auth.currentUser.email;
-      
+
       // Comprehensive list of all possible collections
       const collections = [
-        'users', 'reservations', 'feedback', 'leaderboard', 'bookings',
-        'events', 'notifications', 'messages', 'comments', 'reviews',
-        'activities', 'sessions', 'logs', 'analytics', 'preferences'
+        "users",
+        "reservations",
+        "feedback",
+        "leaderboard",
+        "bookings",
+        "events",
+        "notifications",
+        "messages",
+        "comments",
+        "reviews",
+        "activities",
+        "sessions",
+        "logs",
+        "analytics",
+        "preferences",
       ];
-      
+
       // Delete from all collections
       for (const collectionName of collections) {
         try {
-          if (collectionName === 'users') {
+          if (collectionName === "users") {
             // Delete user document directly
             await deleteDoc(doc(db, collectionName, userId));
           } else {
             // Query by userId
-            const userIdQuery = query(collection(db, collectionName), where('userId', '==', userId));
+            const userIdQuery = query(
+              collection(db, collectionName),
+              where("userId", "==", userId)
+            );
             const userIdSnapshot = await getDocs(userIdQuery);
             for (const docSnapshot of userIdSnapshot.docs) {
               await deleteDoc(docSnapshot.ref);
             }
-            
+
             // Query by userEmail if different from userId
             if (userEmail) {
-              const emailQuery = query(collection(db, collectionName), where('userEmail', '==', userEmail));
+              const emailQuery = query(
+                collection(db, collectionName),
+                where("userEmail", "==", userEmail)
+              );
               const emailSnapshot = await getDocs(emailQuery);
               for (const docSnapshot of emailSnapshot.docs) {
                 await deleteDoc(docSnapshot.ref);
               }
-              
+
               // Query by email field
-              const emailFieldQuery = query(collection(db, collectionName), where('email', '==', userEmail));
+              const emailFieldQuery = query(
+                collection(db, collectionName),
+                where("email", "==", userEmail)
+              );
               const emailFieldSnapshot = await getDocs(emailFieldQuery);
               for (const docSnapshot of emailFieldSnapshot.docs) {
                 await deleteDoc(docSnapshot.ref);
@@ -643,18 +942,25 @@ const AccountPage = () => {
           }
         } catch (collectionError) {
           // Continue with other collections even if one fails
-          console.warn(`Failed to delete from ${collectionName}:`, collectionError);
+          console.warn(
+            `Failed to delete from ${collectionName}:`,
+            collectionError
+          );
         }
       }
-      
+
       // Delete auth account last
       await deleteUser(auth.currentUser);
-      toastSuccess("Account completely deleted! All your data has been removed.");
+      toastSuccess(
+        "Account completely deleted! All your data has been removed."
+      );
       setShowDeleteAccount(false);
       navigate("/auth");
     } catch (error) {
       console.error("Delete account error:", error);
-      toastError("Failed to delete account. Please check your password and try again.");
+      toastError(
+        "Failed to delete account. Please check your password and try again."
+      );
     }
   };
 
@@ -662,7 +968,11 @@ const AccountPage = () => {
     setExperiences([...experiences, { title: "", description: "" }]);
   };
 
-  const handleUpdateExperience = (index: number, field: string, value: string) => {
+  const handleUpdateExperience = (
+    index: number,
+    field: string,
+    value: string
+  ) => {
     const newExp = [...experiences];
     newExp[index] = { ...newExp[index], [field]: value };
     setExperiences(newExp);
@@ -716,14 +1026,19 @@ const AccountPage = () => {
       <div
         className="relative h-48 sm:h-56"
         style={{
-          background: "linear-gradient(to right, hsl(220, 70%, 20%), hsl(220, 70%, 25%))",
+          background:
+            "linear-gradient(to right, hsl(220, 70%, 20%), hsl(220, 70%, 25%))",
         }}
       >
         <div className="max-w-7xl mx-auto px-4 h-full">
           {/* Desktop Layout */}
           <div className="hidden sm:flex items-center justify-between gap-4 h-full">
             <div className="flex items-center gap-4">
-              <div className="relative cursor-pointer" onClick={() => setShowAvatarPicker(true)} title="Change profile picture">
+              <div
+                className="relative cursor-pointer"
+                onClick={() => setShowAvatarPicker(true)}
+                title="Change profile picture"
+              >
                 {userData.profileUrl ? (
                   <img
                     src={userData.profileUrl}
@@ -741,34 +1056,43 @@ const AccountPage = () => {
                 <h1 className="text-2xl font-bold text-white">
                   {userData.name || "Student"}
                 </h1>
-                <p className="text-blue-100 text-sm truncate">{userData.email}</p>
+                <p className="text-blue-100 text-sm truncate">
+                  {userData.email}
+                </p>
                 {userData.college && (
-                  <p className="text-blue-100 text-sm truncate">{userData.college}</p>
+                  <p className="text-blue-100 text-sm truncate">
+                    {userData.college}
+                  </p>
                 )}
               </div>
             </div>
 
             <div className="flex-shrink-0 flex gap-2">
               {userData?.role === "admin+" && (
-  
-    <button
-      
-      onClick={() => navigate("/addAdmin")} className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-3 py-2 rounded-lg transition-all backdrop-blur-sm border border-white border-opacity-30 text-sm"
-    >
-      Add Admin
-    </button>
- 
-)}
-              {
-                userData?.role !== "admin+" && (
-                  <button
-                onClick={() => navigate("/reservations")}
-                className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-3 py-2 rounded-lg transition-all backdrop-blur-sm border border-white border-opacity-30 text-sm"
-              >
-                Reservations
-              </button>
-                )
-              }
+                <button
+                  onClick={() => navigate("/addAdmin")}
+                  className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-3 py-2 rounded-lg transition-all backdrop-blur-sm border border-white border-opacity-30 text-sm"
+                >
+                  Add Admin
+                </button>
+              )}
+              {userData?.role === "admin+" && (
+                <button
+                  onClick={() => setShowTestimonial(true)}
+                  className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-3 py-2 rounded-lg transition-all backdrop-blur-sm border border-white border-opacity-30 text-sm"
+                >
+                  Add Testimonial
+                </button>
+              )}
+
+              {userData?.role !== "admin+" && (
+                <button
+                  onClick={() => navigate("/reservations")}
+                  className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-3 py-2 rounded-lg transition-all backdrop-blur-sm border border-white border-opacity-30 text-sm"
+                >
+                  Reservations
+                </button>
+              )}
               <button
                 onClick={handleSignOut}
                 className="flex items-center gap-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-3 py-2 rounded-lg transition-all backdrop-blur-sm border border-white border-opacity-30 text-sm"
@@ -782,7 +1106,11 @@ const AccountPage = () => {
           {/* Mobile Layout */}
           <div className="sm:hidden flex flex-col justify-center h-full">
             <div className="flex items-start gap-4">
-              <div className="relative cursor-pointer" onClick={() => setShowAvatarPicker(true)} title="Change profile picture">
+              <div
+                className="relative cursor-pointer"
+                onClick={() => setShowAvatarPicker(true)}
+                title="Change profile picture"
+              >
                 {userData.profileUrl ? (
                   <img
                     src={userData.profileUrl}
@@ -800,28 +1128,41 @@ const AccountPage = () => {
                 <h1 className="text-lg font-bold text-white">
                   {userData.name || "Student"}
                 </h1>
-                <p className="text-blue-100 text-sm truncate">{userData.email}</p>
+                <p className="text-blue-100 text-sm truncate">
+                  {userData.email}
+                </p>
                 {userData.college && (
-                  <p className="text-blue-100 text-sm truncate mb-2">{userData.college}</p>
+                  <p className="text-blue-100 text-sm truncate mb-2">
+                    {userData.college}
+                  </p>
                 )}
-                
-                <div className="flex gap-2 mt-2">
-                  <button
-      
-      onClick={() => navigate("/addAdmin")} className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-3 py-2 rounded-lg transition-all backdrop-blur-sm border border-white border-opacity-30 text-sm"
-    >
-      Add Admin
-    </button>
-                  {
-                    userData?.role !== "admin+" && (
-                      <button
-                    onClick={() => navigate("/reservations")}
-                    className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-3 py-2 rounded-lg transition-all backdrop-blur-sm border border-white border-opacity-30 text-sm"
-                  >
-                    Reservations
-                  </button>
-                    )
-                  }
+
+                <div className="flex-shrink-0 flex gap-2">
+                  {userData?.role === "admin+" && (
+                    <button
+                      onClick={() => navigate("/addAdmin")}
+                      className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-3 py-2 rounded-lg transition-all backdrop-blur-sm border border-white border-opacity-30 text-sm"
+                    >
+                      Add Admin
+                    </button>
+                  )}
+                  {userData?.role === "admin+" && (
+                    <button
+                      onClick={() => setShowTestimonial(true)}
+                      className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-3 py-2 rounded-lg transition-all backdrop-blur-sm border border-white border-opacity-30 text-sm"
+                    >
+                      Add Testimonial
+                    </button>
+                  )}
+
+                  {userData?.role !== "admin+" && (
+                    <button
+                      onClick={() => navigate("/reservations")}
+                      className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-3 py-2 rounded-lg transition-all backdrop-blur-sm border border-white border-opacity-30 text-sm"
+                    >
+                      Reservations
+                    </button>
+                  )}
                   <button
                     onClick={handleSignOut}
                     className="flex items-center gap-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-3 py-2 rounded-lg transition-all backdrop-blur-sm border border-white border-opacity-30 text-sm"
@@ -932,17 +1273,23 @@ const AccountPage = () => {
                 <div className="space-y-4">
                   <div>
                     <p className="text-sm text-gray-500">Name</p>
-                    <p className="text-gray-900">{userData.name || "Not set"}</p>
+                    <p className="text-gray-900">
+                      {userData.name || "Not set"}
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">College</p>
-                    <p className="text-gray-900">{userData.college || "Not set"}</p>
+                    <p className="text-gray-900">
+                      {userData.college || "Not set"}
+                    </p>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {userData.graduationYear && (
                       <div>
                         <p className="text-sm text-gray-500">Graduation Year</p>
-                        <p className="text-gray-900">{userData.graduationYear}</p>
+                        <p className="text-gray-900">
+                          {userData.graduationYear}
+                        </p>
                       </div>
                     )}
                     {userData.department && (
@@ -1149,7 +1496,11 @@ const AccountPage = () => {
                             type="text"
                             value={exp.title}
                             onChange={(e) =>
-                              handleUpdateExperience(idx, "title", e.target.value)
+                              handleUpdateExperience(
+                                idx,
+                                "title",
+                                e.target.value
+                              )
                             }
                             placeholder="Title"
                             className="flex-1 border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 bg-[hsl(60,100%,95%)]"
@@ -1158,7 +1509,11 @@ const AccountPage = () => {
                             type="text"
                             value={exp.duration || ""}
                             onChange={(e) =>
-                              handleUpdateExperience(idx, "duration", e.target.value)
+                              handleUpdateExperience(
+                                idx,
+                                "duration",
+                                e.target.value
+                              )
                             }
                             placeholder="Duration"
                             className="w-36 border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 bg-[hsl(60,100%,95%)]"
@@ -1167,7 +1522,11 @@ const AccountPage = () => {
                         <textarea
                           value={exp.description}
                           onChange={(e) =>
-                            handleUpdateExperience(idx, "description", e.target.value)
+                            handleUpdateExperience(
+                              idx,
+                              "description",
+                              e.target.value
+                            )
                           }
                           placeholder="Description"
                           className="w-full border border-gray-300 rounded px-3 py-2 mb-2 focus:ring-2 focus:ring-blue-500 bg-[hsl(60,100%,95%)] resize-none"
@@ -1186,9 +1545,13 @@ const AccountPage = () => {
                     ) : (
                       <>
                         <div className="flex justify-between items-center">
-                          <p className="font-semibold text-gray-800">{exp.title}</p>
+                          <p className="font-semibold text-gray-800">
+                            {exp.title}
+                          </p>
                           {exp.duration && (
-                            <p className="text-xs text-gray-500">{exp.duration}</p>
+                            <p className="text-xs text-gray-500">
+                              {exp.duration}
+                            </p>
                           )}
                         </div>
                         <p className="text-gray-700 mt-2">{exp.description}</p>
@@ -1340,7 +1703,7 @@ const AccountPage = () => {
                     toastError("Please enter your feedback before submitting.");
                     return;
                   }
-                  
+
                   try {
                     const feedbackDoc = {
                       userId: auth.currentUser?.uid,
@@ -1348,12 +1711,21 @@ const AccountPage = () => {
                       userName: userData.name || "Anonymous",
                       feedback: feedback.trim(),
                       timestamp: new Date().toISOString(),
-                      status: "pending"
+                      status: "pending",
                     };
-                    
-                    await setDoc(doc(db, "feedback", `${auth.currentUser?.uid}_${Date.now()}`), feedbackDoc);
+
+                    await setDoc(
+                      doc(
+                        db,
+                        "feedback",
+                        `${auth.currentUser?.uid}_${Date.now()}`
+                      ),
+                      feedbackDoc
+                    );
                     setFeedback("");
-                    toastSuccess("Feedback submitted successfully! Thank you for your input.");
+                    toastSuccess(
+                      "Feedback submitted successfully! Thank you for your input."
+                    );
                   } catch (error) {
                     console.error("Feedback submission error:", error);
                     toastError("Failed to submit feedback. Please try again.");
@@ -1372,7 +1744,8 @@ const AccountPage = () => {
                 Delete Account
               </h3>
               <p className="text-sm text-gray-600 mb-4">
-                Permanently delete your account and all associated data. This action cannot be undone.
+                Permanently delete your account and all associated data. This
+                action cannot be undone.
               </p>
               <button
                 onClick={() => setShowDeleteAccount(true)}
@@ -1423,6 +1796,13 @@ const AccountPage = () => {
         <AvatarPicker
           onSelect={handleProfileUpdate}
           onClose={() => setShowAvatarPicker(false)}
+        />
+      )}
+      {showTestimonial && (
+        <TestimonialModal
+          defaultName={userData?.name || ""}
+          onClose={() => setShowTestimonial(false)}
+          onSubmit={handleSubmitTestimonial}
         />
       )}
 
