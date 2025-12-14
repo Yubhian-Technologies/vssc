@@ -859,6 +859,29 @@ const AccountPage = () => {
 
     try {
       const docRef = doc(db, "users", auth.currentUser.uid);
+
+      // Filter out empty entries
+      const filteredExperiences = experiences.filter(
+        (exp) => exp.title && exp.title.trim() !== ""
+      );
+      const filteredClubs = clubs.filter(
+        (club) => club.name && club.name.trim() !== ""
+      );
+      const filteredSkills = skills.filter((skill) => skill && skill.trim() !== "");
+      const filteredAccounts = accounts.filter(
+        (acc) =>
+          acc.platform &&
+          acc.platform.trim() !== "" &&
+          acc.url &&
+          acc.url.trim() !== ""
+      );
+
+      // Update local state with filtered values to reflect cleanup immediately
+      setExperiences(filteredExperiences);
+      setClubs(filteredClubs);
+      setSkills(filteredSkills);
+      setAccounts(filteredAccounts);
+
       const updates = {
         name: editName.trim(),
         college: editCollege.trim(),
@@ -870,10 +893,10 @@ const AccountPage = () => {
         hackerRank: hackerRank.trim(),
         linkedIn: linkedIn.trim(),
         resumeDrive: resumeDrive.trim(),
-        experiences,
-        clubs,
-        skills,
-        accounts,
+        experiences: filteredExperiences,
+        clubs: filteredClubs,
+        skills: filteredSkills,
+        accounts: filteredAccounts,
       };
 
       await setDoc(docRef, { ...userData, ...updates }, { merge: true });
@@ -914,11 +937,15 @@ const AccountPage = () => {
   const handleDeleteAccount = async (password: string) => {
     if (!auth.currentUser) return;
     try {
+      console.log("Starting account deletion process...");
+
+      // 1. Re-authenticate
       const credential = EmailAuthProvider.credential(
         auth.currentUser.email!,
         password
       );
       await reauthenticateWithCredential(auth.currentUser, credential);
+      console.log("Re-authentication successful.");
 
       const userId = auth.currentUser.uid;
       const userEmail = auth.currentUser.email;
@@ -940,68 +967,88 @@ const AccountPage = () => {
         "logs",
         "analytics",
         "preferences",
+        "testimonials", // Added testimonials as it was missing from the original list but used in the code
       ];
 
-      // Delete from all collections
-      for (const collectionName of collections) {
-        try {
-          if (collectionName === "users") {
-            // Delete user document directly
-            await deleteDoc(doc(db, collectionName, userId));
-          } else {
-            // Query by userId
-            const userIdQuery = query(
-              collection(db, collectionName),
-              where("userId", "==", userId)
+      // 2. Delete from all collections
+      await Promise.all(
+        collections.map(async (collectionName) => {
+          try {
+            if (collectionName === "users") {
+              // Delete user document directly
+              await deleteDoc(doc(db, collectionName, userId));
+            } else {
+              const deletionPromises: Promise<void>[] = [];
+
+              // Query by userId
+              const userIdQuery = query(
+                collection(db, collectionName),
+                where("userId", "==", userId)
+              );
+              const userIdSnapshot = await getDocs(userIdQuery);
+              userIdSnapshot.docs.forEach((docSnapshot) => {
+                deletionPromises.push(deleteDoc(docSnapshot.ref));
+              });
+
+              // Query by userEmail if different from userId and exists
+              if (userEmail) {
+                const emailQuery = query(
+                  collection(db, collectionName),
+                  where("userEmail", "==", userEmail)
+                );
+                const emailSnapshot = await getDocs(emailQuery);
+                emailSnapshot.docs.forEach((docSnapshot) => {
+                  deletionPromises.push(deleteDoc(docSnapshot.ref));
+                });
+
+                // Query by email field
+                const emailFieldQuery = query(
+                  collection(db, collectionName),
+                  where("email", "==", userEmail)
+                );
+                const emailFieldSnapshot = await getDocs(emailFieldQuery);
+                emailFieldSnapshot.docs.forEach((docSnapshot) => {
+                  deletionPromises.push(deleteDoc(docSnapshot.ref));
+                });
+              }
+
+              await Promise.all(deletionPromises);
+            }
+          } catch (collectionError) {
+            // Continue with other collections even if one fails, but log it
+            console.warn(
+              `Failed to delete from ${collectionName}:`,
+              collectionError
             );
-            const userIdSnapshot = await getDocs(userIdQuery);
-            for (const docSnapshot of userIdSnapshot.docs) {
-              await deleteDoc(docSnapshot.ref);
-            }
-
-            // Query by userEmail if different from userId
-            if (userEmail) {
-              const emailQuery = query(
-                collection(db, collectionName),
-                where("userEmail", "==", userEmail)
-              );
-              const emailSnapshot = await getDocs(emailQuery);
-              for (const docSnapshot of emailSnapshot.docs) {
-                await deleteDoc(docSnapshot.ref);
-              }
-
-              // Query by email field
-              const emailFieldQuery = query(
-                collection(db, collectionName),
-                where("email", "==", userEmail)
-              );
-              const emailFieldSnapshot = await getDocs(emailFieldQuery);
-              for (const docSnapshot of emailFieldSnapshot.docs) {
-                await deleteDoc(docSnapshot.ref);
-              }
-            }
           }
-        } catch (collectionError) {
-          // Continue with other collections even if one fails
-          console.warn(
-            `Failed to delete from ${collectionName}:`,
-            collectionError
-          );
-        }
-      }
+        })
+      );
+      console.log("Data deletion from collections completed.");
 
-      // Delete auth account last
+      // 3. Delete auth account
       await deleteUser(auth.currentUser);
+      console.log("Auth account deleted.");
+
       toastSuccess(
         "Account completely deleted! All your data has been removed."
       );
       setShowDeleteAccount(false);
-      navigate("/auth");
-    } catch (error) {
+
+      // 4. Force navigation to auth page
+      navigate("/auth", { replace: true });
+
+    } catch (error: any) {
       console.error("Delete account error:", error);
-      toastError(
-        "Failed to delete account. Please check your password and try again."
-      );
+      if (error.code === "auth/wrong-password") {
+        toastError("Incorrect password. Please try again.");
+      } else if (error.code === "auth/requires-recent-login") {
+        toastError("Please login again before deleting your account.");
+        // Optionally force logout here if you want them to re-login
+      } else {
+        toastError(
+          "Failed to delete account. Please try again later."
+        );
+      }
     }
   };
 
