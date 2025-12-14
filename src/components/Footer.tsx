@@ -77,11 +77,10 @@ const Footer = () => {
                   variant="ghost"
                   size="icon"
                   aria-label={url ? `Go to ${url}` : "No link available"}
-                  className={`w-9 h-9 rounded-full text-white ${
-                    url
-                      ? "bg-white/10 hover:bg-white/20 cursor-pointer"
-                      : "bg-white/20 cursor-not-allowed"
-                  }`}
+                  className={`w-9 h-9 rounded-full text-white ${url
+                    ? "bg-white/10 hover:bg-white/20 cursor-pointer"
+                    : "bg-white/20 cursor-not-allowed"
+                    }`}
                   onClick={() => {
                     if (!url) return; // Disabled button does nothing
                     if (external) {
@@ -160,10 +159,10 @@ const Footer = () => {
         {/* Marquee */}
         <div className="w-full overflow-hidden bg-primary py-2 mt-10">
           <div className="flex whitespace-nowrap animate-marquee">
-            <p className="text-xl sm:text-30xl md:text-7xl lg:text-15xl font-bold mr-20 opacity-60">
+            <p className="text-xl sm:text-15xl md:text-7xl lg:text-30xl font-bold mr-20 opacity-60">
               VISHNU STUDENT SUCCESS CENTRE
             </p>
-            <p className="text-xl sm:text-30xl md:text-7xl lg:text-15xl font-bold mr-20 opacity-60">
+            <p className="text-xl sm:text-15xl md:text-7xl lg:text-30xl font-bold mr-20 opacity-60">
               VISHNU STUDENT SUCCESS CENTRE
             </p>
           </div>
