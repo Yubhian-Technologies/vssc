@@ -474,15 +474,52 @@ const Header = () => {
 
             
 
-            <ButtonGradient
-              name={isLoggedIn ? "Book an Appointment →" : "Login/Register"}
-              onClick={() => {
-                setIsMenuOpen(false);
-                handleLoginClick();
-              }}
-            />
+           {isLoggedIn ? (
+    <>
+      {role === "admin+" ? (
+        <ButtonGradient
+          name="Dashboard →"
+          onClick={() => {
+            setIsMenuOpen(false);
+            navigate("/dashboard");
+          }}
+        />
+      ) : role === "admin" ? (
+        <ButtonGradient
+          name="Appointments →"
+          onClick={() => {
+            setIsMenuOpen(false);
+            navigate("/appointment");
+          }}
+        />
+      ) : (
+        <ButtonGradient
+          name="Book an Appointment →"
+          onClick={() => {
+            setIsMenuOpen(false);
+            navigate("/appointment");
+          }}
+        />
+      )}
 
-            {isLoggedIn && <PointsBadge />}
+     
+      
+      <PointsBadge />
+
+      {/* Only show toggle for regular admin */}
+      {role === "admin" && uid && <AppointmentToggleModal userId={uid} />}
+    </>
+  ) : (
+    <ButtonGradient
+      name="Login/Register"
+      onClick={() => {
+        setIsMenuOpen(false);
+        navigate("/auth");
+      }}
+    />
+  )}
+
+            
             
           </nav>
         </div>

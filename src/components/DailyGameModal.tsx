@@ -118,36 +118,44 @@ const DailyGameModal: React.FC<DailyGameModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/70 flex justify-center items-center z-50">
-      <div className="bg-white p-6 rounded-2xl shadow-xl max-w-md w-full text-center relative transition-transform transform scale-100">
-        <button
-          onClick={handleSkip}
-          className="absolute top-2 right-3 text-gray-500 hover:text-red-500 text-lg font-bold"
-          title="Skip game"
-        >
-          ✖
-        </button>
+  <div
+    className="
+      bg-white p-6 rounded-2xl shadow-xl max-w-md w-full text-center relative
+      transform transition-transform
+      scale-[0.92] sm:scale-100
+    "
+  >
+    <button
+      onClick={handleSkip}
+      className="absolute top-4 right-3 text-gray-500 hover:text-red-500 text-sm sm:text-md font-bold"
+      title="Skip game"
+    >
+      ✖
+    </button>
 
-        <h2 className="text-2xl font-bold mb-2 text-blue-600">
-          🎮 {selectedGame.name}
-        </h2>
-        <p className="text-gray-700 mb-4">
-          Solve this game to earn <b>5 points!</b>
-        </p>
+    <h2 className=" text-lg md:text-2xl font-bold mb-2 text-blue-600">
+      🎮 {selectedGame.name}
+    </h2>
 
-        <div className="mt-4 flex justify-center">
-          <GameComponent onSolve={handleComplete} />
-        </div>
+    <p className="text-gray-700 mb-4">
+      Solve this game to earn <b>5 points!</b>
+    </p>
 
-        {onClose && (
-          <button
-            onClick={onClose}
-            className="mt-5 px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 transition"
-          >
-            Close
-          </button>
-        )}
-      </div>
+    <div className="mt-4 flex justify-center">
+      <GameComponent onSolve={handleComplete} />
     </div>
+
+    {onClose && (
+      <button
+        onClick={onClose}
+        className="mt-5 px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 transition"
+      >
+        Close
+      </button>
+    )}
+  </div>
+</div>
+
   );
 };
 

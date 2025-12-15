@@ -1110,15 +1110,7 @@ const AccountPage = () => {
   if (!userData) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[hsl(60,100%,90%)]">
-        <div className="text-center">
-          <p className="text-lg text-gray-600">User data not found.</p>
-          <button
-            onClick={() => navigate("/auth")}
-            className="mt-4 text-blue-600 hover:underline"
-          >
-            Return to login
-          </button>
-        </div>
+        <h3 className="text-xl text-primary">Returning to login page...</h3>
       </div>
     );
   }
