@@ -106,7 +106,11 @@ const ChangePasswordModal = ({
                 onClick={() => setShowCurrentPassword(!showCurrentPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
               >
-                {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {showCurrentPassword ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
               </button>
             </div>
           </div>
@@ -128,7 +132,11 @@ const ChangePasswordModal = ({
                 onClick={() => setShowNewPassword(!showNewPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
               >
-                {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {showNewPassword ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
               </button>
             </div>
           </div>
@@ -150,7 +158,11 @@ const ChangePasswordModal = ({
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
               >
-                {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {showConfirmPassword ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
               </button>
             </div>
           </div>
@@ -236,7 +248,11 @@ const DeleteAccountModal = ({
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
               >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {showPassword ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
               </button>
             </div>
           </div>
@@ -867,7 +883,9 @@ const AccountPage = () => {
       const filteredClubs = clubs.filter(
         (club) => club.name && club.name.trim() !== ""
       );
-      const filteredSkills = skills.filter((skill) => skill && skill.trim() !== "");
+      const filteredSkills = skills.filter(
+        (skill) => skill && skill.trim() !== ""
+      );
       const filteredAccounts = accounts.filter(
         (acc) =>
           acc.platform &&
@@ -1036,7 +1054,6 @@ const AccountPage = () => {
 
       // 4. Force navigation to auth page
       navigate("/auth", { replace: true });
-
     } catch (error: any) {
       console.error("Delete account error:", error);
       if (error.code === "auth/wrong-password") {
@@ -1045,9 +1062,7 @@ const AccountPage = () => {
         toastError("Please login again before deleting your account.");
         // Optionally force logout here if you want them to re-login
       } else {
-        toastError(
-          "Failed to delete account. Please try again later."
-        );
+        toastError("Failed to delete account. Please try again later.");
       }
     }
   };
@@ -1624,9 +1639,9 @@ const AccountPage = () => {
                         <div className="flex justify-end mt-2">
                           <button
                             onClick={() => handleDeleteExperience(idx)}
-                            className="bg-red-100 hover:bg-red-200 text-red-600 p-2 rounded-full transition duration-200 flex items-center justify-center"
+                            className="w-full h-10 bg-red-100 hover:bg-red-200 text-red-600 p-2 rounded-full transition duration-200 flex items-center justify-center"
                           >
-                            <Minus className="w-5 h-5 font-bold" />
+                            <Minus className="w-full h-5 font-bold" />
                           </button>
                         </div>
                       </>
@@ -1642,7 +1657,9 @@ const AccountPage = () => {
                             </p>
                           )}
                         </div>
-                        <p className="text-gray-700 mt-2 break-words">{exp.description}</p>
+                        <p className="text-gray-700 mt-2 break-words">
+                          {exp.description}
+                        </p>
                       </>
                     )}
                   </div>
@@ -1711,7 +1728,7 @@ const AccountPage = () => {
                       <div className="flex justify-center mt-2">
                         <button
                           onClick={() => handleDeleteClub(idx)}
-                          className="bg-red-100 hover:bg-red-200 text-red-600 p-2 rounded-full transition duration-200 flex items-center justify-center"
+                          className="w-full h-10 bg-red-100 hover:bg-red-200 text-red-600 p-2 rounded-full transition duration-200 flex items-center justify-center"
                         >
                           <Minus className="w-5 h-5 font-bold" />
                         </button>
