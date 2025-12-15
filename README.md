@@ -1,4 +1,4 @@
-# Vishnu Student Service Center (VSSC)
+# Vishnu Student Success Center (VSSC)
 
 Welcome to the **Vishnu Student Success Center (VSSC)** project! This application allows students of the Vishnu Educational Society to access various student services, manage their profiles, and book appointments.
 
