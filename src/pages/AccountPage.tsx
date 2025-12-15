@@ -1266,10 +1266,10 @@ const AccountPage = () => {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-5xl mx-auto px-4 mt-6 sm:mt-10">
+      <div className="max-w-5xl mx-auto px-4 mt-6 sm:mt-10 overflow-hidden">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
           {/* Left Column */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-6 min-w-0">
             {/* Profile Info */}
             <SectionCard>
               <div className="flex justify-between items-start mb-4">
@@ -1418,7 +1418,7 @@ const AccountPage = () => {
                   {accounts.map((account, idx) => (
                     <div
                       key={idx}
-                      className="flex flex-col sm:flex-row sm:items-center gap-2 border border-gray-200 rounded-lg p-3 shadow-sm bg-[hsl(60,100%,95%)]"
+                      className="flex flex-col sm:flex-row sm:items-center gap-2 border border-gray-200 rounded-lg p-3 shadow-sm bg-[hsl(60,100%,95%)] min-w-0"
                     >
                       <input
                         type="text"
@@ -1429,7 +1429,7 @@ const AccountPage = () => {
                           setAccounts(newAccounts);
                         }}
                         placeholder="Platform (e.g. GitHub, LinkedIn)"
-                        className="flex-1 border border-gray-300 rounded px-3 py-1.5 focus:ring-2 focus:ring-blue-500 bg-[hsl(60,100%,95%)]"
+                        className="flex-1 min-w-0 border border-gray-300 rounded px-3 py-1.5 focus:ring-2 focus:ring-blue-500 bg-[hsl(60,100%,95%)]"
                       />
 
                       <input
@@ -1441,7 +1441,7 @@ const AccountPage = () => {
                           setAccounts(newAccounts);
                         }}
                         placeholder="Profile URL"
-                        className="flex-1 border border-gray-300 rounded px-3 py-1.5 focus:ring-2 focus:ring-blue-500 bg-[hsl(60,100%,95%)]"
+                        className="flex-1 min-w-0 border border-gray-300 rounded px-3 py-1.5 focus:ring-2 focus:ring-blue-500 bg-[hsl(60,100%,95%)]"
                       />
 
                       <button
@@ -1475,9 +1475,9 @@ const AccountPage = () => {
                       href={account.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center justify-between bg-blue-100 text-blue-800 font-medium px-3 py-2 rounded-lg shadow-sm hover:bg-blue-200 transition"
+                      className="flex items-center justify-between bg-blue-100 text-blue-800 font-medium px-3 py-2 rounded-lg shadow-sm hover:bg-blue-200 transition min-w-0"
                     >
-                      <span>{account.platform}</span>
+                      <span className="truncate">{account.platform}</span>
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         className="h-5 w-5 text-blue-700"
@@ -1513,7 +1513,7 @@ const AccountPage = () => {
                   {skills.map((skill, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center gap-2 border border-gray-200 rounded-lg p-2 shadow-sm bg-[hsl(60,100%,95%)]"
+                      className="flex items-center gap-2 border border-gray-200 rounded-lg p-2 shadow-sm bg-[hsl(60,100%,95%)] min-w-0"
                     >
                       <input
                         type="text"
@@ -1524,7 +1524,7 @@ const AccountPage = () => {
                           setSkills(newSkills);
                         }}
                         placeholder="Enter skill"
-                        className="flex-1 border border-gray-300 rounded px-3 py-1.5 focus:ring-2 focus:ring-blue-500 bg-[hsl(60,100%,95%)]"
+                        className="flex-1 min-w-0 border border-gray-300 rounded px-3 py-1.5 focus:ring-2 focus:ring-blue-500 bg-[hsl(60,100%,95%)]"
                       />
                       <button
                         onClick={() => {
@@ -1548,11 +1548,11 @@ const AccountPage = () => {
                   </div>
                 </div>
               ) : (
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 overflow-hidden">
                   {skills.map((skill, idx) => (
                     <span
                       key={idx}
-                      className="bg-blue-100 text-blue-800 font-medium px-3 py-1 rounded-full shadow-sm"
+                      className="bg-blue-100 text-blue-800 font-medium px-3 py-1 rounded-full shadow-sm break-words"
                     >
                       {skill}
                     </span>
@@ -1575,11 +1575,11 @@ const AccountPage = () => {
                 {experiences.map((exp, idx) => (
                   <div
                     key={idx}
-                    className="border border-gray-200 rounded-lg p-4 shadow-sm bg-[hsl(60,100%,95%)]"
+                    className="border border-gray-200 rounded-lg p-4 shadow-sm bg-[hsl(60,100%,95%)] min-w-0"
                   >
                     {isEditing ? (
                       <>
-                        <div className="flex gap-2 mb-2">
+                        <div className="flex flex-col sm:flex-row gap-2 mb-2">
                           <input
                             type="text"
                             value={exp.title}
@@ -1591,7 +1591,7 @@ const AccountPage = () => {
                               )
                             }
                             placeholder="Title"
-                            className="flex-1 border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 bg-[hsl(60,100%,95%)]"
+                            className="flex-1 min-w-0 border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 bg-[hsl(60,100%,95%)]"
                           />
                           <input
                             type="text"
@@ -1604,7 +1604,7 @@ const AccountPage = () => {
                               )
                             }
                             placeholder="Duration"
-                            className="w-36 border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 bg-[hsl(60,100%,95%)]"
+                            className="w-full sm:w-36 border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 bg-[hsl(60,100%,95%)]"
                           />
                         </div>
                         <textarea
@@ -1632,17 +1632,17 @@ const AccountPage = () => {
                       </>
                     ) : (
                       <>
-                        <div className="flex justify-between items-center">
-                          <p className="font-semibold text-gray-800">
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1">
+                          <p className="font-semibold text-gray-800 break-words">
                             {exp.title}
                           </p>
                           {exp.duration && (
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-gray-500 break-words">
                               {exp.duration}
                             </p>
                           )}
                         </div>
-                        <p className="text-gray-700 mt-2">{exp.description}</p>
+                        <p className="text-gray-700 mt-2 break-words">{exp.description}</p>
                       </>
                     )}
                   </div>
@@ -1676,7 +1676,7 @@ const AccountPage = () => {
                   {clubs.map((club, idx) => (
                     <div
                       key={idx}
-                      className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center border border-gray-200 rounded-lg p-4 shadow-sm bg-[hsl(60,100%,95%)]"
+                      className="grid grid-cols-1 gap-4 border border-gray-200 rounded-lg p-4 shadow-sm bg-[hsl(60,100%,95%)] min-w-0"
                     >
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -1689,7 +1689,7 @@ const AccountPage = () => {
                             handleUpdateClub(idx, "name", e.target.value)
                           }
                           placeholder="Club Name"
-                          className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 bg-[hsl(60,100%,95%)]"
+                          className="w-full min-w-0 border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 bg-[hsl(60,100%,95%)]"
                         />
                       </div>
 
@@ -1704,11 +1704,11 @@ const AccountPage = () => {
                             handleUpdateClub(idx, "proofUrl", e.target.value)
                           }
                           placeholder="https://example.com/proof"
-                          className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 bg-[hsl(60,100%,95%)]"
+                          className="w-full min-w-0 border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 bg-[hsl(60,100%,95%)]"
                         />
                       </div>
 
-                      <div className="sm:col-span-2 flex justify-center mt-2">
+                      <div className="flex justify-center mt-2">
                         <button
                           onClick={() => handleDeleteClub(idx)}
                           className="bg-red-100 hover:bg-red-200 text-red-600 p-2 rounded-full transition duration-200 flex items-center justify-center"
@@ -1736,9 +1736,9 @@ const AccountPage = () => {
                       href={club.proofUrl || "#"}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors px-4 py-3 rounded-lg shadow-sm font-medium break-words"
+                      className="flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors px-4 py-3 rounded-lg shadow-sm font-medium min-w-0"
                     >
-                      <span>{club.name}</span>
+                      <span className="truncate">{club.name}</span>
                       {club.proofUrl && (
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -1763,7 +1763,7 @@ const AccountPage = () => {
           </div>
 
           {/* Right Column */}
-          <div className="space-y-6">
+          <div className="space-y-6 min-w-0">
             {/* Change Password */}
             <SectionCard>
               <SectionTitle icon={Lock}>Change Password</SectionTitle>
