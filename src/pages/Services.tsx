@@ -10,7 +10,6 @@ import green2 from "@/assets/green2.png";
 import green3 from "@/assets/green3.png";
 import green4 from "@/assets/green4.png";
 import green5 from "@/assets/green5.png";
-import filter21 from "@/assets/filter21.jpg";
 
 interface Service {
   id: string;
@@ -41,7 +40,7 @@ const Services = () => {
       title: "Academic Advising",
       description: "Educational guidance and career planning",
       image: green4,
-      collectionName: "academicAdvising",
+      collectionName: "academicadvising",
       count: 0,
       route: "/services/academic-advising",
     },
@@ -50,7 +49,7 @@ const Services = () => {
       title: "Study Skills Workshops",
       description: "Learning technique seminars and training",
       image: green2,
-      collectionName: "studyWorkshops",
+      collectionName: "studyworkshop",
       count: 0,
       route: "/services/study-workshops",
     },
@@ -68,7 +67,7 @@ const Services = () => {
       title: "Psychology Counseling Service",
       description: "Support for emotional well-being and personal growth",
       image: green5,
-      collectionName: "psychologyCounseling",
+      collectionName: "psychologycounseling",
       count: 0,
       route: "/services/psychology-counseling",
     },
@@ -77,58 +76,84 @@ const Services = () => {
   const [search, setSearch] = useState("");
   const [filteredServices, setFilteredServices] = useState<Service[]>(services);
 
-  useEffect(() => {
-    const fetchCounts = async () => {
-      try {
-        const currentUser = auth.currentUser;
-        if (!currentUser) return;
+  const fetchCounts = async () => {
+    try {
+      const currentUser = auth.currentUser;
+      if (!currentUser) return;
 
-        const userDocRef = doc(db, "users", currentUser.uid);
-        const userSnap = await getDoc(userDocRef);
-        if (!userSnap.exists()) return;
+      const userDocRef = doc(db, "users", currentUser.uid);
+      const userSnap = await getDoc(userDocRef);
+      if (!userSnap.exists()) return;
 
-        const userData = userSnap.data();
-        const userCollege = userData.college;
-        const isAdmin = userData.role === "admin" ? true : false;
-        // check if user is admin
+      const userData = userSnap.data();
+      const userCollege = userData.college;
+      const isAdmin = userData.role === "admin";
 
-        const updatedServices = await Promise.all(
-          services.map(async (service) => {
-            try {
-              const sessionSnapshot = await getDocs(
-                collection(db, service.collectionName)
-              );
+      const updatedServices = await Promise.all(
+        services.map(async (service) => {
+          try {
+            const snapshot = await getDocs(collection(db, service.collectionName));
+            let count = 0;
 
-              const count = sessionSnapshot.docs.filter((sessionDoc) => {
-                const sessionData = sessionDoc.data();
+            for (const doc of snapshot.docs) {
+              const data = doc.data();
 
-                if (isAdmin) {
-                  // Admin sees only sessions created by themselves
-                  return sessionData.createdBy === currentUser.uid;
-                } else {
-                  // Regular user sees sessions for their college
-                  return sessionData.colleges?.includes(userCollege);
+              
+              if (data.validated === true) continue;
+
+            
+              if (isAdmin) {
+                if (data.createdBy === currentUser.uid) count++;
+                continue;
+              }
+
+              
+              if (!data.colleges || !Array.isArray(data.colleges) || !data.colleges.includes(userCollege)) {
+                continue;
+              }
+
+          
+              let isExpired = false;
+              if (data.expiryDate && data.expiryTime) {
+                try {
+                  const [y, m, d] = data.expiryDate.split("-").map(Number);
+                  const [h, min] = data.expiryTime.split(":").map(Number);
+
+                  if ([y, m, d, h, min].every(n => Number.isInteger(n) && n >= 0)) {
+                    const expiry = new Date(y, m - 1, d, h, min);
+                    if (!isNaN(expiry.getTime()) && new Date() > expiry) {
+                      isExpired = true;
+                    }
+                  }
+                } catch (e) {
+                  
                 }
-              }).length;
+              }
 
-              return { ...service, count };
-            } catch (err) {
-              console.error(`Error fetching ${service.title}:`, err);
-              return service;
+              if (!isExpired) count++;
             }
-          })
-        );
 
-        setServices(updatedServices);
-        setFilteredServices(updatedServices);
-      } catch (err) {
-        console.error("Error fetching user or sessions:", err);
-      }
-    };
+            return { ...service, count };
+          } catch (err) {
+            console.error(`Error fetching ${service.title}:`, err);
+            return service;
+          }
+        })
+      );
 
+      setServices(updatedServices);
+      setFilteredServices(updatedServices);
+    } catch (err) {
+      console.error("Error in fetchCounts:", err);
+    }
+  };
+
+  
+  useEffect(() => {
     fetchCounts();
-  }, [auth.currentUser]);
+  }, []);
 
+  // Search filter
   useEffect(() => {
     const filtered = services.filter((service) =>
       service.title.toLowerCase().includes(search.toLowerCase())
