@@ -8,7 +8,7 @@ const Footer = () => {
   const navigate = useNavigate();
 
   const navigationLinks = [
-    { title: "Home", href: "#" },
+    { title: "Home", href: "/" },
     { title: "About", href: "/About" },
     { title: "Services", href: "/Services" },
     { title: "Tour", href: "/tour" },
