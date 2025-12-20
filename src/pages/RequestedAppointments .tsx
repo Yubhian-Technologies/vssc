@@ -8,6 +8,7 @@ import {
   deleteDoc,
   doc,
   getDoc,
+  onSnapshot,
 } from "firebase/firestore";
 import { useAuth } from "../AuthContext";
 import red2 from "@/assets/red2.png";
@@ -31,38 +32,56 @@ const RequestedAppointments = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [activeTab, setActiveTab] = useState<"appointments" | "activities">("appointments");
 
-  const fetchAppointments = async () => {
-    if (!user) return;
+  useEffect(() => {
+  if (!user) return;
 
-    const q = query(collection(db, "appointments"), where("studentId", "==", user.uid));
-    const snap = await getDocs(q);
+  const q = query(
+    collection(db, "appointments"),
+    where("studentId", "==", user.uid)
+  );
 
-    const list: Appointment[] = [];
-
-    for (const d of snap.docs) {
-      const data = d.data();
-      // Fetch faculty profile photo
-      const facultyDoc = await getDoc(doc(db, "users", data.facultyId));
-      const profileUrl = facultyDoc.exists() ? facultyDoc.data()?.profileUrl : undefined;
-
-      list.push({
-        id: d.id,
-        facultyId: data.facultyId,
-        facultyName: data.facultyName,
-        subject: data.subject,
-        doubt: data.doubt,
-        status: data.status,
-        scheduledAt: data.scheduledAt,
-        profileUrl,
-      });
+  const unsubscribe = onSnapshot(q, async (snap) => {
+    if (snap.empty) {
+      setAppointments([]);
+      return;
     }
 
-    setAppointments(list);
-  };
+    const rawAppointments = snap.docs.map((d) => ({
+      id: d.id,
+      ...d.data(),
+    })) as any[];
 
-  useEffect(() => {
-    fetchAppointments();
-  }, [user]);
+    const facultyIds = [...new Set(rawAppointments.map(a => a.facultyId))];
+
+    const facultyDocs = await Promise.all(
+      facultyIds.map(id => getDoc(doc(db, "users", id)))
+    );
+
+    const facultyMap: Record<string, string | undefined> = {};
+    facultyDocs.forEach((docSnap, index) => {
+      if (docSnap.exists()) {
+        facultyMap[facultyIds[index]] = docSnap.data()?.profileUrl;
+      }
+    });
+
+    const finalList: Appointment[] = rawAppointments.map((a) => ({
+      id: a.id,
+      facultyId: a.facultyId,
+      facultyName: a.facultyName,
+      subject: a.subject,
+      doubt: a.doubt,
+      status: a.status,
+      scheduledAt: a.scheduledAt,
+      profileUrl: facultyMap[a.facultyId],
+    }));
+
+    setAppointments(finalList);
+  });
+
+  // cleanup
+  return () => unsubscribe();
+}, [user]);
+
 
   const cancelAppointment = async (id: string) => {
     const confirmCancel = window.confirm("Are you sure you want to cancel this appointment?");

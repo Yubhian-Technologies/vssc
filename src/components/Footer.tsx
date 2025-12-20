@@ -2,13 +2,14 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
+import LazyImage from "@/components/LazyImage";
 import vssc from "@/assets/VSSC LOGO[1].png";
 
 const Footer = () => {
   const navigate = useNavigate();
 
   const navigationLinks = [
-    { title: "Home", href: "#" },
+    { title: "Home", href: "/" },
     { title: "About", href: "/About" },
     { title: "Services", href: "/Services" },
     { title: "Tour", href: "/tour" },
@@ -56,7 +57,7 @@ const Footer = () => {
           <div className="p-6 rounded-xl shadow-lg shadow-black/20">
             <div className="mb-6">
               <div className="flex items-center transition-transform">
-                <img
+                <LazyImage
                   src={vssc}
                   alt="VSSC Logo"
                   className="w-8 h-8 sm:w-16 sm:h-16 object-contain"
