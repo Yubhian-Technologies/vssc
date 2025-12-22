@@ -1,9 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 60" width="150" height="60">
-  <ellipse cx="75" cy="55" rx="50" ry="6" fill="#000" opacity="0.3" />
-  <rect x="0" y="25" width="150" height="4" fill="#4d79ff" opacity="0.3" />
-  <path d="M15 40 L135 40 Q140 35 130 25 L20 25 Q10 35 15 40 Z" fill="#1d3557" />
-  <polygon points="35,25 115,25 100,10 50,10" fill="#457b9d" />
-  <path d="M35 25 L50 10 L100 10 L115 25" fill="white" opacity="0.15" />
-  <circle cx="30" cy="42" r="7" fill="#333" />
-  <circle cx="120" cy="42" r="7" fill="#333" />
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="150" height="60"><ellipse cx="75" cy="55" opacity=".3" rx="50" ry="6"/><path fill="#4d79ff" d="M0 25h150v4H0z" opacity=".3"/><path fill="#1d3557" d="M15 40h120q5-5-5-15H20q-10 10-5 15"/><path fill="#457b9d" d="M35 25h80l-15-15H50z"/><path fill="#fff" d="m35 25 15-15h50l15 15" opacity=".15"/><circle cx="30" cy="42" r="7" fill="#333"/><circle cx="120" cy="42" r="7" fill="#333"/></svg>
