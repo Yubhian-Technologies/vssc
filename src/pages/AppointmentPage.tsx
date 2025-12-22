@@ -54,6 +54,8 @@ const AppointmentPage = () => {
   const [schedulingId, setSchedulingId] = useState<string | null>(null);
   const [scheduleDate, setScheduleDate] = useState("");
   const [scheduleTime, setScheduleTime] = useState("");
+  const [facultyLoading, setFacultyLoading] = useState(true);
+
   const navigate = useNavigate();
 
   // Fetch user role + college
@@ -83,6 +85,7 @@ const AppointmentPage = () => {
   // Student: fetch faculty from same college + profile photo
   useEffect(() => {
     if (role !== "student" || !college) return;
+    setFacultyLoading(true);
 
     const q = query(
       collection(db, "faculty"),
@@ -91,27 +94,27 @@ const AppointmentPage = () => {
     );
 
     const unsubscribe = onSnapshot(q, async (snapshot) => {
-      const facultyList: Faculty[] = [];
+  const facultyList = await Promise.all(
+    snapshot.docs.map(async (docSnap) => {
+      const facultyData = docSnap.data();
+      const userDoc = await getDoc(doc(db, "users", docSnap.id));
 
-      for (const docSnap of snapshot.docs) {
-        const facultyData = docSnap.data();
-        const userDoc = await getDoc(doc(db, "users", docSnap.id));
-        const profileUrl = userDoc.exists() ? userDoc.data().profileUrl : undefined;
+      return {
+        id: docSnap.id,
+        name: facultyData.name,
+        college: facultyData.college,
+        skills: facultyData.skills || [],
+        profileUrl: userDoc.exists()
+          ? userDoc.data().profileUrl
+          : undefined,
+      };
+    })
+  );
+  
+  setFaculty(facultyList);
+  setFacultyLoading(false);
+});
 
-        facultyList.push({
-          id: docSnap.id,
-          name: facultyData.name,
-          college: facultyData.college,
-          skills: facultyData.skills || [],
-          profileUrl,
-        });
-      }
-
-      setFaculty(facultyList);
-    }, (error) => {
-      console.error("Error fetching faculty:", error);
-      toastError("Failed to fetch faculty list");
-    });
 
     return () => unsubscribe();
   }, [role, college]);
@@ -318,66 +321,93 @@ const AppointmentPage = () => {
           <h2 className="text-2xl font-bold mb-4 text-primary text-center">
             Available Faculty
           </h2>
-          {faculty.length === 0 ? (
-            <p className="text-gray-500 text-lg text-center">No faculty available at your college.</p>
-          ) : (
+          {facultyLoading ? (
+  <p className="text-gray-500 text-lg text-center animate-pulse">
+    Loading faculty details...
+  </p>
+) : faculty.length === 0 ? (
+  <p className="text-gray-500 text-lg text-center">
+    No faculty available at your college.
+  </p>
+) : (
+
             <ul className="space-y-4">
               {faculty.map((f) => {
                 const appointmentStatus = getFacultyAppointmentStatus(f.id);
                 return (
                   <li
-                    key={f.id}
-                    className="flex items-center gap-4 [background-color:hsl(60,100%,90%)] p-4 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300"
-                  >
-                    {/* Profile Photo */}
-                    <div className="flex-shrink-0">
-                      {f.profileUrl ? (
-                        <img
-                          src={f.profileUrl}
-                          alt={f.name}
-                          className="w-16 h-16 rounded-full object-cover border-2 border-white shadow-md"
-                        />
-                      ) : (
-                        <div className="w-16 h-16 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center shadow-md">
-                          <User className="w-8 h-8 text-gray-400" />
-                        </div>
-                      )}
-                    </div>
+  key={f.id}
+  className="flex flex-col md:flex-row md:items-center gap-4
+             [background-color:hsl(60,100%,90%)] p-4 rounded-xl
+             shadow-md hover:shadow-lg transition-shadow duration-300"
+>
+  {/* TOP ROW (Image + Details) */}
+  <div className="flex items-center gap-4 w-full">
+    {/* Profile Photo */}
+    <div className="flex-shrink-0">
+      {f.profileUrl ? (
+        <img
+          src={f.profileUrl}
+          alt={f.name}
+          className="w-14 h-14 md:w-16 md:h-16 rounded-full object-cover
+                     border-2 border-white shadow-md"
+        />
+      ) : (
+        <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-gray-200
+                        border-2 border-white flex items-center justify-center shadow-md">
+          <User className="w-7 h-7 md:w-8 md:h-8 text-gray-400" />
+        </div>
+      )}
+    </div>
 
-                    {/* Details */}
-                    <div className="flex-1">
-                      <p className="text-xl font-semibold text-primary">{f.name}</p>
-                      <p className="text-md text-primary mb-1">{f.college}</p>
-                      <p className="text-sm text-primary">Skills: {f.skills.join(", ")}</p>
-                      {appointmentStatus && (
-                        <p className="text-sm mt-2">
-                          {appointmentStatus.status === "pending" ? (
-                            <span className="text-yellow-700 font-medium">Pending Appointment</span>
-                          ) : (
-                            <span className="text-green-700 font-medium">
-                              Scheduled: {appointmentStatus.scheduledAt}
-                            </span>
-                          )}
-                        </p>
-                      )}
-                    </div>
+    {/* Details */}
+    <div className="flex-1">
+      <p className="text-lg md:text-xl font-semibold text-primary">
+        {f.name}
+      </p>
+      <p className="text-sm md:text-md text-primary">
+        {f.college}
+      </p>
+      <p className="text-xs md:text-sm text-primary">
+        Skills: {f.skills.join(", ")}
+      </p>
 
-                    {/* Request Button */}
-                    <button
-                      onClick={() => {
-                        setSelectedFaculty(f);
-                        setModalOpen(true);
-                      }}
-                      disabled={!!appointmentStatus}
-                      className={`px-4 py-2 rounded-lg font-medium shadow-md transition-colors duration-200 ${
-                        appointmentStatus
-                          ? "bg-gray-400 cursor-not-allowed text-gray-200"
-                          : "bg-green-800 hover:bg-green-600 text-white"
-                      }`}
-                    >
-                      Request Appointment
-                    </button>
-                  </li>
+      {appointmentStatus && (
+        <p className="text-xs md:text-sm mt-1">
+          {appointmentStatus.status === "pending" ? (
+            <span className="text-yellow-700 font-medium">
+              Pending Appointment
+            </span>
+          ) : (
+            <span className="text-green-700 font-medium">
+              Scheduled: {appointmentStatus.scheduledAt}
+            </span>
+          )}
+        </p>
+      )}
+    </div>
+  </div>
+
+  {/* BUTTON ROW */}
+  <div className="w-full md:w-auto">
+    <button
+      onClick={() => {
+        setSelectedFaculty(f);
+        setModalOpen(true);
+      }}
+      disabled={!!appointmentStatus}
+      className={`w-full sm:w-80   px-4 py-2 rounded-lg font-medium
+        shadow-md transition-colors duration-200 ${
+          appointmentStatus
+            ? "bg-gray-400 cursor-not-allowed text-gray-200"
+            : "bg-green-800 hover:bg-green-600 text-white"
+        }`}
+    >
+      Request Appointment
+    </button>
+  </div>
+</li>
+
                 );
               })}
             </ul>
