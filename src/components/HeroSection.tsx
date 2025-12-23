@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import heroStudent from "@/assets/hero-student.jpg";
+import yellow1 from "@/assets/yellow1.png";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import CongratsPopup from "../components/ui/CongratsPopup";
