@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import heroStudent from "@/assets/hero-student.jpg";
+import heroStudent from "@/assets/yellow1.png";
 import Instructorman from "@/assets/instructor-man.jpg";
 
 const AboutUs = () => {
