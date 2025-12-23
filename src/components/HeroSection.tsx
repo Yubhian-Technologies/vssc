@@ -168,7 +168,7 @@ const HeroSection = () => {
             whileHover={{ scale: 1.05, rotate: 1 }}
           >
             <img
-              src={heroStudent}
+              src={yellow1}
               alt="Student learning with Educve"
               className="w-4/5 max-w-[280px] sm:max-w-sm md:max-w-md drop-shadow-2xl"
             />
