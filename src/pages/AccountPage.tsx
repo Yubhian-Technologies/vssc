@@ -688,13 +688,14 @@ const AccountPage = () => {
                   className="w-full border rounded-[20px] px-3 py-2"
                 >
                   <option value="">Start Year</option>
-                  {Array.from({ length: 30 }, (_, i) => 2010 + i).map(
-                    (year) => (
-                      <option key={year} value={year}>
-                        {year}
-                      </option>
-                    )
-                  )}
+                  {Array.from(
+                    { length: new Date().getFullYear() - 1950 + 1 },
+                    (_, i) => 1950 + i
+                  ).map((year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  ))}
                 </select>
 
                 {/* End Year */}
@@ -708,13 +709,14 @@ const AccountPage = () => {
                   className="w-full border rounded-[20px] px-3 py-2"
                 >
                   <option value="">End Year</option>
-                  {Array.from({ length: 30 }, (_, i) => 2010 + i).map(
-                    (year) => (
-                      <option key={year} value={year}>
-                        {year}
-                      </option>
-                    )
-                  )}
+                  {Array.from(
+                    { length: new Date().getFullYear() - 1950 + 1 },
+                    (_, i) => 1950 + i
+                  ).map((year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
