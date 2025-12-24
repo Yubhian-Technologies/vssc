@@ -52,7 +52,7 @@ const TestimonialsSection = () => {
   const duplicated = [...testimonials, ...testimonials];
 
   // animation duration: base 12s for 1 item, then +4s per item capped
-  const durationSec = Math.max(12, Math.min(120, 12 + testimonials.length * 4));
+  const durationSec = Math.max(3, Math.min(40, 3+ testimonials.length * 1));
 
   return (
     <section
@@ -141,7 +141,7 @@ const TestimonialsSection = () => {
         </div>
       </div>
 
-      <style jsx>{`
+      <style >{`
         /* marquee styles */
         .marquee-wrapper {
           width: 100%;

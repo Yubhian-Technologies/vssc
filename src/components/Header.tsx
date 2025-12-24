@@ -301,7 +301,7 @@ const Header = () => {
         )}
       </div>
 
-      {isLoggedIn && <PointsBadge />}
+      <PointsBadge />
 
       {/* Only show toggle for regular admin */}
       {role === "admin" && uid && <AppointmentToggleModal userId={uid} />}
@@ -318,59 +318,20 @@ const Header = () => {
 </div>
 
         {/* Mobile Menu Button and Admin Toggle */}
-        {/* Mobile Menu Button and Actions */}
-<div className="lg:hidden flex items-center gap-2 relative z-[200]">
-
-  {/* Mobile Login / Action Button */}
-  {!isLoggedIn ? (
-    <ButtonGradient
-      name="Login/Register"
-      onClick={() => {
-        setIsMenuOpen(false);
-        navigate("/auth");
-      }}
-    />
-  ) : role === "admin+" ? (
-    <ButtonGradient
-          name="Dashboard →"
-          onClick={() => {
-            setIsMenuOpen(false);
-            navigate("/dashboard");
-          }}
-        />
-  ) 
-  : role === "admin" ? (
-        <ButtonGradient
-          name="Appointments →"
-          onClick={() => {
-            setIsMenuOpen(false);
-            navigate("/appointment");
-          }}
-        />
-      ) :(
-    <ButtonGradient
-          name="Book an Appointment →"
-          onClick={() => {
-            setIsMenuOpen(false);
-            navigate("/appointment");
-          }}
-        />
-  )}
-
-  {/* Admin Toggle for mobile */}
-  {isLoggedIn && role === "admin" && uid && (
-    <AppointmentToggleModal userId={uid} />
-  )}
-
-  {/* Hamburger Menu Button */}
-  <button
-    className="flex items-center justify-center w-10 h-10 rounded-md border border-border text-white"
-    onClick={toggleMenu}
-  >
-    {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-  </button>
-</div>
-
+        <div className="lg:hidden flex items-center gap-2 relative z-[200]">
+          {/* Admin Toggle for mobile */}
+          {isLoggedIn && role === "admin" && uid && (
+            <AppointmentToggleModal userId={uid} />
+          )}
+          
+          {/* Hamburger Menu Button */}
+          <button
+            className="flex items-center justify-center w-10 h-10 rounded-md border border-border text-white"
+            onClick={toggleMenu}
+          >
+            {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile Menu */}
@@ -513,8 +474,7 @@ const Header = () => {
 
             
 
-            <div className="hidden lg:flex items-center gap-4 relative z-20">
-  {isLoggedIn ? (
+           {isLoggedIn ? (
     <>
       {role === "admin+" ? (
         <ButtonGradient
@@ -542,21 +502,9 @@ const Header = () => {
         />
       )}
 
-      {/* Profile Avatar */}
-      <div
-        className="w-10 h-10 rounded-full overflow-hidden border-2 border-primary cursor-pointer"
-        onClick={() => navigate("/account")}
-      >
-        {profileUrl ? (
-          <img src={profileUrl} alt="Profile" className="w-full h-full object-cover" />
-        ) : (
-          <div className="w-full h-full bg-gray-300 flex items-center justify-center">
-            <span className="text-white font-bold">U</span>
-          </div>
-        )}
-      </div>
-
-      {isLoggedIn && <PointsBadge />}
+     
+      
+      <PointsBadge />
 
       {/* Only show toggle for regular admin */}
       {role === "admin" && uid && <AppointmentToggleModal userId={uid} />}
@@ -570,8 +518,8 @@ const Header = () => {
       }}
     />
   )}
-</div>
 
+            
             
           </nav>
         </div>
