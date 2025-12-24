@@ -18,6 +18,8 @@ type Testimonial = {
 const TestimonialsSection = () => {
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const [durationSec, setDurationSec] = useState(20);
+
 
   useEffect(() => {
     const q = query(
@@ -52,7 +54,21 @@ const TestimonialsSection = () => {
   const duplicated = [...testimonials, ...testimonials];
 
   // animation duration: base 12s for 1 item, then +4s per item capped
-  const durationSec = Math.max(3, Math.min(40, 3+ testimonials.length * 1));
+ useEffect(() => {
+  if (!containerRef.current || testimonials.length === 0) return;
+
+  const track = containerRef.current.querySelector(
+    ".marquee-track"
+  ) as HTMLElement;
+
+  if (!track) return;
+
+  const totalWidth = track.scrollWidth / 2; // real moving distance
+  const speedPxPerSec = window.innerWidth < 640 ? 300: 140; // mobile vs desktop
+
+  setDurationSec(totalWidth / speedPxPerSec);
+}, [testimonials]);
+
 
   return (
     <section
@@ -172,6 +188,12 @@ const TestimonialsSection = () => {
         .marquee-track::-webkit-scrollbar {
           display: none;
         }
+          @media (max-width: 640px) {
+  .marquee-track {
+    animation-timing-function: linear;
+  }
+}
+
       `}</style>
     </section>
   );
