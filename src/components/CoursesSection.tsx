@@ -137,33 +137,16 @@ const CoursesSection = () => {
           </h2>
 
           {/* Category Buttons - Mobile: single row scrollable, Desktop: wrapped as original */}
-          <div className="mb-8">
+          
             {/* Mobile-only horizontal scroll container */}
-            <div className="md:hidden overflow-x-auto no-scrollbar pb-3 -mx-4 px-4">
-              <div className="flex gap-3">
-                {categories.map((category) => (
-                  <Button
-                    key={category}
-                    className={`flex-shrink-0 px-2 py-1.5 sm:px-4 sm:py-1.5 rounded-full text-xs font-medium whitespace-nowrap
-                      ${
-                        activeCategory === category
-                          ? `${activeColors[category]} !hover:bg-[inherit] !hover:text-[inherit]`
-                          : "bg-white text-black"
-                      }`}
-                    onClick={() => setActiveCategory(category)}
-                  >
-                    {category}
-                  </Button>
-                ))}
-              </div>
-            </div>
+            
 
             {/* Desktop & larger: original wrapped layout (unchanged) */}
-            <div className="hidden md:flex flex-wrap justify-center gap-4">
+            <div className="flex flex-wrap justify-center gap-2 sm:gap-3 md:gap-4 mb-8">
               {categories.map((category) => (
                 <Button
                   key={category}
-                  className={`px-5 py-1.5 rounded-full text-sm font-medium
+                  className={`px-2 py-0.5 sm:px-5 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium
                     ${
                       activeCategory === category
                         ? `${activeColors[category]} !hover:bg-[inherit] !hover:text-[inherit]`
@@ -175,7 +158,7 @@ const CoursesSection = () => {
                 </Button>
               ))}
             </div>
-          </div>
+         
         </div>
 
         {/* Course Cards with Manual Arrows */}
