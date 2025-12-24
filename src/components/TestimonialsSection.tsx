@@ -51,14 +51,14 @@ const TestimonialsSection = () => {
   }, []);
 
   // duplicate testimonials for seamless marquee
-  const duplicated = [...testimonials, ...testimonials];
+  const duplicated = [...testimonials, ...testimonials,...testimonials];
 
   // calculate animation duration dynamically
   useEffect(() => {
     if (!trackRef.current || testimonials.length === 0) return;
 
     const totalWidth = trackRef.current.scrollWidth / 2;
-    const speedPxPerSec = window.innerWidth < 640 ? 30 : 30;
+    const speedPxPerSec = window.innerWidth < 640 ? 60 : 40;
 
     setDurationSec(totalWidth / speedPxPerSec);
   }, [testimonials]);
@@ -165,7 +165,7 @@ const TestimonialsSection = () => {
       <style>{`
         .marquee-wrapper {
           width: 100%;
-          overflow-x: auto;
+          overflow:hidden;
           cursor: grab;
           scrollbar-width: none;
         }
@@ -179,18 +179,20 @@ const TestimonialsSection = () => {
         }
 
         .marquee-track {
-          width: max-content;
-          animation: marquee var(--marquee-duration) linear infinite;
-        }
+  display: flex;
+  width: max-content;
+  animation: marquee var(--marquee-duration) linear infinite;
+}
 
-        @keyframes marquee {
-          0% {
-            transform: translateX(0);
-          }
-          100% {
-            transform: translateX(-50%);
-          }
-        }
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-33.3333%);
+  }
+}
+
       `}</style>
     </section>
   );
