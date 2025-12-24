@@ -204,7 +204,7 @@ const TourPage: React.FC = () => {
                   <img
                     src={campus.cover}
                     alt={campus.name}
-                    className="w-full h-full max-w-xs md:max-w-sm object-cover p-7"
+                    className="w-full h-full  md:max-w-sm object-cover"
                   />
                 {/* </Tilt> */}
               </div>
