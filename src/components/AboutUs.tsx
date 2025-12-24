@@ -42,7 +42,7 @@ const AboutUs = () => {
         </div>
 
         {/* Right side content */}
-        <div className="lg:w-1/2 w-full flex flex-col justify-center">
+        <div className="lg:w-1/2 w-full flex flex-col justify-center mt-2">
           <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-6">
             What Does VSSC Offer? <br /> For Your Learning
           </h2>
