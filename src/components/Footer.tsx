@@ -52,7 +52,7 @@ const Footer = () => {
   return (
     <footer className="bg-primary text-white text-[0.9rem]">
       <div className="container mx-auto px-3 py-4 sm:px-4 sm:py-8 md:py-10">
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid  md:grid-cols-[1fr_2fr] gap-6">
           <div className="p-6 rounded-xl shadow-lg shadow-black/20">
             <div className="mb-6">
               <div className="flex items-center transition-transform">
@@ -99,7 +99,7 @@ const Footer = () => {
 
           {/* Navigation & Services & Subscribe */}
           <div className="p-6 rounded-xl shadow-lg shadow-black/20">
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-6">
               <div>
                 <h3 className="text-base font-semibold mb-3">Navigate</h3>
                 <ul className="space-y-1">
@@ -132,7 +132,7 @@ const Footer = () => {
                 </ul>
               </div>
 
-              <div className="col-span-2 sm:col-span-2 md:col-span-3 text-center">
+              <div className="col-span-2 sm:col-span-2 md:col-span-2 text-center">
                 <h3 className="text-base font-semibold mb-3">Subscribe Now</h3>
 
                 <p className="text-white/70 mb-3 text-sm mx-auto max-w-xs">

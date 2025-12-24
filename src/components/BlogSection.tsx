@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import heroStudent from "@/assets/hero-student.jpg";
+import heroStudent from "@/assets/yellow1.png";
 import { useNavigate } from "react-router-dom";
 
 const blogPost = {

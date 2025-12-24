@@ -183,40 +183,41 @@ const TourPage: React.FC = () => {
       </div>
 
       {/* Campus Section (Updated layout) */}
-      <section className="[background-color:hsl(60,100%,90%)] w-full py-8">
+      <section className="[background-color:hsl(60,100%,95%)] w-full py-8">
         <div className="max-w-6xl mx-auto flex flex-col gap-12 px-5">
           {campuses.map((campus, index) => (
             <div
               key={campus.id}
-              className={`flex flex-col md:flex-row items-center md:items-stretch w-full gap-6 ${
+              className={`flex flex-col md:flex-row items-center md:items-stretch
+                 w-full  ${
                 index % 2 !== 0 ? "md:flex-row-reverse" : ""
               }`}
             >
               {/* Image */}
-              <div className="flex-1 flex justify-center">
-                <Tilt
+              <div className=" flex justify-center bg-background">
+                {/* <Tilt
                   glareEnable
                   glareMaxOpacity={0.3}
                   scale={1.05}
                   className="rounded-xl overflow-hidden shadow-lg"
-                >
+                > */}
                   <img
                     src={campus.cover}
                     alt={campus.name}
-                    className="w-full h-full max-w-xs md:max-w-sm object-cover"
+                    className="w-full h-full max-w-xs md:max-w-sm object-cover p-7"
                   />
-                </Tilt>
+                {/* </Tilt> */}
               </div>
 
               {/* Text block */}
-              <div className="flex-1 flex flex-col justify-center items-center md:items-start text-center md:text-left gap-4 p-2 mt-10 md:mt-0">
+              <div className="flex-1 flex flex-col justify-center items-center md:items-start text-center md:text-left gap-4 p-10 mt-0 md:mt-0 bg-background">
   <h2
-    className="text-4xl font-extrabold leading-tight"
+    className="text-xl sm:text-3xl font-extrabold leading-tight"
     style={{ color: "hsl(220, 70%, 20%)" }}
   >
     {campus.name}
   </h2>
-  <p className="text-gray-700 max-w-md">{campus.description}</p>
+  <p className="text-gray-700 text-sm sm:text-lg max-w-md">{campus.description}</p>
   <button
     onClick={() => {
       window.scrollTo(0, 0);

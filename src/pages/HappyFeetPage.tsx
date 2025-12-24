@@ -442,25 +442,19 @@ const HappyFeetPage: React.FC = () => {
           </div>
           <div className="flex-1 flex flex-col justify-center items-center md:items-start text-center md:text-left gap-4 p-2 max-h-[300px] mt-20">
             <h2
-              className="text-5xl font-extrabold leading-tight text-green-800"
-              style={{
-                fontFamily:
-                  "'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif",
-              }}
+              className=" text-4xl sm:text-5xl font-bold leading-tight text-green-800"
+              
             >
-              Wellness &
-              <br />
+              Wellness and
+              
               Self-Care
             </h2>
             <h2
-              className="text-4xl font-extrabold leading-tight text-pink-700"
-              style={{
-                fontFamily:
-                  "'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif",
-              }}
+              className="text-3xl sm:text-4xl font-bold leading-tight text-pink-700"
+              
             >
               Head
-              <br />
+              
               Hustle
               <br />
               Heal
@@ -472,7 +466,7 @@ const HappyFeetPage: React.FC = () => {
       {/* DESCRIPTION */}
       <section className="w-full bg-gray-50 pt-2 pb-8 px-6 md:px-12 lg:px-20 [background-color:hsl(60,100%,95%)]">
         <div className="container mx-auto text-center">
-          <p className="text-lg md:text-xl text-gray-700 leading-relaxed max-w-4xl mx-auto">
+          <p className="text-md md:text-xl text-gray-700 leading-relaxed max-w-4xl mx-auto">
             Your wellbeing is our priority. From zumba for your limbs to a digital detox for your mind, we have got it all covered. Listen to your needs, stay active, and rejuvenate yourself. Join us to cultivate a balanced and healthy lifestyle.
           </p>
         </div>

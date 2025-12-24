@@ -1,7 +1,7 @@
 // src/components/FAQAccordion.tsx
 import { useState, useRef } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import heroStudent from "@/assets/hero-student.jpg";
+import heroStudent from "@/assets/hero-student.png";
 
 const faqs = [
   {

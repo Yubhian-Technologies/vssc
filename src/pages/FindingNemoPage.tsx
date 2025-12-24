@@ -471,22 +471,16 @@ const FindingNemoPage: React.FC = () => {
           </div>
           <div className="flex-1 flex flex-col justify-center items-center md:items-start text-center md:text-left gap-4 p-2 max-h-[300px] mt-20">
             <h2
-              className="text-4xl font-extrabold leading-tight text-pink-600"
-              style={{
-                fontFamily:
-                  "'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif",
-              }}
+              className="text-3xl sm:text-4xl font-bold  text-pink-600"
+              
             >
               Discover Networks
-              <br />
+             
               and Opportunities
             </h2>
             <h2
-              className="text-4xl font-extrabold leading-tight text-blue-700"
-              style={{
-                fontFamily:
-                  "'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif",
-              }}
+              className="text-3xl sm:text-4xl font-bold leading-tight text-blue-700"
+              
             >
               Explore
               <br />
@@ -501,7 +495,7 @@ const FindingNemoPage: React.FC = () => {
       {/* DESCRIPTION */}
       <section className="w-full bg-gray-50 pt-2 pb-8 px-6 md:px-12 lg:px-20 [background-color:hsl(60,100%,95%)]">
         <div className="container mx-auto text-center">
-          <p className="text-lg md:text-xl text-gray-700 leading-relaxed max-w-4xl mx-auto">
+          <p className="text-md sm:text-lg md:text-xl text-gray-700 leading-relaxed max-w-4xl mx-auto">
             Discover the power of connections as we enable you to forge
             meaningful relationships, expand your professional network, and
             thrive through collaboration. This is where you unlock your

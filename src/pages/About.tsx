@@ -1,6 +1,6 @@
 import React from "react";
-import heroImage from "@/assets/hero-student.jpg";
-import filter21 from "@/assets/filter21.jpg";
+import heroImage from "@/assets/yellow1.png";
+import filter21 from "@/assets/pursuit5.jpg";
 import { motion } from "framer-motion";
 import aboutelement from "@/assets/about-element-1.png";
 

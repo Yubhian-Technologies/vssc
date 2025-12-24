@@ -442,22 +442,16 @@ const InsideOutPage: React.FC = () => {
           </div>
           <div className="flex-1 flex flex-col justify-center items-center md:items-start text-center md:text-left gap-4 p-2 max-h-[300px] mt-20">
             <h2
-              className="text-5xl font-extrabold leading-tight text-green-800"
-              style={{
-                fontFamily:
-                  "'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif",
-              }}
+              className="text-4xl sm:text-4xl font-bold leading-tight text-green-800"
+              
             >
               Knowing
               <br />
               Yourself
             </h2>
             <h2
-              className="text-4xl font-extrabold leading-tight text-purple-500"
-              style={{
-                fontFamily:
-                  "'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif",
-              }}
+              className="text-3xl sm:text-4xl font-bold leading-tight text-purple-500"
+              
             >
               Notice
               <br />
@@ -472,7 +466,7 @@ const InsideOutPage: React.FC = () => {
       {/* DESCRIPTION */}
       <section className="w-full bg-gray-50 pt-2 pb-8 px-6 md:px-12 lg:px-20 [background-color:hsl(60,100%,95%)]">
         <div className="container mx-auto text-center">
-          <p className="text-lg md:text-xl text-gray-700 leading-relaxed max-w-4xl mx-auto">
+          <p className="text-md md:text-xl text-gray-700 leading-relaxed max-w-4xl mx-auto">
             We are here to help you cut out the hustle and bustle of everyday life. Embark with us on a journey of personal and professional growth through mindful practices. Join us today and seize this moment of self-discovery.
           </p>
         </div>
