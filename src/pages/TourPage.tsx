@@ -28,7 +28,7 @@ import Land1 from "../assets/Land1.jpg";
 export const campuses = [
   {
     id: 1,
-    name: "Vishnu Institute of Technology",
+    name: "Green Meadows",
     cover: green1,
     gallery: [
       {
@@ -67,7 +67,7 @@ export const campuses = [
   },
   {
     id: 2,
-    name: "Vishnu Dental College",
+    name: "Orchard Park",
     cover: green2,
     gallery: [
       {
@@ -106,7 +106,7 @@ export const campuses = [
   },
   {
     id: 3,
-    name: "Vishnu Pharmacy",
+    name: "Valley Vista",
     cover: green3,
     gallery: [
       {
