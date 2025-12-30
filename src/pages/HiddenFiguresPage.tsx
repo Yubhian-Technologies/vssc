@@ -30,7 +30,15 @@ import {
 } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { format } from "date-fns";
-import { Plus, Edit, Users, Calendar, Clock, MoreVertical, Trash2 } from "lucide-react";
+import {
+  Plus,
+  Edit,
+  Users,
+  Calendar,
+  Clock,
+  MoreVertical,
+  Trash2,
+} from "lucide-react";
 import { uploadToCloudinary } from "../utils/cloudinary";
 import {
   DropdownMenu,
@@ -107,7 +115,9 @@ const HiddenFiguresPage: React.FC = () => {
 
   /* -------------------------- IST TIME HELPERS --------------------------- */
   const getISTNow = () => {
-    return new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+    return new Date(
+      new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" })
+    );
   };
 
   /* -------------------------- AUTH & ROLE --------------------------- */
@@ -160,7 +170,11 @@ const HiddenFiguresPage: React.FC = () => {
   useEffect(() => {
     let q: any;
 
-    if (userRole === "admin+" && selectedCollege && selectedCollege !== "All colleges") {
+    if (
+      userRole === "admin+" &&
+      selectedCollege &&
+      selectedCollege !== "All colleges"
+    ) {
       q = query(
         collection(db, EVENTS_COLLECTION),
         where("college", "==", selectedCollege)
@@ -168,9 +182,15 @@ const HiddenFiguresPage: React.FC = () => {
     } else if (userRole === "admin+") {
       q = query(collection(db, EVENTS_COLLECTION));
     } else if (userRole === "admin") {
-      q = query(collection(db, EVENTS_COLLECTION), where("createdBy", "==", currentUser.uid));
+      q = query(
+        collection(db, EVENTS_COLLECTION),
+        where("createdBy", "==", currentUser.uid)
+      );
     } else if (userRole === "student" && currentUser) {
-      q = query(collection(db, EVENTS_COLLECTION), where("college", "==", userCollege));
+      q = query(
+        collection(db, EVENTS_COLLECTION),
+        where("college", "==", userCollege)
+      );
     } else {
       q = query(collection(db, EVENTS_COLLECTION));
     }
@@ -245,7 +265,13 @@ const HiddenFiguresPage: React.FC = () => {
       });
       toastSuccess("Event added successfully!");
       setShowAddModal(false);
-      setAddForm({ name: "", description: "", eventDate: "", eventTime: "", image: null });
+      setAddForm({
+        name: "",
+        description: "",
+        eventDate: "",
+        eventTime: "",
+        image: null,
+      });
     } catch (err: any) {
       toastError(err.message || "Failed to add event");
     } finally {
@@ -272,7 +298,9 @@ const HiddenFiguresPage: React.FC = () => {
         selectedEvent.eventTime
       )
     ) {
-      return toastError("New date & time must be after the original event and not in the past (IST)");
+      return toastError(
+        "New date & time must be after the original event and not in the past (IST)"
+      );
     }
 
     setLoading(true);
@@ -422,7 +450,9 @@ const HiddenFiguresPage: React.FC = () => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `${selectedEvent?.name.replace(/[^a-z0-9]/gi, "_") || "event"}_participants.xlsx`;
+    link.download = `${
+      selectedEvent?.name.replace(/[^a-z0-9]/gi, "_") || "event"
+    }_participants.xlsx`;
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -441,18 +471,12 @@ const HiddenFiguresPage: React.FC = () => {
             />
           </div>
           <div className="flex-1 flex flex-col justify-center items-center md:items-start text-center md:text-left gap-4 p-2 max-h-[300px] mt-20">
-            <h2
-              className="text-4xl sm:text-5xl font-bold leading-tight text-green-800"
-              
-            >
+            <h2 className="text-4xl sm:text-5xl font-bold leading-tight text-green-800">
               Professional
               <br />
               Readiness
             </h2>
-            <h2
-              className="text-3xl sm:text-4xl font-bold leading-tight text-green-400"
-             
-            >
+            <h2 className="text-3xl sm:text-4xl font-bold leading-tight text-green-400">
               Target
               <br />
               Upskill
@@ -525,9 +549,7 @@ const HiddenFiguresPage: React.FC = () => {
           )}
 
           {events.length === 0 ? (
-            <p className="text-center text-gray-500">
-              No events yet.
-            </p>
+            <p className="text-center text-gray-500">No events yet.</p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {events.map((event) => {
@@ -614,7 +636,11 @@ const HiddenFiguresPage: React.FC = () => {
                               : "bg-primary text-white hover:bg-blue-900"
                           }`}
                         >
-                          {expired ? "Expired" : registered ? "Registered" : "Register Now"}
+                          {expired
+                            ? "Expired"
+                            : registered
+                            ? "Registered"
+                            : "Register Now"}
                         </Button>
                       )}
 
@@ -641,7 +667,7 @@ const HiddenFiguresPage: React.FC = () => {
       {isAdmin && (
         <button
           onClick={() => setShowAddModal(true)}
-          className="fixed bottom-8 right-8 bg-blue-600 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center hover:bg-blue-700 transition z-40"
+          className="fixed bottom-24 right-8 bg-blue-600 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center hover:bg-blue-700 transition z-40"
         >
           <Plus className="w-8 h-8" />
         </button>
@@ -661,7 +687,9 @@ const HiddenFiguresPage: React.FC = () => {
               <Input
                 value={addForm.name}
                 className="[background-color:hsl(60,100%,95%)]"
-                onChange={(e) => setAddForm({ ...addForm, name: e.target.value })}
+                onChange={(e) =>
+                  setAddForm({ ...addForm, name: e.target.value })
+                }
                 required
               />
             </div>
@@ -670,7 +698,9 @@ const HiddenFiguresPage: React.FC = () => {
               <Textarea
                 value={addForm.description}
                 className="[background-color:hsl(60,100%,95%)]"
-                onChange={(e) => setAddForm({ ...addForm, description: e.target.value })}
+                onChange={(e) =>
+                  setAddForm({ ...addForm, description: e.target.value })
+                }
                 required
               />
             </div>
@@ -680,7 +710,9 @@ const HiddenFiguresPage: React.FC = () => {
                 type="date"
                 value={addForm.eventDate}
                 className="[background-color:hsl(60,100%,95%)]"
-                onChange={(e) => setAddForm({ ...addForm, eventDate: e.target.value })}
+                onChange={(e) =>
+                  setAddForm({ ...addForm, eventDate: e.target.value })
+                }
                 min={getISTNow().toISOString().split("T")[0]}
                 required
               />
@@ -691,7 +723,9 @@ const HiddenFiguresPage: React.FC = () => {
                 type="time"
                 value={addForm.eventTime}
                 className="[background-color:hsl(60,100%,95%)]"
-                onChange={(e) => setAddForm({ ...addForm, eventTime: e.target.value })}
+                onChange={(e) =>
+                  setAddForm({ ...addForm, eventTime: e.target.value })
+                }
                 required
               />
             </div>
@@ -700,7 +734,9 @@ const HiddenFiguresPage: React.FC = () => {
               <Input
                 type="file"
                 accept="image/*"
-                onChange={(e) => setAddForm({ ...addForm, image: e.target.files?.[0] || null })}
+                onChange={(e) =>
+                  setAddForm({ ...addForm, image: e.target.files?.[0] || null })
+                }
                 className="[background-color:hsl(60,100%,95%)]"
                 required
               />
@@ -738,8 +774,13 @@ const HiddenFiguresPage: React.FC = () => {
               <Input
                 type="date"
                 value={editForm.eventDate}
-                onChange={(e) => setEditForm({ ...editForm, eventDate: e.target.value })}
-                min={selectedEvent?.eventDate ?? getISTNow().toISOString().split("T")[0]}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, eventDate: e.target.value })
+                }
+                min={
+                  selectedEvent?.eventDate ??
+                  getISTNow().toISOString().split("T")[0]
+                }
                 className="[background-color:hsl(60,100%,95%)]"
                 required
               />
@@ -749,7 +790,9 @@ const HiddenFiguresPage: React.FC = () => {
               <Input
                 type="time"
                 value={editForm.eventTime}
-                onChange={(e) => setEditForm({ ...editForm, eventTime: e.target.value })}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, eventTime: e.target.value })
+                }
                 required
               />
             </div>
@@ -780,14 +823,23 @@ const HiddenFiguresPage: React.FC = () => {
           <DialogHeader>
             <DialogTitle>Delete Event?</DialogTitle>
             <DialogDescription>
-              This will permanently delete "<strong>{selectedEvent?.name}</strong>". This action cannot be undone.
+              This will permanently delete "
+              <strong>{selectedEvent?.name}</strong>". This action cannot be
+              undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteConfirm(false)}
+            >
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={loading}>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={loading}
+            >
               {loading ? "Deleting..." : "Delete"}
             </Button>
           </DialogFooter>
@@ -801,7 +853,9 @@ const HiddenFiguresPage: React.FC = () => {
             <DialogTitle>Participants: {selectedEvent?.name}</DialogTitle>
           </DialogHeader>
           {participants.length === 0 ? (
-            <p className="text-center py-8 text-gray-500">No participants yet.</p>
+            <p className="text-center py-8 text-gray-500">
+              No participants yet.
+            </p>
           ) : (
             <div className="space-y-3">
               {participants.map((p) => (
@@ -817,7 +871,9 @@ const HiddenFiguresPage: React.FC = () => {
                     />
                   ) : (
                     <div className="w-10 h-10 rounded-full bg-gray-300 border flex items-center justify-center">
-                      <span className="text-xs text-gray-600">{p.name[0]?.toUpperCase()}</span>
+                      <span className="text-xs text-gray-600">
+                        {p.name[0]?.toUpperCase()}
+                      </span>
                     </div>
                   )}
                   <div className="flex-1">
@@ -834,7 +890,7 @@ const HiddenFiguresPage: React.FC = () => {
               disabled={participants.length === 0}
               className="flex-1 bg-green-600 hover:bg-green-700 text-white"
             >
-              Download Excel 
+              Download Excel
             </Button>
             <Button
               className="flex-1 bg-red-600 text-white"

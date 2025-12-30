@@ -30,7 +30,15 @@ import {
 } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { format } from "date-fns";
-import { Plus, Edit, Users, Calendar, Clock, MoreVertical, Trash2 } from "lucide-react";
+import {
+  Plus,
+  Edit,
+  Users,
+  Calendar,
+  Clock,
+  MoreVertical,
+  Trash2,
+} from "lucide-react";
 import { uploadToCloudinary } from "../utils/cloudinary";
 import {
   DropdownMenu,
@@ -155,7 +163,11 @@ const TheIncrediblesPage: React.FC = () => {
   useEffect(() => {
     let q: any;
 
-    if (userRole === "admin+" && selectedCollege && selectedCollege !== "All colleges") {
+    if (
+      userRole === "admin+" &&
+      selectedCollege &&
+      selectedCollege !== "All colleges"
+    ) {
       q = query(
         collection(db, EVENTS_COLLECTION),
         where("college", "==", selectedCollege)
@@ -163,9 +175,15 @@ const TheIncrediblesPage: React.FC = () => {
     } else if (userRole === "admin+") {
       q = query(collection(db, EVENTS_COLLECTION));
     } else if (userRole === "admin") {
-      q = query(collection(db, EVENTS_COLLECTION), where("createdBy", "==", currentUser.uid));
+      q = query(
+        collection(db, EVENTS_COLLECTION),
+        where("createdBy", "==", currentUser.uid)
+      );
     } else if (userRole === "student" && currentUser) {
-      q = query(collection(db, EVENTS_COLLECTION), where("college", "==", userCollege));
+      q = query(
+        collection(db, EVENTS_COLLECTION),
+        where("college", "==", userCollege)
+      );
     } else {
       q = query(collection(db, EVENTS_COLLECTION));
     }
@@ -203,7 +221,12 @@ const TheIncrediblesPage: React.FC = () => {
     return dt < new Date();
   };
 
-  const isAfterOriginal = (newDate: string, newTime: string, origDate: string, origTime: string) => {
+  const isAfterOriginal = (
+    newDate: string,
+    newTime: string,
+    origDate: string,
+    origTime: string
+  ) => {
     const newDt = new Date(`${newDate}T${newTime}:00`);
     const origDt = new Date(`${origDate}T${origTime}:00`);
     return newDt >= origDt && newDt >= new Date();
@@ -235,7 +258,13 @@ const TheIncrediblesPage: React.FC = () => {
       });
       toastSuccess("Event added successfully!");
       setShowAddModal(false);
-      setAddForm({ name: "", description: "", eventDate: "", eventTime: "", image: null });
+      setAddForm({
+        name: "",
+        description: "",
+        eventDate: "",
+        eventTime: "",
+        image: null,
+      });
     } catch (err: any) {
       toastError(err.message || "Failed to add event");
     } finally {
@@ -254,8 +283,17 @@ const TheIncrediblesPage: React.FC = () => {
     e.preventDefault();
     if (!selectedEvent || userRole !== "admin") return;
 
-    if (!isAfterOriginal(editForm.eventDate, editForm.eventTime, selectedEvent.eventDate, selectedEvent.eventTime)) {
-      return toastError("New date & time must be after the original event and not in the past");
+    if (
+      !isAfterOriginal(
+        editForm.eventDate,
+        editForm.eventTime,
+        selectedEvent.eventDate,
+        selectedEvent.eventTime
+      )
+    ) {
+      return toastError(
+        "New date & time must be after the original event and not in the past"
+      );
     }
 
     setLoading(true);
@@ -394,7 +432,7 @@ const TheIncrediblesPage: React.FC = () => {
       { header: "Email", key: "email", width: 35 },
     ];
 
-    participants.forEach(p => {
+    participants.forEach((p) => {
       worksheet.addRow({ name: p.name, email: p.email });
     });
 
@@ -405,7 +443,9 @@ const TheIncrediblesPage: React.FC = () => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `${selectedEvent?.name.replace(/[^a-z0-9]/gi, "_") || "event"}_participants.xlsx`;
+    link.download = `${
+      selectedEvent?.name.replace(/[^a-z0-9]/gi, "_") || "event"
+    }_participants.xlsx`;
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -424,18 +464,10 @@ const TheIncrediblesPage: React.FC = () => {
             />
           </div>
           <div className="flex-1 flex flex-col justify-center items-center md:items-start text-center md:text-left gap-4 p-2 max-h-[300px] mt-20">
-            <h2
-              className="text-3xl sm:text-4xl font-bold leading-tight text-green-600"
-              
-            >
-              Students empowerment
-              
-              Support
+            <h2 className="text-3xl sm:text-4xl font-bold leading-tight text-green-600">
+              Students empowerment Support
             </h2>
-            <h2
-              className="text-3xl sm:text-4xl font-bold leading-tight text-green-400"
-              
-            >
+            <h2 className="text-3xl sm:text-4xl font-bold leading-tight text-green-400">
               Learn
               <br />
               Grow
@@ -450,7 +482,10 @@ const TheIncrediblesPage: React.FC = () => {
       <section className="w-full bg-gray-50 pt-2 pb-8 px-6 md:px-12 lg:px-20 [background-color:hsl(60,100%,95%)]">
         <div className="container mx-auto text-center">
           <p className="text-md md:text-xl text-gray-700 leading-relaxed max-w-4xl mx-auto">
-            We are here to equip you with essential tools for success. Whether you need subject-focused recap sessions or help with improving your writing skills, you’ll find our unwavering support right here. Visit us and let us help you achieve your goals.
+            We are here to equip you with essential tools for success. Whether
+            you need subject-focused recap sessions or help with improving your
+            writing skills, you’ll find our unwavering support right here. Visit
+            us and let us help you achieve your goals.
           </p>
         </div>
       </section>
@@ -503,9 +538,7 @@ const TheIncrediblesPage: React.FC = () => {
           )}
 
           {events.length === 0 ? (
-            <p className="text-center text-gray-500">
-              No events yet.
-            </p>
+            <p className="text-center text-gray-500">No events yet.</p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {events.map((event) => {
@@ -564,11 +597,15 @@ const TheIncrediblesPage: React.FC = () => {
                       <h3 className="font-semibold text-gray-900 text-base mb-2">
                         {event.name}
                       </h3>
-                      <p className="text-gray-700 text-sm mb-4">{event.description}</p>
+                      <p className="text-gray-700 text-sm mb-4">
+                        {event.description}
+                      </p>
 
                       <div className="flex items-center gap-2 text-sm text-gray-700 mb-4">
                         <Calendar className="w-4 h-4" />
-                        <span>{format(new Date(event.eventDate), "MMM dd, yyyy")}</span>
+                        <span>
+                          {format(new Date(event.eventDate), "MMM dd, yyyy")}
+                        </span>
                         <Clock className="w-4 h-4 ml-3" />
                         <span>{event.eventTime}</span>
                       </div>
@@ -586,7 +623,11 @@ const TheIncrediblesPage: React.FC = () => {
                               : "bg-primary text-white hover:bg-blue-900"
                           }`}
                         >
-                          {expired ? "Expired" : registered ? "Registered" : "Register Now"}
+                          {expired
+                            ? "Expired"
+                            : registered
+                            ? "Registered"
+                            : "Register Now"}
                         </Button>
                       )}
 
@@ -613,7 +654,7 @@ const TheIncrediblesPage: React.FC = () => {
       {isAdmin && (
         <button
           onClick={() => setShowAddModal(true)}
-          className="fixed bottom-8 right-8 bg-blue-600 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center hover:bg-blue-700 transition z-40"
+          className="fixed bottom-24 right-8 bg-blue-600 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center hover:bg-blue-700 transition z-40"
         >
           <Plus className="w-8 h-8" />
         </button>
@@ -623,7 +664,9 @@ const TheIncrediblesPage: React.FC = () => {
       <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
         <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-xl text-primary">Add New Event</DialogTitle>
+            <DialogTitle className="text-xl text-primary">
+              Add New Event
+            </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleAddEvent} className="space-y-4">
             <div>
@@ -631,7 +674,9 @@ const TheIncrediblesPage: React.FC = () => {
               <Input
                 value={addForm.name}
                 className="[background-color:hsl(60,100%,95%)]"
-                onChange={(e) => setAddForm({ ...addForm, name: e.target.value })}
+                onChange={(e) =>
+                  setAddForm({ ...addForm, name: e.target.value })
+                }
                 required
               />
             </div>
@@ -640,7 +685,9 @@ const TheIncrediblesPage: React.FC = () => {
               <Textarea
                 value={addForm.description}
                 className="[background-color:hsl(60,100%,95%)]"
-                onChange={(e) => setAddForm({ ...addForm, description: e.target.value })}
+                onChange={(e) =>
+                  setAddForm({ ...addForm, description: e.target.value })
+                }
                 required
               />
             </div>
@@ -650,7 +697,9 @@ const TheIncrediblesPage: React.FC = () => {
                 type="date"
                 value={addForm.eventDate}
                 className="[background-color:hsl(60,100%,95%)]"
-                onChange={(e) => setAddForm({ ...addForm, eventDate: e.target.value })}
+                onChange={(e) =>
+                  setAddForm({ ...addForm, eventDate: e.target.value })
+                }
                 min={new Date().toISOString().split("T")[0]}
                 required
               />
@@ -661,7 +710,9 @@ const TheIncrediblesPage: React.FC = () => {
                 type="time"
                 value={addForm.eventTime}
                 className="[background-color:hsl(60,100%,95%)]"
-                onChange={(e) => setAddForm({ ...addForm, eventTime: e.target.value })}
+                onChange={(e) =>
+                  setAddForm({ ...addForm, eventTime: e.target.value })
+                }
                 required
               />
             </div>
@@ -670,16 +721,27 @@ const TheIncrediblesPage: React.FC = () => {
               <Input
                 type="file"
                 accept="image/*"
-                onChange={(e) => setAddForm({ ...addForm, image: e.target.files?.[0] || null })}
+                onChange={(e) =>
+                  setAddForm({ ...addForm, image: e.target.files?.[0] || null })
+                }
                 className="[background-color:hsl(60,100%,95%)]"
                 required
               />
             </div>
             <div className="flex gap-3">
-              <Button type="submit" disabled={loading || !isAddFormValid} className="bg-green-700 hover:bg-green-600 text-white">
+              <Button
+                type="submit"
+                disabled={loading || !isAddFormValid}
+                className="bg-green-700 hover:bg-green-600 text-white"
+              >
                 {loading ? "Uploading..." : "Add Event"}
               </Button>
-              <Button type="button" variant="outline" onClick={() => setShowAddModal(false)} className="bg-red-600 hover:bg-red-700 text-white">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowAddModal(false)}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
                 Cancel
               </Button>
             </div>
@@ -699,8 +761,13 @@ const TheIncrediblesPage: React.FC = () => {
               <Input
                 type="date"
                 value={editForm.eventDate}
-                onChange={(e) => setEditForm({ ...editForm, eventDate: e.target.value })}
-                min={selectedEvent?.eventDate ?? new Date().toISOString().split("T")[0]}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, eventDate: e.target.value })
+                }
+                min={
+                  selectedEvent?.eventDate ??
+                  new Date().toISOString().split("T")[0]
+                }
                 className="[background-color:hsl(60,100%,95%)]"
                 required
               />
@@ -710,15 +777,26 @@ const TheIncrediblesPage: React.FC = () => {
               <Input
                 type="time"
                 value={editForm.eventTime}
-                onChange={(e) => setEditForm({ ...editForm, eventTime: e.target.value })}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, eventTime: e.target.value })
+                }
                 required
               />
             </div>
             <div className="flex gap-3">
-              <Button type="submit" disabled={loading} className="bg-green-700 hover:bg-green-600 text-white">
+              <Button
+                type="submit"
+                disabled={loading}
+                className="bg-green-700 hover:bg-green-600 text-white"
+              >
                 Update
               </Button>
-              <Button type="button" variant="outline" onClick={() => setShowEditModal(false)} className="bg-red-600 hover:bg-red-700 text-white">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowEditModal(false)}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
                 Cancel
               </Button>
             </div>
@@ -732,14 +810,23 @@ const TheIncrediblesPage: React.FC = () => {
           <DialogHeader>
             <DialogTitle>Delete Event?</DialogTitle>
             <DialogDescription>
-              This will permanently delete "<strong>{selectedEvent?.name}</strong>". This action cannot be undone.
+              This will permanently delete "
+              <strong>{selectedEvent?.name}</strong>". This action cannot be
+              undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteConfirm(false)}
+            >
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={loading}>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={loading}
+            >
               {loading ? "Deleting..." : "Delete"}
             </Button>
           </DialogFooter>
@@ -753,7 +840,9 @@ const TheIncrediblesPage: React.FC = () => {
             <DialogTitle>Participants: {selectedEvent?.name}</DialogTitle>
           </DialogHeader>
           {participants.length === 0 ? (
-            <p className="text-center py-8 text-gray-500">No participants yet.</p>
+            <p className="text-center py-8 text-gray-500">
+              No participants yet.
+            </p>
           ) : (
             <div className="space-y-3">
               {participants.map((p) => (
@@ -769,7 +858,9 @@ const TheIncrediblesPage: React.FC = () => {
                     />
                   ) : (
                     <div className="w-10 h-10 rounded-full bg-gray-300 border flex items-center justify-center">
-                      <span className="text-xs text-gray-600">{p.name[0]?.toUpperCase()}</span>
+                      <span className="text-xs text-gray-600">
+                        {p.name[0]?.toUpperCase()}
+                      </span>
                     </div>
                   )}
                   <div className="flex-1">
@@ -781,7 +872,11 @@ const TheIncrediblesPage: React.FC = () => {
             </div>
           )}
           <div className="flex gap-3 mt-6">
-            <Button onClick={downloadExcel} disabled={participants.length === 0} className="flex-1 bg-green-600 hover:bg-green-700 text-white">
+            <Button
+              onClick={downloadExcel}
+              disabled={participants.length === 0}
+              className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+            >
               Download Excel
             </Button>
             <Button

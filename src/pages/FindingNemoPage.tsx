@@ -30,7 +30,15 @@ import {
 } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { format } from "date-fns";
-import { Plus, Edit, Users, Calendar, Clock, MoreVertical, Trash2 } from "lucide-react";
+import {
+  Plus,
+  Edit,
+  Users,
+  Calendar,
+  Clock,
+  MoreVertical,
+  Trash2,
+} from "lucide-react";
 import { uploadToCloudinary } from "../utils/cloudinary";
 import {
   DropdownMenu,
@@ -168,7 +176,11 @@ const FindingNemoPage: React.FC = () => {
   useEffect(() => {
     let q: any;
 
-    if (userRole === "admin+" && selectedCollege && selectedCollege !== "All colleges") {
+    if (
+      userRole === "admin+" &&
+      selectedCollege &&
+      selectedCollege !== "All colleges"
+    ) {
       q = query(
         collection(db, EVENTS_COLLECTION),
         where("college", "==", selectedCollege)
@@ -325,9 +337,7 @@ const FindingNemoPage: React.FC = () => {
       return;
     }
 
-    const confirmRegister = window.confirm(
-      `Register for "${event.name}"?`
-    );
+    const confirmRegister = window.confirm(`Register for "${event.name}"?`);
     if (!confirmRegister) return;
 
     setLoading(true);
@@ -437,10 +447,9 @@ const FindingNemoPage: React.FC = () => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `${selectedEvent?.name.replace(
-      /[^a-z0-9]/gi,
-      "_"
-    ) || "event"}_participants.xlsx`;
+    link.download = `${
+      selectedEvent?.name.replace(/[^a-z0-9]/gi, "_") || "event"
+    }_participants.xlsx`;
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -470,18 +479,10 @@ const FindingNemoPage: React.FC = () => {
             />
           </div>
           <div className="flex-1 flex flex-col justify-center items-center md:items-start text-center md:text-left gap-4 p-2 max-h-[300px] mt-20">
-            <h2
-              className="text-3xl sm:text-4xl font-bold  text-pink-600"
-              
-            >
-              Discover Networks
-             
-              and Opportunities
+            <h2 className="text-3xl sm:text-4xl font-bold  text-pink-600">
+              Discover Networks and Opportunities
             </h2>
-            <h2
-              className="text-3xl sm:text-4xl font-bold leading-tight text-blue-700"
-              
-            >
+            <h2 className="text-3xl sm:text-4xl font-bold leading-tight text-blue-700">
               Explore
               <br />
               Discern
@@ -669,7 +670,7 @@ const FindingNemoPage: React.FC = () => {
       {isAdmin && (
         <button
           onClick={() => setShowAddModal(true)}
-          className="fixed bottom-8 right-8 bg-blue-600 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center hover:bg-blue-700 transition z-40"
+          className="fixed bottom-24 right-8 bg-blue-600 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center hover:bg-blue-700 transition z-40"
         >
           <Plus className="w-8 h-8" />
         </button>
@@ -857,9 +858,7 @@ const FindingNemoPage: React.FC = () => {
       <Dialog open={showParticipants} onOpenChange={setShowParticipants}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
-              Participants: {selectedEvent?.name}
-            </DialogTitle>
+            <DialogTitle>Participants: {selectedEvent?.name}</DialogTitle>
           </DialogHeader>
 
           {participants.length === 0 ? (
