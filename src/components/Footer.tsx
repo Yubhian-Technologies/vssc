@@ -1,37 +1,61 @@
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Facebook, Twitter, Instagram, Linkedin, Underline } from "lucide-react";
+import { Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
 import vssc from "@/assets/VSSC LOGO[1].png";
 
 const Footer = () => {
+  const navigate = useNavigate();
+
   const navigationLinks = [
     { title: "Home", href: "#" },
-    { title: "About", href: "#" },
-    { title: "Contact", href: "#" },
-    { title: "Refund", href: "#" },
-    { title: "Help Center", href: "#" },
-    { title: "Privacy Policy", href: "#" },
+    { title: "About", href: "/About" },
+    { title: "Services", href: "/Services" },
+    { title: "Tour", href: "/tour" },
+    { title: "Help", href: "/Help" },
+    { title: "Account", href: "/Account" },
+    { title: "Events", href: "/Events" },
   ];
 
   const courseLinks = [
-    { title: "Business Coach", href: "#" },
-    { title: "Development Coach", href: "#" },
-    { title: "Testimonials", href: "#" },
-    { title: "Seo Optimization", href: "#" },
-    { title: "Web design", href: "#" },
-    { title: "Life Coach", href: "#" },
+    { title: "Academic Advice", href: "/Services" },
+    { title: "Peer Tutoring", href: "/Services" },
+    { title: "Career Counselling", href: "/Services" },
+    { title: "Peer Mentoring", href: "/Services" },
+    { title: "Communication Skills", href: "/Services" },
+    { title: "Personality Development", href: "/Services" },
+    { title: "Corporate-readiness Workshops", href: "/Services" },
+    { title: "Self-care Strategies", href: "/Services" },
+    { title: "Wellness Practices", href: "/Services" },
+  ];
+
+  const socialLinks = [
+    {
+      Icon: Facebook,
+      url: "https://www.facebook.com/srivishnueducationalsocietybhimavaram/",
+      external: true,
+    },
+
+    {
+      Icon: Instagram,
+      url: "https://www.instagram.com/vishnueducationalsociety/",
+      external: true,
+    },
+    {
+      Icon: Linkedin,
+      url: "https://www.linkedin.com/school/vitbhimavaram/posts/?feedView=all",
+      external: true,
+    },
+    { Icon: Twitter, url: "", external: true }, // Disabled because URL is missing
   ];
 
   return (
-    <footer
-      data-aos="fade-down"
-      className="bg-primary text-white text-[0.9rem]"
-    >
+    <footer className="bg-primary text-white text-[0.9rem]">
       <div className="container mx-auto px-3 py-4 sm:px-4 sm:py-8 md:py-10">
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid  md:grid-cols-[1fr_2fr] gap-6">
           <div className="p-6 rounded-xl shadow-lg shadow-black/20">
             <div className="mb-6">
-              <div className="flex items-center  transition-transform">
+              <div className="flex items-center transition-transform">
                 <img
                   src={vssc}
                   alt="VSSC Logo"
@@ -45,13 +69,27 @@ const Footer = () => {
               </p>
             </div>
 
+            {/* Social Buttons */}
             <div className="flex gap-3">
-              {[Facebook, Twitter, Instagram, Linkedin].map((Icon, idx) => (
+              {socialLinks.map(({ Icon, url, external }, idx) => (
                 <Button
                   key={idx}
                   variant="ghost"
                   size="icon"
-                  className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white"
+                  aria-label={url ? `Go to ${url}` : "No link available"}
+                  className={`w-9 h-9 rounded-full text-white ${url
+                    ? "bg-white/10 hover:bg-white/20 cursor-pointer"
+                    : "bg-white/20 cursor-not-allowed"
+                    }`}
+                  onClick={() => {
+                    if (!url) return; // Disabled button does nothing
+                    if (external) {
+                      window.open(url, "_blank", "noopener,noreferrer");
+                    } else {
+                      navigate(url);
+                    }
+                  }}
+                  disabled={!url}
                 >
                   <Icon className="w-4 h-4" />
                 </Button>
@@ -59,8 +97,9 @@ const Footer = () => {
             </div>
           </div>
 
+          {/* Navigation & Services & Subscribe */}
           <div className="p-6 rounded-xl shadow-lg shadow-black/20">
-            <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-6">
               <div>
                 <h3 className="text-base font-semibold mb-3">Navigate</h3>
                 <ul className="space-y-1">
@@ -78,7 +117,7 @@ const Footer = () => {
               </div>
 
               <div>
-                <h3 className="text-base font-semibold mb-3">Courses</h3>
+                <h3 className="text-base font-semibold mb-3">Services</h3>
                 <ul className="space-y-1">
                   {courseLinks.map((link) => (
                     <li key={link.title}>
@@ -93,17 +132,21 @@ const Footer = () => {
                 </ul>
               </div>
 
-              <div>
+              <div className="col-span-2 sm:col-span-2 md:col-span-2 text-center">
                 <h3 className="text-base font-semibold mb-3">Subscribe Now</h3>
-                <p className="text-white/70 mb-3 text-sm">
+
+                <p className="text-white/70 mb-3 text-sm mx-auto max-w-xs">
                   Get the latest updates directly to your inbox.
                 </p>
-                <div className="flex flex-col sm:flex-row gap-2 mb-4">
+
+                <div className="flex flex-col sm:flex-row gap-2 mb-4 justify-center">
                   <Input
                     type="email"
                     placeholder="Email"
-                    className="bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:bg-white/20 h-9 text-sm flex-1"
+                    className="bg-white/10 border-white/20 text-white placeholder:text-white/60 
+                 focus:bg-white/20 h-9 text-sm flex-1 max-w-xs sm:max-w-sm"
                   />
+
                   <Button className="bg-white text-primary hover:bg-white/90 font-medium h-9 px-3 text-sm">
                     Go
                   </Button>
@@ -112,25 +155,26 @@ const Footer = () => {
             </div>
           </div>
         </div>
-        <div className="w-full overflow-hidden bg-primary py-2 mt-10">
-           <div className="flex whitespace-nowrap animate-marquee">
-          <p className="text-xl sm:text-20xl md:text-7xl lg:text-10xl font-bold mr-20 opacity-5">
-             VISHNU STUDENT SUCCESS CENTRE
-          </p>
-          <p className="text-xl sm:text-20xl md:text-7xl lg:text-10xl font-bold mr-20 opacity-5">
-             VISHNU STUDENT SUCCESS CENTRE
-        </p>
-   </div>
-</div>
 
-        
+        {/* Marquee */}
+        <div className="w-full overflow-hidden bg-primary py-2 mt-10">
+          <div className="flex whitespace-nowrap animate-marquee">
+            <p className="text-xl sm:text-15xl md:text-7xl lg:text-30xl font-bold mr-20 opacity-60">
+              VISHNU STUDENT SUCCESS CENTRE
+            </p>
+            <p className="text-xl sm:text-15xl md:text-7xl lg:text-30xl font-bold mr-20 opacity-60">
+              VISHNU STUDENT SUCCESS CENTRE
+            </p>
+          </div>
+        </div>
 
         <div className="mt-6 text-center text-white/70 text-sm">
-          @ {new Date().getFullYear()} Vishnu Student Success Centre. All rights
+          © {new Date().getFullYear()} Vishnu Student Success Centre. All rights
           reserved.
         </div>
       </div>
 
+      {/* Marquee animation */}
       <style>
         {`
           @keyframes marquee {
