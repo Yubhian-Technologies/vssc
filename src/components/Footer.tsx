@@ -170,7 +170,8 @@ const Footer = () => {
 
         <div className="mt-6 text-center text-white/70 text-sm">
           © {new Date().getFullYear()} Vishnu Student Success Centre. All rights
-          reserved.
+          reserved<br/>
+          Developed By Yubhian Technologies LLP
         </div>
       </div>
 
