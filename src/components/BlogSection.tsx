@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 
 const blogPost = {
   id: 1,
-  title: "Tips for Students and Recent Graduates",
+  title: "Tips for Students",
   date: "Jan 23, 2024",
   image: heroStudent,
   category: "Education",
@@ -17,6 +17,14 @@ const blogPost = {
     "Learning",
     "Motivation",
     "Success",
+    "Academic",
+    "Study",
+    "VSSC",
+    "vishnu",
+    "technology",
+    "development",
+    "skills",
+    "growth",
   ],
   shortDescription:
     "Practical tips for students and recent graduates to achieve academic and professional success.",
@@ -108,7 +116,7 @@ const BlogPage = () => {
               </div>
             </div>
 
-            {/* ✅ New Section: Popular Posts */}
+            {/* ✅ New Section: Popular Posts 
             <div className="bg-yellow-50 border border-gray-300 rounded-lg p-2">
               <h3 className="text-sm font-semibold mb-1">Popular Posts</h3>
               <ul className="flex flex-col gap-1">
@@ -125,7 +133,7 @@ const BlogPage = () => {
                   </li>
                 ))}
               </ul>
-            </div>
+            </div>*/}
           </aside>
         </div>
 
