@@ -45,7 +45,17 @@ import HiddenFiguresPage from "./pages/HiddenFiguresPage";
 import DashboardPage from "./pages/DashboardPage";
 import { useAuth } from "./AuthContext";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: true,
+      refetchOnReconnect: true,
+      refetchInterval: 30000, // 30 seconds
+      staleTime: 10000, // 10 seconds
+      retry: 3,
+    },
+  },
+});
 
 const AdminPlusRoute = ({ children }: { children: React.ReactNode }) => {
   const { userData, loading } = useAuth();

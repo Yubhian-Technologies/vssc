@@ -43,6 +43,7 @@ import {
 import { uploadToCloudinary } from "../utils/cloudinary";
 import LoadingScreen from "@/components/LoadingScreen";
 import { Eye, EyeOff } from "lucide-react";
+import { useUserDataAutoRefresh } from "@/hooks/usePageAutoRefresh";
 
 // Change Password Modal Component
 const ChangePasswordModal = ({
@@ -569,6 +570,9 @@ const AccountPage = () => {
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [showTestimonial, setShowTestimonial] = useState(false);
+
+  // Enable auto-refresh for user data
+  useUserDataAutoRefresh(auth.currentUser?.uid);
 
   const handleSubmitTestimonial = async (payload: {
     name?: string;

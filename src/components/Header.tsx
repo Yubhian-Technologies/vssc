@@ -8,6 +8,7 @@ import { doc, onSnapshot } from "firebase/firestore";
 import ButtonGradient from "./ui/ButtonGradient";
 import VSSCLogo from "@/assets/VSSC LOGO[1].png";
 import AppointmentToggleModal from "./ui/AppointmentToggleModal";
+import { AutoRefreshIndicator } from "./AutoRefreshIndicator";
 
 const Header = () => {
   const navigate = useNavigate();
@@ -259,6 +260,9 @@ const Header = () => {
         {/* Desktop Right */}
         
 <div className="hidden lg:flex items-center gap-4 relative z-20">
+  {/* Auto-refresh indicator */}
+  <AutoRefreshIndicator className="mr-2" />
+  
   {isLoggedIn ? (
     <>
       {role === "admin+" ? (

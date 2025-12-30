@@ -1,162 +1,16 @@
-import React, { useEffect, useState, useMemo } from "react";
-import { db } from "@/firebase";
-import { collection, onSnapshot } from "firebase/firestore";
+import React, { useState, useMemo } from "react";
 import { useAuth } from "@/AuthContext";
 import { motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
-
-// Unified Booking Interface
-interface UnifiedBooking {
-  id: string;
-  serviceType:
-    | "Tutoring"
-    | "Academic Advising"
-    | "Study Workshop"
-    | "Counseling"
-    | "Psychology Counseling";
-  sessionId: string;
-  title: string;
-  tutorName: string;
-  date: string;
-  startTime?: string;
-  slotTime?: string;
-  type: "group" | "1-on-1";
-  skills: string[];
-  colleges: string[];
-  description: string;
-  expiryDate?: string;
-  expiryTime?: string;
-  status: "upcoming" | "confirmed" | "expired" | "cancelled" | "completed";
-}
-
-// Service-to-Collection Mapping
-const SERVICE_COLLECTIONS: Record<UnifiedBooking["serviceType"], string> = {
-  Tutoring: "tutoring",
-  "Academic Advising": "academicadvising",
-  "Study Workshop": "studyworkshop",
-  Counseling: "counseling",
-  "Psychology Counseling": "psychologycounseling",
-} as const;
-
-// Check if a session is expired
-const isSessionExpired = (expiryDate?: string, expiryTime?: string): boolean => {
-  if (!expiryDate || !expiryTime) return false;
-  const [year, month, day] = expiryDate.split("-").map(Number);
-  const [hours, minutes] = expiryTime.split(":").map(Number);
-  const expiryDateTime = new Date(year, month - 1, day, hours, minutes);
-  return new Date() > expiryDateTime;
-};
-
-// Generic booking fetcher
-const fetchServiceBookings = (
-  userId: string,
-  serviceType: UnifiedBooking["serviceType"],
-  setBookings: React.Dispatch<React.SetStateAction<UnifiedBooking[]>>
-): (() => void) => {
-  const collectionName = SERVICE_COLLECTIONS[serviceType];
-  const q = collection(db, collectionName);
-
-  const unsubscribe = onSnapshot(q, (snapshot) => {
-    const allSessions = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...(doc.data() as any),
-    }));
-
-    const userBookings: UnifiedBooking[] = [];
-
-    allSessions.forEach((session: any) => {
-      let isBooked = false;
-      let slotTime: string | undefined;
-
-      if (session.isGroup) {
-        isBooked = session.participants?.includes(userId) || false;
-      } else {
-        const bookedSlot = session.bookedSlots?.find(
-          (slot: { user?: string; time?: string }) => slot.user === userId
-        );
-        isBooked = !!bookedSlot;
-        if (bookedSlot) slotTime = bookedSlot.time;
-      }
-
-      if (isBooked && session.date) {
-        let status: UnifiedBooking["status"];
-        // Check if session is validated and expired
-        if (session.validated === true && isSessionExpired(session.expiryDate, session.expiryTime)) {
-          status = "expired"; // Validated and expired sessions are marked as expired
-        } else if (session.validated === true) {
-          status = "completed"; // Validated but not expired sessions are marked as completed
-        } else if (isSessionExpired(session.expiryDate, session.expiryTime)) {
-          status = "expired"; // Non-validated expired sessions
-        } else if (new Date(session.date) > new Date()) {
-          status = "upcoming"; // Non-validated upcoming sessions
-        } else {
-          status = "confirmed"; // Non-validated confirmed sessions
-        }
-
-        userBookings.push({
-          id: `${session.id}-${userId}`,
-          serviceType,
-          sessionId: session.id,
-          title: session.title || "Untitled Session",
-          tutorName: session.tutorName || "Unknown Tutor",
-          date: session.date,
-          startTime: session.startTime,
-          slotTime,
-          type: session.isGroup ? "group" : "1-on-1",
-          skills: session.skills || [],
-          colleges: session.colleges || [],
-          description: session.description || "",
-          expiryDate: session.expiryDate,
-          expiryTime: session.expiryTime,
-          status,
-        });
-      }
-    });
-
-    setBookings((prev) => {
-      const nonServiceBookings = prev.filter(
-        (b) => b.serviceType !== serviceType
-      );
-      return [...nonServiceBookings, ...userBookings];
-    });
-  }, (error) => {
-    console.error(`Error fetching bookings for ${serviceType}:`, error);
-  });
-
-  return unsubscribe;
-};
+import { useUserBookings, UnifiedBooking } from "@/hooks/useUserBookings";
 
 export default function MyBookingsPage() {
   const { user } = useAuth();
-  const [bookings, setBookings] = useState<UnifiedBooking[]>([]);
+  const { bookings, isLoading } = useUserBookings(user?.uid);
   const [filter, setFilter] = useState<"all" | "upcoming" | "confirmed" | "expired" | "completed">("all");
   const [selectedService, setSelectedService] = useState<UnifiedBooking["serviceType"] | "all">("all");
   const [selectedDate, setSelectedDate] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(true);
   const [showAll, setShowAll] = useState(false);
-
-  // Fetch bookings from all services
-  useEffect(() => {
-    if (!user?.uid) {
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    const unsubscribers: Array<() => void> = [];
-
-    Object.keys(SERVICE_COLLECTIONS).forEach((serviceTypeKey) => {
-      const serviceType = serviceTypeKey as UnifiedBooking["serviceType"];
-      const unsub = fetchServiceBookings(user.uid, serviceType, setBookings);
-      unsubscribers.push(unsub);
-    });
-
-    setLoading(false);
-
-    return () => {
-      unsubscribers.forEach((unsub) => unsub());
-    };
-  }, [user?.uid]);
 
   // Filter and sort bookings
   const filteredBookings = useMemo(() => {
@@ -210,7 +64,7 @@ export default function MyBookingsPage() {
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">

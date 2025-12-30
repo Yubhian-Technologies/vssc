@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { collection, getDocs, doc, getDoc } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { getAuth, onAuthStateChanged, User } from "firebase/auth";
 import { gapi } from "gapi-script";
@@ -27,33 +27,11 @@ import {
   PieChart as PieChartIcon,
   LineChart as LineChartIcon,
 } from "lucide-react";
-import * as XLSX from "xlsx"; // ← ONLY ADDED THIS
-
-interface DocType {
-  createdBy: string;
-  colleges: string[];
-  totalDuration: number;
-  validated: boolean;
-  skills?: string[];
-  [key: string]: any;
-}
-
-interface AggregatedData {
-  uid: string;
-  name: string;
-  totalDuration: number;
-  sessionCount: number;
-  skills: string[];
-}
+import * as XLSX from "xlsx";
+import { useDashboardData, AggregatedData } from "@/hooks/useDashboardData";
+import { useAdminDataAutoRefresh } from "@/hooks/usePageAutoRefresh";
 
 const COLORS = ["#0061feff", "#00C49F", "#FFBB28", "#FF8042", "#A28EFF"];
-const collections = [
-  "tutoring",
-  "academicadvising",
-  "studyworkshop",
-  "counseling",
-  "psychologycounseling",
-];
 
 // Google API credentials
 const CLIENT_ID =
@@ -63,8 +41,10 @@ const SCOPES = "https://www.googleapis.com/auth/spreadsheets";
 
 const DashboardPage: React.FC = () => {
   const [adminCollege, setAdminCollege] = useState<string | null>(null);
-  const [aggregated, setAggregated] = useState<AggregatedData[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const { data: aggregated, isLoading } = useDashboardData(adminCollege);
+  
+  // Enable auto-refresh for admin data
+  useAdminDataAutoRefresh(adminCollege || undefined);
 
   // Initialize Google API
   useEffect(() => {
@@ -105,88 +85,8 @@ const DashboardPage: React.FC = () => {
     }
   };
 
-  // Fetch and group sessions by createdBy
-  useEffect(() => {
-    if (!adminCollege) return;
-
-    const fetchAllCollections = async () => {
-      try {
-        setLoading(true);
-
-        const fetchPromises = collections.map(async (col) => {
-          const snapshot = await getDocs(collection(db, col));
-          return snapshot.docs.map((d) => d.data() as DocType);
-        });
-
-        const results = await Promise.all(fetchPromises);
-        const allDocs = results.flat();
-
-        const filteredDocs = allDocs.filter(
-          (doc) =>
-            doc.colleges?.includes(adminCollege) && doc.validated === true
-        );
-
-        const statsByCreator: Record<
-          string,
-          { totalDuration: number; sessionCount: number; skills: Set<string> }
-        > = {};
-
-        filteredDocs.forEach((doc) => {
-          if (doc.createdBy) {
-            if (!statsByCreator[doc.createdBy]) {
-              statsByCreator[doc.createdBy] = {
-                totalDuration: 0,
-                sessionCount: 0,
-                skills: new Set(),
-              };
-            }
-            statsByCreator[doc.createdBy].totalDuration +=
-              doc.totalDuration || 0;
-            statsByCreator[doc.createdBy].sessionCount += 1;
-            if (Array.isArray(doc.skills)) {
-              doc.skills.forEach((skill) =>
-                statsByCreator[doc.createdBy].skills.add(skill)
-              );
-            }
-          }
-        });
-
-        // Fetch all users
-        const usersSnapshot = await getDocs(collection(db, "users"));
-        const uidNameMap: Record<string, string> = {};
-
-        usersSnapshot.docs.forEach((userDoc) => {
-          const data = userDoc.data();
-          if (data.name) {
-            uidNameMap[userDoc.id] = data.name;
-          }
-        });
-
-        // Build aggregated data
-        const aggregatedData: AggregatedData[] = Object.entries(statsByCreator)
-          .map(([uid, { totalDuration, sessionCount, skills }]) => {
-            const name = uidNameMap[uid];
-            if (!name) return null;
-            return {
-              uid,
-              name,
-              totalDuration,
-              sessionCount,
-              skills: Array.from(skills),
-            };
-          })
-          .filter((item): item is AggregatedData => item !== null);
-
-        setAggregated(aggregatedData);
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching collections:", error);
-        setLoading(false);
-      }
-    };
-
-    fetchAllCollections();
-  }, [adminCollege]);
+  // Fetch and group sessions by createdBy - now handled by the hook
+  // The useDashboardData hook automatically refreshes data
 
   // CSV Download
   const downloadCSV = () => {
@@ -237,7 +137,7 @@ const DashboardPage: React.FC = () => {
   };
   // ←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←
 
-  if (loading || !adminCollege)
+  if (isLoading || !adminCollege)
     return (
       <div className="flex justify-center items-center h-[80vh] text-lg text-gray-400">
         Loading dashboard data...
