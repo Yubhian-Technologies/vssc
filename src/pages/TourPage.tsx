@@ -212,7 +212,7 @@ const TourPage: React.FC = () => {
                 >
                   {campus.name}
                 </h2>
-                <p className="text-gray-700 text-sm sm:text-lg max-w-md">
+                <p className="text-gray-700 text-sm sm:text-lg max-w-md mx-auto text-justify">
                   {campus.description}
                 </p>
                 <button
