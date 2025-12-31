@@ -53,7 +53,7 @@ export const campuses = [
         id: "1-4",
         src: gallery12,
         alt: "Cafeteria",
-        description: "Spacious cafeteria offering a variety .",
+        description: "Spacious cafeteria offering a variety of food options.",
       },
       {
         id: "1-5",
@@ -62,9 +62,11 @@ export const campuses = [
         description: "Indoor sports complex for various activities.",
       },
     ],
-    description:
-      "Explore the beautiful campus of Vishnu Institute of Technology with world-class facilities and vibrant student life.",
+    description: `Lack of housing often discourages talented faculty from distant regions.
+VISHNU campus addresses this through its on-campus gated community, Green Meadows, offering a serene environment with modern amenities.
+This initiative enhances faculty attraction by providing affordable, comfortable, and healthy living aligned with VISHNU’s vision.`,
   },
+
   {
     id: 2,
     name: "Orchard Park",
@@ -101,8 +103,9 @@ export const campuses = [
         description: "Outdoor sports ground for various activities.",
       },
     ],
-    description:
-      "Experience academic excellence and modern amenities at Vishnu Dental College.",
+    description: `From the outset, BVRIT has integrated living and learning within a serene, green campus surrounded by orchards and natural landscapes.
+The lush environment enhances cognitive development, reduces stress, and supports strong academic and personal growth for nearly 5000 students.
+With rich academic, recreational, and community opportunities, campus life at BVRIT fosters lifelong experiences and friendships.`,
   },
   {
     id: 3,
@@ -140,8 +143,9 @@ export const campuses = [
         description: "Venue for seminars, events, and cultural programs.",
       },
     ],
-    description:
-      "Join a thriving community at Vishnu Pharmacy with top-notch facilities and vibrant student life.",
+    description: `Valley Vista, a lush green campus, houses BVRIT Hyderabad, established in 2012 as the youngest women’s flagship college of Sri Vishnu Educational Society.
+Despite its young age, the institution has earned numerous prestigious awards for academic excellence, skills, leadership, and employability.
+Driven by aspiring students, committed faculty, supportive parents, and visionary management, BVRIT Hyderabad continues to make a strong impact in education.`,
   },
 ];
 
@@ -189,9 +193,7 @@ const TourPage: React.FC = () => {
             <div
               key={campus.id}
               className={`flex flex-col md:flex-row items-center md:items-stretch
-                 w-full  ${
-                index % 2 !== 0 ? "md:flex-row-reverse" : ""
-              }`}
+                 w-full  ${index % 2 !== 0 ? "md:flex-row-reverse" : ""}`}
             >
               {/* Image */}
               <div className=" flex justify-center bg-background">
@@ -210,7 +212,9 @@ const TourPage: React.FC = () => {
                 >
                   {campus.name}
                 </h2>
-                <p className="text-gray-700 text-sm sm:text-lg max-w-md">{campus.description}</p>
+                <p className="text-gray-700 text-sm sm:text-lg max-w-md">
+                  {campus.description}
+                </p>
                 <button
                   onClick={() => {
                     window.scrollTo(0, 0);
@@ -221,10 +225,12 @@ const TourPage: React.FC = () => {
                     backgroundColor: "hsl(220, 70%, 20%)",
                   }}
                   onMouseOver={(e) =>
-                    (e.currentTarget.style.backgroundColor = "hsl(220, 70%, 15%)")
+                    (e.currentTarget.style.backgroundColor =
+                      "hsl(220, 70%, 15%)")
                   }
                   onMouseOut={(e) =>
-                    (e.currentTarget.style.backgroundColor = "hsl(220, 70%, 20%)")
+                    (e.currentTarget.style.backgroundColor =
+                      "hsl(220, 70%, 20%)")
                   }
                 >
                   Explore
