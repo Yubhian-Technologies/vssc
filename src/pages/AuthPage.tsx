@@ -128,6 +128,26 @@ export default function AuthPage() {
     }
   };
 
+  // ✅ Password validation function
+  const validatePassword = (password: string): string | null => {
+    if (password.length < 8) {
+      return "Password must be at least 8 characters long.";
+    }
+    if (!/[A-Z]/.test(password)) {
+      return "Password must contain at least one uppercase letter.";
+    }
+    if (!/[a-z]/.test(password)) {
+      return "Password must contain at least one lowercase letter.";
+    }
+    if (!/[0-9]/.test(password)) {
+      return "Password must contain at least one number.";
+    }
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+      return "Password must contain at least one special character.";
+    }
+    return null;
+  };
+
   // ✅ Handle Register
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -137,6 +157,13 @@ export default function AuthPage() {
     try {
       if (password !== confirmPassword) {
         setError("Passwords do not match.");
+        setLoading(false);
+        return;
+      }
+
+      const passwordError = validatePassword(password);
+      if (passwordError) {
+        setError(passwordError);
         setLoading(false);
         return;
       }
@@ -238,7 +265,7 @@ export default function AuthPage() {
             <motion.div
               className="w-full p-6 bg-[hsl(60,100%,85%)] rounded-xl shadow-xl"
               initial={false}
-              animate={{ rotateY: isLogin ? 0 : 180 }}
+              animate={{ rotateY: isLogin && !isReset && !isResend ? 0 : 180 }}
               transition={{ duration: 0.6, ease: "easeInOut" }}
               style={{ transformStyle: "preserve-3d" }}
             >
@@ -388,6 +415,9 @@ export default function AuthPage() {
                         {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
+                    <p className="text-xs text-gray-600 mt-1">
+                      💡 Use a strong password: 8+ characters, uppercase, lowercase, numbers, and symbols
+                    </p>
                     <div className="relative">
                       <input
                         type={showConfirmPassword ? "text" : "password"}
@@ -433,125 +463,141 @@ export default function AuthPage() {
                   </p>
                 </motion.div>
               )}
+
+              {/* Reset Password Form - Mobile */}
+              {isReset && (
+                <motion.div
+                  style={{ 
+                    backfaceVisibility: "hidden",
+                    transform: "rotateY(180deg)"
+                  }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <h2 className="text-2xl font-bold mb-6 text-center">Reset Password</h2>
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handleResetPassword();
+                    }}
+                    className="space-y-4"
+                  >
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Enter your registered college email"
+                      required
+                      className="w-full border rounded-md p-3 bg-[hsl(60,100%,95%)]"
+                    />
+                    {error && (
+                      <p
+                        className={`text-sm mt-2 ${
+                          error.startsWith("✅") ? "text-green-600" : "text-red-500"
+                        }`}
+                      >
+                        {error}
+                      </p>
+                    )}
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full bg-[#001A66] hover:bg-blue-900 text-white py-3 rounded-md transition"
+                    >
+                      {loading ? "Processing..." : "Send Reset Link"}
+                    </button>
+                  </form>
+
+                  <p className="mt-4 text-sm text-gray-600 text-center">
+                    Remembered your password?{" "}
+                    <button
+                      onClick={() => {
+                        setIsReset(false);
+                        setIsLogin(true);
+                        setError("");
+                      }}
+                      className="text-[#001A66] font-medium"
+                    >
+                      Back to Login
+                    </button>
+                  </p>
+                </motion.div>
+              )}
+
+              {/* Resend Verification Form - Mobile */}
+              {isResend && (
+                <motion.div
+                  style={{ 
+                    backfaceVisibility: "hidden",
+                    transform: "rotateY(180deg)"
+                  }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <h2 className="text-2xl font-bold mb-6 text-center">Resend Verification Email</h2>
+                  <form onSubmit={handleResendVerification} className="space-y-4">
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Enter your registered college email"
+                      required
+                      className="w-full border rounded-md p-3 bg-[hsl(60,100%,95%)]"
+                    />
+                    <div className="relative">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Enter your password"
+                        required
+                        className="w-full border rounded-md p-3 pr-10 bg-[hsl(60,100%,95%)]"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    {error && (
+                      <p
+                        className={`text-sm mt-2 ${
+                          error.startsWith("✅") ? "text-green-600" : "text-red-500"
+                        }`}
+                      >
+                        {error}
+                      </p>
+                    )}
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full bg-[#001A66] hover:bg-blue-900 text-white py-3 rounded-md transition"
+                    >
+                      {loading ? "Processing..." : "Send Verification Email"}
+                    </button>
+                  </form>
+
+                  <p className="mt-4 text-sm text-gray-600 text-center">
+                    Back to{" "}
+                    <button
+                      onClick={() => {
+                        setIsResend(false);
+                        setIsLogin(true);
+                        setError("");
+                      }}
+                      className="text-[#001A66] font-medium"
+                    >
+                      Login
+                    </button>
+                  </p>
+                </motion.div>
+              )}
             </motion.div>
           </div>
-
-          {/* Reset Password Form - Mobile */}
-          {isReset && (
-            <div className="w-full p-6 bg-white rounded-xl shadow-xl">
-              <h2 className="text-2xl font-bold mb-6 text-center">Reset Password</h2>
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleResetPassword();
-                }}
-                className="space-y-4"
-              >
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your registered college email"
-                  required
-                  className="w-full border rounded-md p-3 bg-[hsl(60,100%,95%)]"
-                />
-                {error && (
-                  <p
-                    className={`text-sm mt-2 ${
-                      error.startsWith("✅") ? "text-green-600" : "text-red-500"
-                    }`}
-                  >
-                    {error}
-                  </p>
-                )}
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-[#001A66] hover:bg-blue-900 text-white py-3 rounded-md transition"
-                >
-                  {loading ? "Processing..." : "Send Reset Link"}
-                </button>
-              </form>
-
-              <p className="mt-4 text-sm text-gray-600 text-center">
-                Remembered your password?{" "}
-                <button
-                  onClick={() => {
-                    setIsReset(false);
-                    setIsLogin(true);
-                    setError("");
-                  }}
-                  className="text-[#001A66] font-medium"
-                >
-                  Back to Login
-                </button>
-              </p>
-            </div>
-          )}
-
-          {/* Resend Verification Form - Mobile */}
-          {isResend && (
-            <div className="w-full p-6 bg-white rounded-xl shadow-xl">
-              <h2 className="text-2xl font-bold mb-6 text-center">Resend Verification Email</h2>
-              <form onSubmit={handleResendVerification} className="space-y-4">
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your registered college email"
-                  required
-                  className="w-full border rounded-md p-3 bg-[hsl(60,100%,95%)]"
-                />
-                <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter your password"
-                    required
-                    className="w-full border rounded-md p-3 pr-10 bg-[hsl(60,100%,95%)]"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-                {error && (
-                  <p
-                    className={`text-sm mt-2 ${
-                      error.startsWith("✅") ? "text-green-600" : "text-red-500"
-                    }`}
-                  >
-                    {error}
-                  </p>
-                )}
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-[#001A66] hover:bg-blue-900 text-white py-3 rounded-md transition"
-                >
-                  {loading ? "Processing..." : "Send Verification Email"}
-                </button>
-              </form>
-
-              <p className="mt-4 text-sm text-gray-600 text-center">
-                Back to{" "}
-                <button
-                  onClick={() => {
-                    setIsResend(false);
-                    setIsLogin(true);
-                    setError("");
-                  }}
-                  className="text-[#001A66] font-medium"
-                >
-                  Login
-                </button>
-              </p>
-            </div>
-          )}
         </div>
       ) : (
         /* Desktop Layout */
@@ -718,6 +764,9 @@ export default function AuthPage() {
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
+            <p className="text-xs text-gray-600 mt-1">
+              💡 Use a strong password: 8+ characters, uppercase, lowercase, numbers, and symbols
+            </p>
             <div className="relative">
               <input
                 type={showConfirmPassword ? "text" : "password"}
