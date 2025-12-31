@@ -12,9 +12,11 @@ import {
 import { doc, setDoc } from "firebase/firestore";
 import { auth, db } from "../firebase";
 import LoginImg from "../assets/Login.png";
+import VSSCLogo from "@/assets/VSSC LOGO[1].png";
 import { toast } from "react-hot-toast";
 import { useIsMobile } from "../hooks/use-mobile";
 import { Eye, EyeOff } from "lucide-react";
+import { motion } from "framer-motion";
 
 const colleges = [
   { name: "Vishnu Institute of Technology", domain: "@vishnu.edu.in" },
@@ -222,192 +224,221 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="relative flex items-center justify-center min-h-screen [background-color:hsl(60,100%,95%)]">
+    <div className="relative flex items-center justify-center min-h-screen [background-color:hsl(60,100%,90%)]">
       {/* Mobile Layout */}
       {isMobile ? (
-        <div className="w-full max-w-md mx-4 p-6 bg-white rounded-xl shadow-xl">
-          {/* Login Form - Mobile */}
-          {isLogin && !isReset && !isResend && (
-            <div>
-              <h2 className="text-2xl font-bold mb-6 text-center">Login</h2>
-              <form onSubmit={handleLogin} className="space-y-4">
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Email"
-                  required
-                  className="w-full border rounded-md p-3 bg-[hsl(60,100%,95%)]"
-                />
-                <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Password"
-                    required
-                    className="w-full border rounded-md p-3 pr-10 bg-[hsl(60,100%,95%)]"
-                  />
+        <div className="w-full max-w-md mx-4">
+          {/* Logo */}
+          <div className="flex justify-center mb-6">
+            <img src={VSSCLogo} alt="VSSC Logo" className="w-20 h-20 object-contain" />
+          </div>
+          
+          {/* Flip Container */}
+          <div className="relative h-auto perspective-1000">
+            <motion.div
+              className="w-full p-6 bg-[hsl(60,100%,85%)] rounded-xl shadow-xl"
+              initial={false}
+              animate={{ rotateY: isLogin ? 0 : 180 }}
+              transition={{ duration: 0.6, ease: "easeInOut" }}
+              style={{ transformStyle: "preserve-3d" }}
+            >
+              {/* Login Form - Mobile */}
+              {isLogin && !isReset && !isResend && (
+                <motion.div
+                  style={{ backfaceVisibility: "hidden" }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <h2 className="text-2xl font-bold mb-6 text-center">Login</h2>
+                  <form onSubmit={handleLogin} className="space-y-4">
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Email"
+                      required
+                      className="w-full border rounded-md p-3 bg-[hsl(60,100%,95%)]"
+                    />
+                    <div className="relative">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Password"
+                        required
+                        className="w-full border rounded-md p-3 pr-10 bg-[hsl(60,100%,95%)]"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    {error && (
+                      <p
+                        className={`text-sm mt-2 ${
+                          error.startsWith("✅") ? "text-green-600" : "text-red-500"
+                        }`}
+                      >
+                        {error}
+                      </p>
+                    )}
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full bg-[#001A66] hover:bg-blue-900 text-white py-3 rounded-md transition"
+                    >
+                      {loading ? "Processing..." : "Login"}
+                    </button>
+                  </form>
+
                   <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    onClick={() => {
+                      setIsResend(true);
+                      setError("");
+                      setEmail("");
+                    }}
+                    className="mt-4 w-full text-sm text-blue-700 hover:underline"
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    Resend Verification Email
                   </button>
-                </div>
-                {error && (
-                  <p
-                    className={`text-sm mt-2 ${
-                      error.startsWith("✅") ? "text-green-600" : "text-red-500"
-                    }`}
-                  >
-                    {error}
+
+                  <p className="mt-4 text-sm text-gray-600 text-center">
+                    Don't have an account?{" "}
+                    <button
+                      onClick={() => setIsLogin(false)}
+                      className="text-[#001A66] font-medium"
+                    >
+                      Register
+                    </button>
                   </p>
-                )}
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-[#001A66] hover:bg-blue-900 text-white py-3 rounded-md transition"
-                >
-                  {loading ? "Processing..." : "Login"}
-                </button>
-              </form>
 
-              <button
-                onClick={() => {
-                  setIsResend(true);
-                  setError("");
-                  setEmail("");
-                }}
-                className="mt-4 w-full text-sm text-blue-700 hover:underline"
-              >
-                Resend Verification Email
-              </button>
+                  <p className="mt-3 text-sm text-gray-600 text-center">
+                    Forgot your password?{" "}
+                    <button
+                      onClick={() => {
+                        setIsReset(true);
+                        setError("");
+                        setEmail("");
+                        setPassword("");
+                        setConfirmPassword("");
+                      }}
+                      className="text-[#001A66] font-medium"
+                    >
+                      Reset Password
+                    </button>
+                  </p>
+                </motion.div>
+              )}
 
-              <p className="mt-4 text-sm text-gray-600 text-center">
-                Don't have an account?{" "}
-                <button
-                  onClick={() => setIsLogin(false)}
-                  className="text-[#001A66] font-medium"
-                >
-                  Register
-                </button>
-              </p>
-
-              <p className="mt-3 text-sm text-gray-600 text-center">
-                Forgot your password?{" "}
-                <button
-                  onClick={() => {
-                    setIsReset(true);
-                    setError("");
-                    setEmail("");
-                    setPassword("");
-                    setConfirmPassword("");
+              {/* Register Form - Mobile */}
+              {!isLogin && !isReset && !isResend && (
+                <motion.div
+                  style={{ 
+                    backfaceVisibility: "hidden",
+                    transform: "rotateY(180deg)"
                   }}
-                  className="text-[#001A66] font-medium"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
                 >
-                  Reset Password
-                </button>
-              </p>
-            </div>
-          )}
+                  <h2 className="text-2xl font-bold mb-6 text-center">Register</h2>
+                  <form onSubmit={handleRegister} className="space-y-4">
+                    <input
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Full Name"
+                      className="w-full border rounded-md p-3 bg-[hsl(60,100%,95%)]"
+                    />
+                    <select
+                      value={college}
+                      onChange={(e) => setCollege(e.target.value)}
+                      className="w-full border rounded-md p-3 bg-[hsl(60,100%,95%)]"
+                    >
+                      {colleges.map((c, i) => (
+                        <option key={i} value={c.name}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="College Email"
+                      className="w-full border rounded-md p-3 bg-[hsl(60,100%,95%)]"
+                    />
+                    <div className="relative">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Password"
+                        className="w-full border rounded-md p-3 pr-10 bg-[hsl(60,100%,95%)]"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    <div className="relative">
+                      <input
+                        type={showConfirmPassword ? "text" : "password"}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="Confirm Password"
+                        className="w-full border rounded-md p-3 pr-10 bg-[hsl(60,100%,95%)]"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      >
+                        {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    {error && (
+                      <p
+                        className={`text-sm mt-2 ${
+                          error.startsWith("✅") ? "text-green-600" : "text-red-500"
+                        }`}
+                      >
+                        {error}
+                      </p>
+                    )}
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full bg-[#001A66] hover:bg-blue-900 text-white py-3 rounded-md transition"
+                    >
+                      {loading ? "Processing..." : "Register"}
+                    </button>
+                  </form>
 
-          {/* Register Form - Mobile */}
-          {!isLogin && !isReset && !isResend && (
-            <div>
-              <h2 className="text-2xl font-bold mb-6 text-center">Register</h2>
-              <form onSubmit={handleRegister} className="space-y-4">
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Full Name"
-                  className="w-full border rounded-md p-3 bg-[hsl(60,100%,95%)]"
-                />
-                <select
-                  value={college}
-                  onChange={(e) => setCollege(e.target.value)}
-                  className="w-full border rounded-md p-3 bg-[hsl(60,100%,95%)]"
-                >
-                  {colleges.map((c, i) => (
-                    <option key={i} value={c.name}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="College Email"
-                  className="w-full border rounded-md p-3 bg-[hsl(60,100%,95%)]"
-                />
-                <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Password"
-                    className="w-full border rounded-md p-3 pr-10 bg-[hsl(60,100%,95%)]"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-                <div className="relative">
-                  <input
-                    type={showConfirmPassword ? "text" : "password"}
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Confirm Password"
-                    className="w-full border rounded-md p-3 pr-10 bg-[hsl(60,100%,95%)]"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                  >
-                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-                {error && (
-                  <p
-                    className={`text-sm mt-2 ${
-                      error.startsWith("✅") ? "text-green-600" : "text-red-500"
-                    }`}
-                  >
-                    {error}
+                  <p className="mt-4 text-sm text-gray-600 text-center">
+                    Already have an account?{" "}
+                    <button
+                      onClick={() => setIsLogin(true)}
+                      className="text-[#001A66] font-medium"
+                    >
+                      Login
+                    </button>
                   </p>
-                )}
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-[#001A66] hover:bg-blue-900 text-white py-3 rounded-md transition"
-                >
-                  {loading ? "Processing..." : "Register"}
-                </button>
-              </form>
-
-              <p className="mt-4 text-sm text-gray-600 text-center">
-                Already have an account?{" "}
-                <button
-                  onClick={() => setIsLogin(true)}
-                  className="text-[#001A66] font-medium"
-                >
-                  Login
-                </button>
-              </p>
-            </div>
-          )}
+                </motion.div>
+              )}
+            </motion.div>
+          </div>
 
           {/* Reset Password Form - Mobile */}
           {isReset && (
-            <div>
+            <div className="w-full p-6 bg-white rounded-xl shadow-xl">
               <h2 className="text-2xl font-bold mb-6 text-center">Reset Password</h2>
               <form
                 onSubmit={(e) => {
@@ -460,7 +491,7 @@ export default function AuthPage() {
 
           {/* Resend Verification Form - Mobile */}
           {isResend && (
-            <div>
+            <div className="w-full p-6 bg-white rounded-xl shadow-xl">
               <h2 className="text-2xl font-bold mb-6 text-center">Resend Verification Email</h2>
               <form onSubmit={handleResendVerification} className="space-y-4">
                 <input
