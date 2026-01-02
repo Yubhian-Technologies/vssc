@@ -14,18 +14,19 @@ import {
   DocumentData,
   onSnapshot,
   getDoc,
+  serverTimestamp, // ← NEW IMPORT
 } from "firebase/firestore";
 import { useAuth } from "../AuthContext";
 import red3 from "@/assets/red3.png";
 import { useNavigate } from "react-router-dom";
-import { User } from "lucide-react"; // ← ADDED
+import { User } from "lucide-react";
 
 interface Faculty {
   id: string;
   name: string;
   college: string;
   skills: string[];
-  profileUrl?: string; // ← NEW
+  profileUrl?: string;
 }
 
 interface Appointment {
@@ -38,6 +39,7 @@ interface Appointment {
   doubt: string;
   status: "pending" | "accepted" | "ignored";
   scheduledAt?: string;
+  createdAt?: any; // Firestore Timestamp
 }
 
 const AppointmentPage = () => {
@@ -57,6 +59,22 @@ const AppointmentPage = () => {
   const [facultyLoading, setFacultyLoading] = useState(true);
 
   const navigate = useNavigate();
+
+  // Helper: Format Firestore timestamp or fallback
+  const formatDate = (timestamp: any) => {
+    if (!timestamp) return "Unknown date";
+    try {
+      return timestamp.toDate().toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch {
+      return "Invalid date";
+    }
+  };
 
   // Fetch user role + college
   useEffect(() => {
@@ -94,32 +112,29 @@ const AppointmentPage = () => {
     );
 
     const unsubscribe = onSnapshot(q, async (snapshot) => {
-  const facultyList = await Promise.all(
-    snapshot.docs.map(async (docSnap) => {
-      const facultyData = docSnap.data();
-      const userDoc = await getDoc(doc(db, "users", docSnap.id));
+      const facultyList = await Promise.all(
+        snapshot.docs.map(async (docSnap) => {
+          const facultyData = docSnap.data();
+          const userDoc = await getDoc(doc(db, "users", docSnap.id));
 
-      return {
-        id: docSnap.id,
-        name: facultyData.name,
-        college: facultyData.college,
-        skills: facultyData.skills || [],
-        profileUrl: userDoc.exists()
-          ? userDoc.data().profileUrl
-          : undefined,
-      };
-    })
-  );
-  
-  setFaculty(facultyList);
-  setFacultyLoading(false);
-});
+          return {
+            id: docSnap.id,
+            name: facultyData.name,
+            college: facultyData.college,
+            skills: facultyData.skills || [],
+            profileUrl: userDoc.exists() ? userDoc.data().profileUrl : undefined,
+          };
+        })
+      );
 
+      setFaculty(facultyList);
+      setFacultyLoading(false);
+    });
 
     return () => unsubscribe();
   }, [role, college]);
 
-  // Student: fetch appointments for this student
+  // Student: fetch appointments
   useEffect(() => {
     if (role !== "student" || !user) return;
 
@@ -142,7 +157,7 @@ const AppointmentPage = () => {
     return () => unsubscribe();
   }, [role, user]);
 
-  // Admin: fetch appointments for this faculty only
+  // Admin: fetch appointments
   useEffect(() => {
     if (role !== "admin" || !user) return;
 
@@ -176,12 +191,17 @@ const AppointmentPage = () => {
   // Get appointment status for a faculty
   const getFacultyAppointmentStatus = (facultyId: string) => {
     const appointment = appointments.find(
-      (a) => a.facultyId === facultyId && (a.status === "pending" || (a.status === "accepted" && !isAppointmentExpired(a.scheduledAt)))
+      (a) =>
+        a.facultyId === facultyId &&
+        (a.status === "pending" ||
+          (a.status === "accepted" && !isAppointmentExpired(a.scheduledAt)))
     );
-    return appointment ? { status: appointment.status, scheduledAt: appointment.scheduledAt } : null;
+    return appointment
+      ? { status: appointment.status, scheduledAt: appointment.scheduledAt }
+      : null;
   };
 
-  // Student: request appointment
+  // Student: request appointment — NOW WITH createdAt
   const handleRequest = async () => {
     if (!user || !selectedFaculty) return;
 
@@ -194,6 +214,7 @@ const AppointmentPage = () => {
         subject,
         doubt,
         status: "pending",
+        createdAt: serverTimestamp(), // ← THIS SAVES THE DATE
       });
 
       setSubject("");
@@ -266,9 +287,7 @@ const AppointmentPage = () => {
       setScheduleTime("");
       toastSuccess("Appointment accepted");
     } catch (error) {
-      console.error
-
-("Error accepting appointment:", error);
+      console.error("Error accepting appointment:", error);
       toastError("Failed to accept appointment");
     }
   };
@@ -290,6 +309,7 @@ const AppointmentPage = () => {
 
   return (
     <div className="min-h-screen [background-color:hsl(60,100%,95%)] mt-0 pt-0">
+      {/* ... Student Banner & Faculty List unchanged ... */}
       {role === "student" && (
         <div className="relative w-full h-72 md:h-96 lg:h-[28rem]">
           <img
@@ -315,99 +335,83 @@ const AppointmentPage = () => {
         </div>
       )}
 
-      {/* STUDENT FLOW */}
+      {/* STUDENT FLOW - Faculty List (unchanged) */}
       {role === "student" && (
         <div className="max-w-4xl mx-auto mt-6 p-6">
           <h2 className="text-2xl font-bold mb-4 text-primary text-center">
             Available Faculty
           </h2>
           {facultyLoading ? (
-  <p className="text-gray-500 text-lg text-center animate-pulse">
-    Loading faculty details...
-  </p>
-) : faculty.length === 0 ? (
-  <p className="text-gray-500 text-lg text-center">
-    No faculty available at your college.
-  </p>
-) : (
-
+            <p className="text-gray-500 text-lg text-center animate-pulse">
+              Loading faculty details...
+            </p>
+          ) : faculty.length === 0 ? (
+            <p className="text-gray-500 text-lg text-center">
+              No faculty available at your college.
+            </p>
+          ) : (
             <ul className="space-y-4">
               {faculty.map((f) => {
                 const appointmentStatus = getFacultyAppointmentStatus(f.id);
                 return (
                   <li
-  key={f.id}
-  className="flex flex-col md:flex-row md:items-center gap-4
-             [background-color:hsl(60,100%,90%)] p-4 rounded-xl
-             shadow-md hover:shadow-lg transition-shadow duration-300"
->
-  {/* TOP ROW (Image + Details) */}
-  <div className="flex items-center gap-4 w-full">
-    {/* Profile Photo */}
-    <div className="flex-shrink-0">
-      {f.profileUrl ? (
-        <img
-          src={f.profileUrl}
-          alt={f.name}
-          className="w-14 h-14 md:w-16 md:h-16 rounded-full object-cover
-                     border-2 border-white shadow-md"
-        />
-      ) : (
-        <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-gray-200
-                        border-2 border-white flex items-center justify-center shadow-md">
-          <User className="w-7 h-7 md:w-8 md:h-8 text-gray-400" />
-        </div>
-      )}
-    </div>
+                    key={f.id}
+                    className="flex flex-col md:flex-row md:items-center gap-4
+                               [background-color:hsl(60,100%,90%)] p-4 rounded-xl
+                               shadow-md hover:shadow-lg transition-shadow duration-300"
+                  >
+                    <div className="flex items-center gap-4 w-full">
+                      <div className="flex-shrink-0">
+                        {f.profileUrl ? (
+                          <img
+                            src={f.profileUrl}
+                            alt={f.name}
+                            className="w-14 h-14 md:w-16 md:h-16 rounded-full object-cover border-2 border-white shadow-md"
+                          />
+                        ) : (
+                          <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center shadow-md">
+                            <User className="w-7 h-7 md:w-8 md:h-8 text-gray-400" />
+                          </div>
+                        )}
+                      </div>
 
-    {/* Details */}
-    <div className="flex-1">
-      <p className="text-lg md:text-xl font-semibold text-primary">
-        {f.name}
-      </p>
-      <p className="text-sm md:text-md text-primary">
-        {f.college}
-      </p>
-      <p className="text-xs md:text-sm text-primary">
-        Skills: {f.skills.join(", ")}
-      </p>
+                      <div className="flex-1">
+                        <p className="text-lg md:text-xl font-semibold text-primary">{f.name}</p>
+                        <p className="text-sm md:text-md text-primary">{f.college}</p>
+                        <p className="text-xs md:text-sm text-primary">
+                          Skills: {f.skills.join(", ")}
+                        </p>
+                        {appointmentStatus && (
+                          <p className="text-xs md:text-sm mt-1">
+                            {appointmentStatus.status === "pending" ? (
+                              <span className="text-yellow-700 font-medium">Pending Appointment</span>
+                            ) : (
+                              <span className="text-green-700 font-medium">
+                                Scheduled: {appointmentStatus.scheduledAt}
+                              </span>
+                            )}
+                          </p>
+                        )}
+                      </div>
+                    </div>
 
-      {appointmentStatus && (
-        <p className="text-xs md:text-sm mt-1">
-          {appointmentStatus.status === "pending" ? (
-            <span className="text-yellow-700 font-medium">
-              Pending Appointment
-            </span>
-          ) : (
-            <span className="text-green-700 font-medium">
-              Scheduled: {appointmentStatus.scheduledAt}
-            </span>
-          )}
-        </p>
-      )}
-    </div>
-  </div>
-
-  {/* BUTTON ROW */}
-  <div className="w-full md:w-auto">
-    <button
-      onClick={() => {
-        setSelectedFaculty(f);
-        setModalOpen(true);
-      }}
-      disabled={!!appointmentStatus}
-      className={`w-full sm:w-80   px-4 py-2 rounded-lg font-medium
-        shadow-md transition-colors duration-200 ${
-          appointmentStatus
-            ? "bg-gray-400 cursor-not-allowed text-gray-200"
-            : "bg-green-800 hover:bg-green-600 text-white"
-        }`}
-    >
-      Request Appointment
-    </button>
-  </div>
-</li>
-
+                    <div className="w-full md:w-auto">
+                      <button
+                        onClick={() => {
+                          setSelectedFaculty(f);
+                          setModalOpen(true);
+                        }}
+                        disabled={!!appointmentStatus}
+                        className={`w-full sm:w-80 px-4 py-2 rounded-lg font-medium shadow-md transition-colors duration-200 ${
+                          appointmentStatus
+                            ? "bg-gray-400 cursor-not-allowed text-gray-200"
+                            : "bg-green-800 hover:bg-green-600 text-white"
+                        }`}
+                      >
+                        Request Appointment
+                      </button>
+                    </div>
+                  </li>
                 );
               })}
             </ul>
@@ -415,7 +419,7 @@ const AppointmentPage = () => {
         </div>
       )}
 
-      {/* MODAL FOR REQUEST */}
+      {/* MODAL FOR REQUEST (unchanged) */}
       {modalOpen && selectedFaculty && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
           <div className="bg-yellow-100 p-6 rounded-sm w-96 shadow-xl border border-yellow-300">
@@ -455,191 +459,187 @@ const AppointmentPage = () => {
 
       {/* ADMIN FLOW */}
       {role === "admin" && (
-        <div className="relative w-full h-72 md:h-96 lg:h-[28rem]">
-          <img
-            src={red3}
-            alt="Appointment Banner"
-            className="w-full h-full object-contain object-top"
-          />
-          <div className="absolute inset-0 bg-black bg-opacity-70"></div>
-          <div className="absolute inset-0 flex flex-col justify-center items-center text-center text-white px-4">
-            <motion.h1
-              className="text-3xl md:text-5xl font-bold text-white mb-6 drop-shadow-lg"
-              initial={{ opacity: 0, y: -40 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7 }}
-            >
-              Your Appointment Requests
-            </motion.h1>
-            <p className="max-w-2xl text-lg text-gray-200">
-              Manage appointment requests assigned to you.
-            </p>
+        <>
+          <div className="relative w-full h-72 md:h-96 lg:h-[28rem]">
+            <img
+              src={red3}
+              alt="Appointment Banner"
+              className="w-full h-full object-contain object-top"
+            />
+            <div className="absolute inset-0 bg-black bg-opacity-70"></div>
+            <div className="absolute inset-0 flex flex-col justify-center items-center text-center text-white px-4">
+              <motion.h1
+                className="text-3xl md:text-5xl font-bold text-white mb-6 drop-shadow-lg"
+                initial={{ opacity: 0, y: -40 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7 }}
+              >
+                Your Appointment Requests
+              </motion.h1>
+              <p className="max-w-2xl text-lg text-gray-200">
+                Manage appointment requests assigned to you.
+              </p>
+            </div>
           </div>
-        </div>
-      )}
 
-      {role === "admin" && (
-        <div className="mt-10 space-y-12 p-7">
-          <h2 className="text-2xl font-bold mb-4 text-primary text-center">
-            Your Requests
-          </h2>
-
-          {/* PENDING */}
-          <div>
-            <h2 className="text-3xl font-bold mb-6 text-yellow-800">
-              Pending Requests
+          <div className="mt-10 space-y-12 p-7">
+            <h2 className="text-2xl font-bold mb-4 text-primary text-center">
+              Your Requests
             </h2>
-            {appointments.filter((a) => a.status === "pending").length === 0 ? (
-              <p className="text-gray-500 text-lg text-center">No pending requests assigned to you.</p>
-            ) : (
-              <ul className="grid md:grid-cols-2 gap-6">
-                {appointments
-                  .filter((a) => a.status === "pending")
-                  .map((req) => (
-                    <li
-                      key={req.id}
-                      className="[background-color:hsl(60,100%,90%)] border border-blue-200 rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300"
-                    >
-                      <div className="flex justify-between items-center mb-2">
-                        <p className="font-semibold text-lg">
-                          {req.studentName}{" "}
-                          <span className="text-gray-400">→</span>{" "}
-                          {req.facultyName}
+
+            {/* PENDING */}
+            <div>
+              <h2 className="text-3xl font-bold mb-6 text-yellow-800">
+                Pending Requests
+              </h2>
+              {appointments.filter((a) => a.status === "pending").length === 0 ? (
+                <p className="text-gray-500 text-lg text-center">No pending requests assigned to you.</p>
+              ) : (
+                <ul className="grid md:grid-cols-2 gap-6">
+                  {appointments
+                    .filter((a) => a.status === "pending")
+                    .map((req) => (
+                      <li
+                        key={req.id}
+                        className="[background-color:hsl(60,100%,90%)] border border-blue-200 rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300"
+                      >
+                        <div className="flex justify-between items-center mb-2">
+                          <p className="font-semibold text-lg">
+                            {req.studentName} → {req.facultyName}
+                          </p>
+                          <span className="text-yellow-700 font-medium px-3 py-1 rounded-full text-sm">
+                            Pending
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-500 mb-1">Subject: {req.subject}</p>
+                        <p className="text-sm text-gray-500 mb-3">Doubt: {req.doubt}</p>
+                        <p className="text-xs text-gray-500 italic mb-3">
+                          Requested on: {formatDate(req.createdAt)}
                         </p>
-                        <span className="text-yellow-700 font-medium px-3 py-1 rounded-full text-sm">
-                          Pending
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-500 mb-1">
-                        Subject: {req.subject}
-                      </p>
-                      <p className="text-sm text-gray-500 mb-3">
-                        Doubt: {req.doubt}
-                      </p>
-                      {schedulingId === req.id ? (
-                        <div className="space-y-2">
-                          <input
-                            type="date"
-                            value={scheduleDate}
-                            onChange={(e) => setScheduleDate(e.target.value)}
-                            className="border border-gray-300 p-2 rounded w-full focus:ring-2 focus:ring-blue-400"
-                          />
-                          <input
-                            type="time"
-                            value={scheduleTime}
-                            onChange={(e) => setScheduleTime(e.target.value)}
-                            className="border border-gray-300 p-2 rounded w-full focus:ring-2 focus:ring-blue-400"
-                          />
-                          <div className="flex gap-2 mt-2">
+
+                        {schedulingId === req.id ? (
+                          <div className="space-y-2">
+                            <input
+                              type="date"
+                              value={scheduleDate}
+                              onChange={(e) => setScheduleDate(e.target.value)}
+                              className="border border-gray-300 p-2 rounded w-full focus:ring-2 focus:ring-blue-400"
+                            />
+                            <input
+                              type="time"
+                              value={scheduleTime}
+                              onChange={(e) => setScheduleTime(e.target.value)}
+                              className="border border-gray-300 p-2 rounded w-full focus:ring-2 focus:ring-blue-400"
+                            />
+                            <div className="flex gap-2 mt-2">
+                              <button
+                                onClick={() => handleAccept(req.id)}
+                                className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-xl font-medium transition"
+                              >
+                                Confirm
+                              </button>
+                              <button
+                                onClick={() => setSchedulingId(null)}
+                                className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-5 py-2 rounded-xl font-medium transition"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex gap-2 justify-between mt-5">
                             <button
-                              onClick={() => handleAccept(req.id)}
-                              className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-xl font-medium transition"
+                              onClick={() => setSchedulingId(req.id)}
+                              className="bg-green-700 hover:bg-green-900 text-white px-5 py-2 rounded-xl font-medium transition"
                             >
-                              Confirm
+                              Accept
                             </button>
                             <button
-                              onClick={() => setSchedulingId(null)}
-                              className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-5 py-2 rounded-xl font-medium transition"
+                              onClick={() => handleIgnore(req.id)}
+                              className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-xl font-medium transition"
                             >
-                              Cancel
+                              Reject
                             </button>
                           </div>
-                        </div>
-                      ) : (
-                        <div className="flex gap-2 justify-between mt-5">
-                          <button
-                            onClick={() => setSchedulingId(req.id)}
-                            className="bg-green-700 hover:bg-green-900 text-white px-5 py-2 rounded-xl font-medium transition"
-                          >
-                            Accept
-                          </button>
-                          <button
-                            onClick={() => handleIgnore(req.id)}
-                            className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-xl font-medium transition"
-                          >
-                            Reject
-                          </button>
-                        </div>
-                      )}
-                    </li>
-                  ))}
-              </ul>
-            )}
-          </div>
+                        )}
+                      </li>
+                    ))}
+                </ul>
+              )}
+            </div>
 
-          {/* APPROVED */}
-          <div>
-            <h2 className="text-3xl font-bold mb-6 text-green-800">
-              Approved
-            </h2>
-            {appointments.filter((a) => a.status === "accepted").length === 0 ? (
-              <p className="text-gray-500 text-lg text-center">No approved requests.</p>
-            ) : (
-              <ul className="grid md:grid-cols-2 gap-6">
-                {appointments
-                  .filter((a) => a.status === "accepted")
-                  .map((req) => (
-                    <li
-                      key={req.id}
-                      className="[background-color:hsl(60,100%,90%)] border border-blue-200 rounded-2xl shadow-md p-6 hover:shadow-lg transition-all duration-300"
-                    >
-                      <div className="flex justify-between items-center mb-2">
-                        <p className="font-semibold text-lg">
-                          {req.studentName}{" "}
-                          <span className="text-gray-400">→</span>{" "}
-                          {req.facultyName}
+            {/* APPROVED */}
+            <div>
+              <h2 className="text-3xl font-bold mb-6 text-green-800">
+                Approved
+              </h2>
+              {appointments.filter((a) => a.status === "accepted").length === 0 ? (
+                <p className="text-gray-500 text-lg text-center">No approved requests.</p>
+              ) : (
+                <ul className="grid md:grid-cols-2 gap-6">
+                  {appointments
+                    .filter((a) => a.status === "accepted")
+                    .map((req) => (
+                      <li
+                        key={req.id}
+                        className="[background-color:hsl(60,100%,90%)] border border-blue-200 rounded-2xl shadow-md p-6 hover:shadow-lg transition-all duration-300"
+                      >
+                        <div className="flex justify-between items-center mb-2">
+                          <p className="font-semibold text-lg">
+                            {req.studentName} → {req.facultyName}
+                          </p>
+                          <span className="text-green-700 font-medium px-3 py-1 rounded-full text-sm">
+                            Approved
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-500 mb-1">Subject: {req.subject}</p>
+                        <p className="text-sm text-gray-500 mb-1">
+                          Scheduled At: {req.scheduledAt}
                         </p>
-                        <span className="text-green-700 font-medium px-3 py-1 rounded-full text-sm">
-                          Approved
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-500 mb-1">
-                        Subject: {req.subject}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        Scheduled At: {req.scheduledAt}
-                      </p>
-                    </li>
-                  ))}
-              </ul>
-            )}
-          </div>
+                        <p className="text-xs text-gray-500 italic">
+                          Requested on: {formatDate(req.createdAt)}
+                        </p>
+                      </li>
+                    ))}
+                </ul>
+              )}
+            </div>
 
-          {/* REJECTED */}
-          <div>
-            <h2 className="text-3xl font-bold mb-6 text-red-600">
-              Rejected
-            </h2>
-            {appointments.filter((a) => a.status === "ignored").length === 0 ? (
-              <p className="text-gray-500 text-lg text-center">No rejected requests.</p>
-            ) : (
-              <ul className="grid md:grid-cols-2 gap-6">
-                {appointments
-                  .filter((a) => a.status === "ignored")
-                  .map((req) => (
-                    <li
-                      key={req.id}
-                      className="[background-color:hsl(60,100%,90%)] border border-blue-200 rounded-2xl shadow-md p-6 hover:shadow-lg transition-all duration-300"
-                    >
-                      <div className="flex justify-between items-center mb-2">
-                        <p className="font-semibold text-lg">
-                          {req.studentName}{" "}
-                          <span className="text-gray-400">→</span>{" "}
-                          {req.facultyName}
+            {/* REJECTED */}
+            <div>
+              <h2 className="text-3xl font-bold mb-6 text-red-600">
+                Rejected
+              </h2>
+              {appointments.filter((a) => a.status === "ignored").length === 0 ? (
+                <p className="text-gray-500 text-lg text-center">No rejected requests.</p>
+              ) : (
+                <ul className="grid md:grid-cols-2 gap-6">
+                  {appointments
+                    .filter((a) => a.status === "ignored")
+                    .map((req) => (
+                      <li
+                        key={req.id}
+                        className="[background-color:hsl(60,100%,90%)] border border-blue-200 rounded-2xl shadow-md p-6 hover:shadow-lg transition-all duration-300"
+                      >
+                        <div className="flex justify-between items-center mb-2">
+                          <p className="font-semibold text-lg">
+                            {req.studentName} → {req.facultyName}
+                          </p>
+                          <span className="text-red-700 font-medium px-3 py-1 rounded-full text-sm">
+                            Rejected
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-500 mb-1">Subject: {req.subject}</p>
+                        <p className="text-xs text-gray-500 italic">
+                          Requested on: {formatDate(req.createdAt)}
                         </p>
-                        <span className="text-red-700 font-medium px-3 py-1 rounded-full text-sm">
-                          Rejected
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-500">
-                        Subject: {req.subject}
-                      </p>
-                    </li>
-                  ))}
-              </ul>
-            )}
+                      </li>
+                    ))}
+                </ul>
+              )}
+            </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );

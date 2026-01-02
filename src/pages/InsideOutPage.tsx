@@ -65,6 +65,7 @@ interface Event {
   name: string;
   description: string;
   imageUrl: string;
+  venue:string;
   eventDate: string;
   eventTime: string;
   createdAt: any;
@@ -109,6 +110,7 @@ const InsideOutPage: React.FC = () => {
     description: "",
     eventDate: "",
     eventTime: "",
+    venue:"",
     image: null as File | null,
   });
   const [editForm, setEditForm] = useState({ eventDate: "", eventTime: "" });
@@ -259,6 +261,7 @@ const InsideOutPage: React.FC = () => {
         imageUrl,
         eventDate: addForm.eventDate,
         eventTime: addForm.eventTime,
+        venue:addForm.venue,
         createdBy: currentUser.uid,
         college: userCollege,
         createdAt: serverTimestamp(),
@@ -269,6 +272,7 @@ const InsideOutPage: React.FC = () => {
         name: "",
         description: "",
         eventDate: "",
+        venue:"",
         eventTime: "",
         image: null,
       });
@@ -609,6 +613,9 @@ const InsideOutPage: React.FC = () => {
                       <p className="text-gray-700 text-sm mb-4">
                         {event.description}
                       </p>
+                       <p className="text-sm text-gray-600 mb-2">
+                        <strong>Venue : </strong> {event.venue}
+                      </p>
 
                       <div className="flex items-center gap-2 text-sm text-gray-700 mb-4">
                         <Calendar className="w-4 h-4" />
@@ -737,6 +744,18 @@ const InsideOutPage: React.FC = () => {
                 required
               />
             </div>
+            <div>
+                          <Label>Venue</Label>
+                          <Input
+                            value={addForm.venue}
+                            className="[background-color:hsl(60,100%,95%)]"
+                            onChange={(e) =>
+                              setAddForm({ ...addForm, venue: e.target.value })
+                            }
+                            placeholder="Eg: Seminar Hall, Block A"
+                            required
+                          />
+                        </div>
             <div className="flex gap-3">
               <Button
                 type="submit"

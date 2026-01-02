@@ -1179,6 +1179,14 @@ const AccountPage = () => {
               )}
               {userData?.role === "admin+" && (
                 <button
+                  onClick={() => navigate("/admin+")}
+                  className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-3 py-2 rounded-lg transition-all backdrop-blur-sm border border-white border-opacity-30 text-sm"
+                >
+                  Appointments
+                </button>
+              )}
+              {userData?.role === "admin+" && (
+                <button
                   onClick={() => setShowTestimonial(true)}
                   className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-3 py-2 rounded-lg transition-all backdrop-blur-sm border border-white border-opacity-30 text-sm"
                 >
@@ -1248,6 +1256,14 @@ const AccountPage = () => {
                     </button>
                   )}
                   {userData?.role === "admin+" && (
+                <button
+                  onClick={() => navigate("/admin+")}
+                  className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-3 py-2 rounded-lg transition-all backdrop-blur-sm border border-white border-opacity-30 text-sm"
+                >
+                  Appointments
+                </button>
+              )}
+                  {userData?.role === "admin+" && (
                     <button
                       onClick={() => setShowTestimonial(true)}
                       className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-3 py-2 rounded-lg transition-all backdrop-blur-sm border border-white border-opacity-30 text-sm"
@@ -1316,13 +1332,11 @@ const AccountPage = () => {
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         College/University
                       </label>
-                      <input
-                        type="text"
-                        value={editCollege}
-                        onChange={(e) => setEditCollege(e.target.value)}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-[hsl(60,100%,95%)]"
-                      />
+                      <p className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-[hsl(60,100%,95%)]">
+                        {editCollege}
+                      </p>
                     </div>
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Graduation Year

@@ -30,6 +30,7 @@ interface TutoringSession {
   totalDuration?: number;
   slotDuration?: number;
   createdBy?: string;
+  venue?: string;
   date?: string; // YYYY-MM-DD
   startTime?: string; // "10:00 PM"
   participants?: string[];
@@ -89,6 +90,7 @@ export default function TutoringPage() {
     totalDuration: 0,
     slotDuration: 0,
     slots: 1,
+    venue:"",
     colleges: [] as string[],
     description: "",
     tutorName: "",
@@ -332,7 +334,7 @@ export default function TutoringPage() {
   };
 
   const handleAddSession = async () => {
-  if (!newSession.title || !newSession.date || newSession.isGroup === undefined || !newSession.expiryDate || !newSession.expiryTime) {
+  if (!newSession.title || !newSession.date || newSession.isGroup === undefined || !newSession.expiryDate || !newSession.expiryTime || !newSession.venue) {
     toastError("Please fill in all required fields.");
     return;
   }
@@ -386,6 +388,7 @@ export default function TutoringPage() {
       description: newSession.description || "",
       tutorName: newSession.tutorName || "",
       skills: newSession.skills || [],
+      venue: newSession.venue || "Not specified",
       createdAt: serverTimestamp(),
       isGroup: newSession.isGroup,
       expiryDate: newSession.expiryDate,
@@ -441,6 +444,7 @@ export default function TutoringPage() {
       startTime: "",
       totalDuration: 0,
       slotDuration: 0,
+      venue:"",
       colleges: [],
       description: "",
       tutorName: "",
@@ -611,6 +615,13 @@ export default function TutoringPage() {
                     <BookOpen className="w-4 h-4 text-green-600" />
                     <span><strong>Skills:</strong> {session.skills.join(", ")}</span>
                   </p>
+                  <p className="flex items-center gap-2">
+  <Clock className="w-4 h-4 text-indigo-600" />
+  <span>
+    <strong>Venue:</strong> {session.venue || "Not specified"}
+  </span>
+</p>
+
                   <p className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-blue-600" />
                     <span><strong>Start:</strong> {session.date} {session.startTime}</span>
@@ -808,6 +819,23 @@ export default function TutoringPage() {
                     Hold Ctrl (Cmd on Mac) to select multiple colleges
                   </p>
                 </div>
+                <div className="space-y-2">
+  <label htmlFor="venue" className="flex items-center gap-2 font-semibold text-gray-700">
+    Venue
+  </label>
+  <input
+    type="text"
+    name="venue"
+    id="venue"
+    placeholder="Eg: Room 204 / Seminar Hall / Online (Google Meet)"
+    className="w-full p-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary bg-gray-50 hover:bg-white"
+    value={newSession.venue}
+    onChange={(e) =>
+      setNewSession({ ...newSession, venue: e.target.value })
+    }
+  />
+</div>
+
                 <div className="space-y-3">
                   <label className="flex items-center gap-2 font-semibold text-gray-700">Session Type</label>
                   <div className="flex items-center gap-6 bg-[hsl(60,100%,95%)] border-2 p-2 rounded-xl">

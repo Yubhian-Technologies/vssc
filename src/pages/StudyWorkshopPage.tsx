@@ -41,6 +41,7 @@ interface StudyWorkshopSession {
   colleges: string[];
   isGroup: boolean;
   slots: number;
+  venue:string;
   slotAvailable?: number;
   totalDuration?: number;
   slotDuration?: number;
@@ -106,6 +107,7 @@ export default function StudyWorkshopPage() {
     totalDuration: 0,
     slotDuration: 0,
     slots: 0,
+    venue:"",
     colleges: [] as string[],
     description: "",
     tutorName: "",
@@ -384,6 +386,7 @@ export default function StudyWorkshopPage() {
     !newSession.tutorName ||
     !newSession.skills.length ||
     !newSession.date ||
+    !newSession.venue ||
     !newSession.startTime ||
     !newSession.totalDuration ||
     !newSession.slots ||
@@ -444,6 +447,7 @@ export default function StudyWorkshopPage() {
       tutorName: newSession.tutorName,
       skills: newSession.skills,
       createdAt: serverTimestamp(),
+      venue: newSession.venue || "Not specified",
       isGroup: newSession.isGroup,
       expiryDate: newSession.expiryDate,
       expiryTime: newSession.expiryTime,
@@ -467,6 +471,7 @@ export default function StudyWorkshopPage() {
       totalDuration: 0,
       slotDuration: 0,
       slots: 1,
+      venue:"",
       colleges: [],
       description: "",
       tutorName: "",
@@ -634,6 +639,12 @@ export default function StudyWorkshopPage() {
                   <p className="flex items-center gap-2">
                     <BookOpen className="w-4 h-4 text-green-600" />
                     <span><strong>Skills:</strong> {session.skills.join(", ")}</span>
+                  </p>
+                  <p className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-indigo-600" />
+                    <span>
+                      <strong>Venue:</strong> {session.venue || "Not specified"}
+                    </span>
                   </p>
                   <p className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-blue-600" />
@@ -833,6 +844,22 @@ export default function StudyWorkshopPage() {
                     Hold Ctrl (Cmd on Mac) to select multiple colleges
                   </p>
                 </div>
+                <div className="space-y-2">
+  <label htmlFor="venue" className="flex items-center gap-2 font-semibold text-gray-700">
+    Venue
+  </label>
+  <input
+    type="text"
+    name="venue"
+    id="venue"
+    placeholder="Eg: Room 204 / Seminar Hall / Online (Google Meet)"
+    className="w-full p-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary bg-gray-50 hover:bg-white"
+    value={newSession.venue}
+    onChange={(e) =>
+      setNewSession({ ...newSession, venue: e.target.value })
+    }
+  />
+</div>
                 <div className="space-y-3">
                   <label className="flex items-center gap-2 font-semibold text-gray-700">Session Type</label>
                   <div className="flex items-center gap-6 bg-[hsl(60,100%,95%)] border-2 p-2 rounded-xl border-indigo-100">

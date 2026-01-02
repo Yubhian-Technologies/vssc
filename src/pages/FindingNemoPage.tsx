@@ -72,6 +72,7 @@ interface Event {
   createdAt: any;
   createdBy: string;
   college?: string;
+  venue: string;
 }
 
 interface Registration {
@@ -116,6 +117,7 @@ const FindingNemoPage: React.FC = () => {
     eventDate: "",
     eventTime: "",
     image: null as File | null,
+    venue: "",
   });
   const [editForm, setEditForm] = useState({ eventDate: "", eventTime: "" });
 
@@ -268,6 +270,7 @@ const FindingNemoPage: React.FC = () => {
         createdBy: currentUser.uid,
         college: userCollege,
         createdAt: serverTimestamp(),
+        venue: addForm.venue,
       });
       toastSuccess("Event added successfully!");
       setShowAddModal(false);
@@ -275,6 +278,7 @@ const FindingNemoPage: React.FC = () => {
         name: "",
         description: "",
         eventDate: "",
+        venue:"",
         eventTime: "",
         image: null,
       });
@@ -610,20 +614,24 @@ const FindingNemoPage: React.FC = () => {
                       className="w-full h-48 object-contain"
                     />
                     <CardContent className="flex flex-col flex-1 p-4">
-                      <h3 className="font-semibold text-gray-900 text-base mb-2">
-                        {event.name}
+                      
+                      <h3 className="f text-gray-700 text-base mb-2">
+                        <strong>Name : </strong>{event.name}
                       </h3>
                       <p className="text-gray-700 text-sm mb-4">
-                        {event.description}
+                        <strong>Description : </strong>{event.description}
+                      </p>
+                      <p className="text-sm text-gray-600 mb-2">
+                        <strong>Venue : </strong> {event.venue}
                       </p>
 
                       <div className="flex items-center gap-2 text-sm text-gray-700 mb-4">
                         <Calendar className="w-4 h-4" />
                         <span>
-                          {format(new Date(event.eventDate), "MMM dd, yyyy")}
+                          <strong>Date: </strong>{format(new Date(event.eventDate), "MMM dd, yyyy")}
                         </span>
                         <Clock className="w-4 h-4 ml-3" />
-                        <span>{event.eventTime}</span>
+                        <strong>Time: </strong><span>{event.eventTime}</span>
                       </div>
 
                       {/* STUDENT */}
@@ -749,6 +757,19 @@ const FindingNemoPage: React.FC = () => {
                 required
               />
             </div>
+            <div>
+              <Label>Venue</Label>
+              <Input
+                value={addForm.venue}
+                className="[background-color:hsl(60,100%,95%)]"
+                onChange={(e) =>
+                  setAddForm({ ...addForm, venue: e.target.value })
+                }
+                placeholder="Eg: Seminar Hall, Block A"
+                required
+              />
+            </div>
+
             <div className="flex gap-3">
               <Button
                 type="submit"

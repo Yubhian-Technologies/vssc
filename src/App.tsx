@@ -44,6 +44,7 @@ import HappyFeetPage from "./pages/HappyFeetPage";
 import HiddenFiguresPage from "./pages/HiddenFiguresPage";
 import DashboardPage from "./pages/DashboardPage";
 import { useAuth } from "./AuthContext";
+import AdminPlusPage from "./pages/AdminPlusPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -213,6 +214,8 @@ const AppContent = () => {
             </ProtectedRoute>
           }
         />
+        {/* <Route path="/addAdmin" element={<AddAdmin></AddAdmin>}></Route> */}
+        <Route path="/admin+" element={<AdminPlusPage></AdminPlusPage>}></Route>
 
         {/* Catch-all */}
         <Route path="*" element={<NotFound />} />

@@ -65,6 +65,7 @@ interface Event {
   name: string;
   description: string;
   imageUrl: string;
+  venue:string;
   eventDate: string;
   eventTime: string;
   createdAt: any;
@@ -108,6 +109,7 @@ const TheIncrediblesPage: React.FC = () => {
     name: "",
     description: "",
     eventDate: "",
+    venue:"",
     eventTime: "",
     image: null as File | null,
   });
@@ -253,6 +255,7 @@ const TheIncrediblesPage: React.FC = () => {
         eventDate: addForm.eventDate,
         eventTime: addForm.eventTime,
         createdBy: currentUser.uid,
+        venue:addForm.venue,
         college: userCollege,
         createdAt: serverTimestamp(),
       });
@@ -262,6 +265,7 @@ const TheIncrediblesPage: React.FC = () => {
         name: "",
         description: "",
         eventDate: "",
+        venue:"",
         eventTime: "",
         image: null,
       });
@@ -600,6 +604,9 @@ const TheIncrediblesPage: React.FC = () => {
                       <p className="text-gray-700 text-sm mb-4">
                         {event.description}
                       </p>
+                       <p className="text-sm text-gray-600 mb-2">
+                         {event.venue}
+                      </p>
 
                       <div className="flex items-center gap-2 text-sm text-gray-700 mb-4">
                         <Calendar className="w-4 h-4" />
@@ -728,6 +735,18 @@ const TheIncrediblesPage: React.FC = () => {
                 required
               />
             </div>
+            <div>
+                          <Label>Venue</Label>
+                          <Input
+                            value={addForm.venue}
+                            className="[background-color:hsl(60,100%,95%)]"
+                            onChange={(e) =>
+                              setAddForm({ ...addForm, venue: e.target.value })
+                            }
+                            placeholder="Eg: Seminar Hall, Block A"
+                            required
+                          />
+                        </div>
             <div className="flex gap-3">
               <Button
                 type="submit"

@@ -17,6 +17,7 @@ import { toast } from "react-hot-toast";
 import { useIsMobile } from "../hooks/use-mobile";
 import { Eye, EyeOff } from "lucide-react";
 import { motion } from "framer-motion";
+import { toastError } from "@/components/ui/sonner";
 
 const colleges = [
   { name: "Vishnu Institute of Technology", domain: "@vishnu.edu.in" },
@@ -155,8 +156,13 @@ export default function AuthPage() {
     setLoading(true);
 
     try {
+      if(!email || !password || !confirmPassword || !college || !name){
+        toastError("Please fill all details");
+        return;
+      }
       if (password !== confirmPassword) {
         setError("Passwords do not match.");
+        toastError("Passwords do not match.")
         setLoading(false);
         return;
       }
@@ -164,6 +170,7 @@ export default function AuthPage() {
       const passwordError = validatePassword(password);
       if (passwordError) {
         setError(passwordError);
+        
         setLoading(false);
         return;
       }
