@@ -25,6 +25,7 @@ import {
   updateDoc,
   serverTimestamp,
   getDoc,
+  getDocs,
   where,
   deleteDoc,
 } from "firebase/firestore";
@@ -65,12 +66,14 @@ interface Event {
   name: string;
   description: string;
   imageUrl: string;
-  venue:string;
   eventDate: string;
   eventTime: string;
   createdAt: any;
   createdBy: string;
   college?: string;
+  venue: string;
+  slots: number; // total slots
+  filledSlots: number; // number of registrations
 }
 
 interface Registration {
@@ -110,8 +113,9 @@ const InsideOutPage: React.FC = () => {
     description: "",
     eventDate: "",
     eventTime: "",
-    venue:"",
     image: null as File | null,
+    venue: "",
+    slots: 0, // NEW
   });
   const [editForm, setEditForm] = useState({ eventDate: "", eventTime: "" });
 
@@ -261,9 +265,11 @@ const InsideOutPage: React.FC = () => {
         imageUrl,
         eventDate: addForm.eventDate,
         eventTime: addForm.eventTime,
-        venue:addForm.venue,
         createdBy: currentUser.uid,
         college: userCollege,
+        venue: addForm.venue,
+        slots: addForm.slots, // ✅ ADD
+        filledSlots: 0, // ✅ ADD
         createdAt: serverTimestamp(),
       });
       toastSuccess("Event added successfully!");
@@ -272,12 +278,57 @@ const InsideOutPage: React.FC = () => {
         name: "",
         description: "",
         eventDate: "",
-        venue:"",
+        venue: "",
         eventTime: "",
         image: null,
+        slots: 0,
       });
     } catch (err: any) {
       toastError(err.message || "Failed to add event");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /* --------------------------- AUTO REGISTER ----------------------- */
+  const handleAutoRegister = async (event: Event) => {
+    const remainingSlots = event.slots - event.filledSlots;
+
+    if (remainingSlots <= 0 || isExpired(event.eventDate, event.eventTime)) {
+      toastError("Slots are full");
+      return;
+    }
+    if (!currentUser) {
+      toastError("Please log in to register");
+      navigate("/auth");
+      return;
+    }
+
+    if (registrations.has(event.id)) {
+      alert("You are already registered for this event!");
+      return;
+    }
+
+    const confirmRegister = window.confirm(`Register for "${event.name}"?`);
+    if (!confirmRegister) return;
+
+    setLoading(true);
+    try {
+      await addDoc(collection(db, REGISTRATIONS_COLLECTION), {
+        eventId: event.id,
+        pageName: PAGE_NAME,
+        userId: currentUser.uid,
+        name: userName,
+        email: currentUser.email,
+        timestamp: serverTimestamp(),
+      });
+      await updateDoc(doc(db, EVENTS_COLLECTION, event.id), {
+        filledSlots: event.filledSlots + 1,
+      });
+
+      alert("Successfully registered!");
+    } catch {
+      alert("Registration failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -309,48 +360,29 @@ const InsideOutPage: React.FC = () => {
 
     setLoading(true);
     try {
+      // 🔥 DELETE ALL REGISTRATIONS
+      const q = query(
+        collection(db, REGISTRATIONS_COLLECTION),
+        where("eventId", "==", selectedEvent.id)
+      );
+
+      const snap = await getDocs(q);
+
+      const deletes = snap.docs.map((d) => deleteDoc(d.ref));
+      await Promise.all(deletes);
+
+      // 🔥 UPDATE EVENT + RESET SLOTS
       await updateDoc(doc(db, EVENTS_COLLECTION, selectedEvent.id), {
         eventDate: editForm.eventDate,
         eventTime: editForm.eventTime,
+        filledSlots: 0,
       });
-      toastSuccess("Event updated!");
+
+      toastSuccess("Event updated. Registrations cleared.");
       setShowEditModal(false);
-    } catch {
+    } catch (err) {
+      console.error(err);
       toastError("Update failed");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  /* --------------------------- AUTO REGISTER ----------------------- */
-  const handleAutoRegister = async (event: Event) => {
-    if (!currentUser) {
-      toastError("Please log in to register");
-      navigate("/auth");
-      return;
-    }
-
-    if (registrations.has(event.id)) {
-      alert("You are already registered for this event!");
-      return;
-    }
-
-    const confirmRegister = window.confirm(`Register for "${event.name}"?`);
-    if (!confirmRegister) return;
-
-    setLoading(true);
-    try {
-      await addDoc(collection(db, REGISTRATIONS_COLLECTION), {
-        eventId: event.id,
-        pageName: PAGE_NAME,
-        userId: currentUser.uid,
-        name: userName,
-        email: currentUser.email,
-        timestamp: serverTimestamp(),
-      });
-      alert("Successfully registered!");
-    } catch {
-      alert("Registration failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -557,6 +589,10 @@ const InsideOutPage: React.FC = () => {
               {events.map((event) => {
                 const expired = isExpired(event.eventDate, event.eventTime);
                 const registered = registrations.has(event.id);
+                const remainingSlots = expired
+                  ? 0
+                  : Math.max(event.slots - event.filledSlots, 0);
+
                 const canRegister = !expired && !registered && currentUser;
 
                 return (
@@ -613,7 +649,7 @@ const InsideOutPage: React.FC = () => {
                       <p className="text-gray-700 text-sm mb-4">
                         {event.description}
                       </p>
-                       <p className="text-sm text-gray-600 mb-2">
+                      <p className="text-sm text-gray-600 mb-2">
                         <strong>Venue : </strong> {event.venue}
                       </p>
 
@@ -625,6 +661,18 @@ const InsideOutPage: React.FC = () => {
                         <Clock className="w-4 h-4 ml-3" />
                         <span>{event.eventTime}</span>
                       </div>
+                      <p className="text-sm text-gray-700 mb-2">
+                        <strong>Slots Available:</strong>{" "}
+                        <span
+                          className={
+                            remainingSlots === 0
+                              ? "text-red-600"
+                              : "text-green-600"
+                          }
+                        >
+                          {remainingSlots}
+                        </span>
+                      </p>
 
                       {/* STUDENT */}
                       {!isAdmin && !isAdminPlus && (
@@ -745,17 +793,30 @@ const InsideOutPage: React.FC = () => {
               />
             </div>
             <div>
-                          <Label>Venue</Label>
-                          <Input
-                            value={addForm.venue}
-                            className="[background-color:hsl(60,100%,95%)]"
-                            onChange={(e) =>
-                              setAddForm({ ...addForm, venue: e.target.value })
-                            }
-                            placeholder="Eg: Seminar Hall, Block A"
-                            required
-                          />
-                        </div>
+              <Label>Venue</Label>
+              <Input
+                value={addForm.venue}
+                className="[background-color:hsl(60,100%,95%)]"
+                onChange={(e) =>
+                  setAddForm({ ...addForm, venue: e.target.value })
+                }
+                placeholder="Eg: Seminar Hall, Block A"
+                required
+              />
+            </div>
+            <div>
+              <Label>Total Slots</Label>
+              <Input
+                type="number"
+                min={1}
+                value={addForm.slots}
+                onChange={(e) =>
+                  setAddForm({ ...addForm, slots: Number(e.target.value) })
+                }
+                className="[background-color:hsl(60,100%,95%)]"
+                required
+              />
+            </div>
             <div className="flex gap-3">
               <Button
                 type="submit"

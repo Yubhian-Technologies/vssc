@@ -25,6 +25,7 @@ import {
   updateDoc,
   serverTimestamp,
   getDoc,
+  getDocs,
   where,
   deleteDoc,
 } from "firebase/firestore";
@@ -64,13 +65,15 @@ interface Event {
   id: string;
   name: string;
   description: string;
-  venue:string;
   imageUrl: string;
   eventDate: string;
   eventTime: string;
   createdAt: any;
   createdBy: string;
   college?: string;
+  venue: string;
+  slots: number;
+  filledSlots: number;
 }
 
 interface Registration {
@@ -110,8 +113,9 @@ const HappyFeetPage: React.FC = () => {
     description: "",
     eventDate: "",
     eventTime: "",
-    venue:"",
     image: null as File | null,
+    venue: "",
+    slots: 0,
   });
   const [editForm, setEditForm] = useState({ eventDate: "", eventTime: "" });
 
@@ -261,10 +265,12 @@ const HappyFeetPage: React.FC = () => {
         imageUrl,
         eventDate: addForm.eventDate,
         eventTime: addForm.eventTime,
-        venue:addForm.venue,
         createdBy: currentUser.uid,
         college: userCollege,
         createdAt: serverTimestamp(),
+        venue: addForm.venue,
+        slots: addForm.slots,
+        filledSlots: 0,
       });
       toastSuccess("Event added successfully!");
       setShowAddModal(false);
@@ -272,9 +278,10 @@ const HappyFeetPage: React.FC = () => {
         name: "",
         description: "",
         eventDate: "",
-        venue:"",
+        venue: "",
         eventTime: "",
         image: null,
+        slots: 0,
       });
     } catch (err: any) {
       toastError(err.message || "Failed to add event");
@@ -309,13 +316,26 @@ const HappyFeetPage: React.FC = () => {
 
     setLoading(true);
     try {
+      // 🔥 DELETE ALL EXISTING REGISTRATIONS
+      const q = query(
+        collection(db, REGISTRATIONS_COLLECTION),
+        where("eventId", "==", selectedEvent.id)
+      );
+
+      const snap = await getDocs(q);
+      await Promise.all(snap.docs.map((d) => deleteDoc(d.ref)));
+
+      // 🔥 UPDATE EVENT + RESET SLOTS
       await updateDoc(doc(db, EVENTS_COLLECTION, selectedEvent.id), {
         eventDate: editForm.eventDate,
         eventTime: editForm.eventTime,
+        filledSlots: 0,
       });
-      toastSuccess("Event updated!");
+
+      toastSuccess("Event updated. Registrations cleared.");
       setShowEditModal(false);
-    } catch {
+    } catch (err) {
+      console.error(err);
       toastError("Update failed");
     } finally {
       setLoading(false);
@@ -324,19 +344,18 @@ const HappyFeetPage: React.FC = () => {
 
   /* --------------------------- AUTO REGISTER ----------------------- */
   const handleAutoRegister = async (event: Event) => {
+    const remainingSlots = event.slots - event.filledSlots;
+
+    if (remainingSlots <= 0 || isExpired(event.eventDate, event.eventTime)) {
+      toastError("No slots available");
+      return;
+    }
+
     if (!currentUser) {
       toastError("Please log in to register");
       navigate("/auth");
       return;
     }
-
-    if (registrations.has(event.id)) {
-      alert("You are already registered for this event!");
-      return;
-    }
-
-    const confirmRegister = window.confirm(`Register for "${event.name}"?`);
-    if (!confirmRegister) return;
 
     setLoading(true);
     try {
@@ -348,9 +367,14 @@ const HappyFeetPage: React.FC = () => {
         email: currentUser.email,
         timestamp: serverTimestamp(),
       });
-      alert("Successfully registered!");
+
+      await updateDoc(doc(db, EVENTS_COLLECTION, event.id), {
+        filledSlots: event.filledSlots + 1,
+      });
+
+      toastSuccess("Successfully registered!");
     } catch {
-      alert("Registration failed. Please try again.");
+      toastError("Registration failed");
     } finally {
       setLoading(false);
     }
@@ -429,7 +453,8 @@ const HappyFeetPage: React.FC = () => {
     addForm.eventDate &&
     addForm.eventTime &&
     addForm.image &&
-    new Date(`${addForm.eventDate}T${addForm.eventTime}:00`) > getISTNow();
+    addForm.slots > 0 &&
+    new Date(`${addForm.eventDate}T${addForm.eventTime}:00`) > new Date();
 
   /* ----------------------- DOWNLOAD EXCEL ----------------------- */
   const downloadExcel = async () => {
@@ -547,16 +572,18 @@ const HappyFeetPage: React.FC = () => {
           )}
 
           {events.length === 0 ? (
-            <p className="text-center text-gray-500">
-              No events yet. Admin can add using the + button.
-            </p>
+            <p className="text-center text-gray-500">No events yet.</p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {events.map((event) => {
                 const expired = isExpired(event.eventDate, event.eventTime);
                 const registered = registrations.has(event.id);
-                const canRegister = !expired && !registered && currentUser;
+                const remainingSlots = expired
+                  ? 0
+                  : Math.max(event.slots - event.filledSlots, 0);
 
+                const canRegister =
+                  !expired && remainingSlots > 0 && !registered && currentUser;
                 return (
                   <Card
                     key={event.id}
@@ -611,7 +638,7 @@ const HappyFeetPage: React.FC = () => {
                       <p className="text-gray-700 text-sm mb-4">
                         {event.description}
                       </p>
-                       <p className="text-sm text-gray-600 mb-2">
+                      <p className="text-sm text-gray-600 mb-2">
                         <strong>Venue : </strong> {event.venue}
                       </p>
 
@@ -623,6 +650,18 @@ const HappyFeetPage: React.FC = () => {
                         <Clock className="w-4 h-4 ml-3" />
                         <span>{event.eventTime}</span>
                       </div>
+                      <p className="text-sm text-gray-700 mb-2">
+                        <strong>Slots Available:</strong>{" "}
+                        <span
+                          className={
+                            remainingSlots === 0
+                              ? "text-red-600"
+                              : "text-green-600"
+                          }
+                        >
+                          {remainingSlots}
+                        </span>
+                      </p>
 
                       {/* STUDENT */}
                       {!isAdmin && !isAdminPlus && (
@@ -743,17 +782,30 @@ const HappyFeetPage: React.FC = () => {
               />
             </div>
             <div>
-                          <Label>Venue</Label>
-                          <Input
-                            value={addForm.venue}
-                            className="[background-color:hsl(60,100%,95%)]"
-                            onChange={(e) =>
-                              setAddForm({ ...addForm, venue: e.target.value })
-                            }
-                            placeholder="Eg: Seminar Hall, Block A"
-                            required
-                          />
-                        </div>
+              <Label>Venue</Label>
+              <Input
+                value={addForm.venue}
+                className="[background-color:hsl(60,100%,95%)]"
+                onChange={(e) =>
+                  setAddForm({ ...addForm, venue: e.target.value })
+                }
+                placeholder="Eg: Seminar Hall, Block A"
+                required
+              />
+            </div>
+            <div>
+              <Label>Total Slots</Label>
+              <Input
+                type="number"
+                min={1}
+                value={addForm.slots}
+                className="[background-color:hsl(60,100%,95%)]"
+                onChange={(e) =>
+                  setAddForm({ ...addForm, slots: Number(e.target.value) })
+                }
+                required
+              />
+            </div>
             <div className="flex gap-3">
               <Button
                 type="submit"

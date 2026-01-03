@@ -25,9 +25,11 @@ import {
   updateDoc,
   serverTimestamp,
   getDoc,
+  getDocs,
   where,
   deleteDoc,
 } from "firebase/firestore";
+
 import { onAuthStateChanged } from "firebase/auth";
 import { format } from "date-fns";
 import {
@@ -65,12 +67,14 @@ interface Event {
   name: string;
   description: string;
   imageUrl: string;
-  venue:string;
   eventDate: string;
   eventTime: string;
   createdAt: any;
   createdBy: string;
   college?: string;
+  venue: string;
+  slots: number; // total slots
+  filledSlots: number; // number of registrations
 }
 
 interface Registration {
@@ -109,10 +113,12 @@ const TheIncrediblesPage: React.FC = () => {
     name: "",
     description: "",
     eventDate: "",
-    venue:"",
     eventTime: "",
     image: null as File | null,
+    venue: "",
+    slots: 0, // NEW
   });
+
   const [editForm, setEditForm] = useState({ eventDate: "", eventTime: "" });
 
   /* -------------------------- AUTH & ROLE --------------------------- */
@@ -255,19 +261,23 @@ const TheIncrediblesPage: React.FC = () => {
         eventDate: addForm.eventDate,
         eventTime: addForm.eventTime,
         createdBy: currentUser.uid,
-        venue:addForm.venue,
         college: userCollege,
+        venue: addForm.venue,
+        slots: addForm.slots, // ✅ ADD
+        filledSlots: 0, // ✅ ADD
         createdAt: serverTimestamp(),
       });
+
       toastSuccess("Event added successfully!");
       setShowAddModal(false);
       setAddForm({
         name: "",
         description: "",
         eventDate: "",
-        venue:"",
+        venue: "",
         eventTime: "",
         image: null,
+        slots: 0,
       });
     } catch (err: any) {
       toastError(err.message || "Failed to add event");
@@ -296,19 +306,34 @@ const TheIncrediblesPage: React.FC = () => {
       )
     ) {
       return toastError(
-        "New date & time must be after the original event and not in the past"
+        "New date & time must be after the original event and not in the past (IST)"
       );
     }
 
     setLoading(true);
     try {
+      // 🔥 DELETE ALL REGISTRATIONS
+      const q = query(
+        collection(db, REGISTRATIONS_COLLECTION),
+        where("eventId", "==", selectedEvent.id)
+      );
+
+      const snap = await getDocs(q);
+
+      const deletes = snap.docs.map((d) => deleteDoc(d.ref));
+      await Promise.all(deletes);
+
+      // 🔥 UPDATE EVENT + RESET SLOTS
       await updateDoc(doc(db, EVENTS_COLLECTION, selectedEvent.id), {
         eventDate: editForm.eventDate,
         eventTime: editForm.eventTime,
+        filledSlots: 0,
       });
-      toastSuccess("Event updated!");
+
+      toastSuccess("Event updated. Registrations cleared.");
       setShowEditModal(false);
-    } catch {
+    } catch (err) {
+      console.error(err);
       toastError("Update failed");
     } finally {
       setLoading(false);
@@ -317,6 +342,12 @@ const TheIncrediblesPage: React.FC = () => {
 
   /* --------------------------- AUTO REGISTER ----------------------- */
   const handleAutoRegister = async (event: Event) => {
+    const remainingSlots = event.slots - event.filledSlots;
+
+    if (remainingSlots <= 0 || isExpired(event.eventDate, event.eventTime)) {
+      toastError("Slots are full");
+      return;
+    }
     if (!currentUser) {
       toastError("Please log in to register");
       navigate("/auth");
@@ -341,6 +372,10 @@ const TheIncrediblesPage: React.FC = () => {
         email: currentUser.email,
         timestamp: serverTimestamp(),
       });
+      await updateDoc(doc(db, EVENTS_COLLECTION, event.id), {
+        filledSlots: event.filledSlots + 1,
+      });
+
       alert("Successfully registered!");
     } catch {
       alert("Registration failed. Please try again.");
@@ -548,7 +583,12 @@ const TheIncrediblesPage: React.FC = () => {
               {events.map((event) => {
                 const expired = isExpired(event.eventDate, event.eventTime);
                 const registered = registrations.has(event.id);
-                const canRegister = !expired && !registered && currentUser;
+                const remainingSlots = expired
+                  ? 0
+                  : Math.max(event.slots - event.filledSlots, 0);
+
+                const canRegister =
+                  !expired && remainingSlots > 0 && !registered && currentUser;
 
                 return (
                   <Card
@@ -604,8 +644,8 @@ const TheIncrediblesPage: React.FC = () => {
                       <p className="text-gray-700 text-sm mb-4">
                         {event.description}
                       </p>
-                       <p className="text-sm text-gray-600 mb-2">
-                         {event.venue}
+                      <p className="text-sm text-gray-600 mb-2">
+                        {event.venue}
                       </p>
 
                       <div className="flex items-center gap-2 text-sm text-gray-700 mb-4">
@@ -616,6 +656,18 @@ const TheIncrediblesPage: React.FC = () => {
                         <Clock className="w-4 h-4 ml-3" />
                         <span>{event.eventTime}</span>
                       </div>
+                      <p className="text-sm text-gray-700 mb-2">
+                        <strong>Slots Available:</strong>{" "}
+                        <span
+                          className={
+                            remainingSlots === 0
+                              ? "text-red-600"
+                              : "text-green-600"
+                          }
+                        >
+                          {remainingSlots}
+                        </span>
+                      </p>
 
                       {/* STUDENT */}
                       {!isAdmin && !isAdminPlus && (
@@ -736,17 +788,31 @@ const TheIncrediblesPage: React.FC = () => {
               />
             </div>
             <div>
-                          <Label>Venue</Label>
-                          <Input
-                            value={addForm.venue}
-                            className="[background-color:hsl(60,100%,95%)]"
-                            onChange={(e) =>
-                              setAddForm({ ...addForm, venue: e.target.value })
-                            }
-                            placeholder="Eg: Seminar Hall, Block A"
-                            required
-                          />
-                        </div>
+              <Label>Venue</Label>
+              <Input
+                value={addForm.venue}
+                className="[background-color:hsl(60,100%,95%)]"
+                onChange={(e) =>
+                  setAddForm({ ...addForm, venue: e.target.value })
+                }
+                placeholder="Eg: Seminar Hall, Block A"
+                required
+              />
+            </div>
+            <div>
+              <Label>Total Slots</Label>
+              <Input
+                type="number"
+                min={1}
+                value={addForm.slots}
+                onChange={(e) =>
+                  setAddForm({ ...addForm, slots: Number(e.target.value) })
+                }
+                className="[background-color:hsl(60,100%,95%)]"
+                required
+              />
+            </div>
+
             <div className="flex gap-3">
               <Button
                 type="submit"

@@ -25,9 +25,11 @@ import {
   updateDoc,
   serverTimestamp,
   getDoc,
+  getDocs,
   where,
   deleteDoc,
 } from "firebase/firestore";
+
 import { onAuthStateChanged } from "firebase/auth";
 import { format } from "date-fns";
 import {
@@ -73,6 +75,8 @@ interface Event {
   createdBy: string;
   college?: string;
   venue: string;
+  slots: number;
+  filledSlots: number;
 }
 
 interface Registration {
@@ -118,6 +122,7 @@ const FindingNemoPage: React.FC = () => {
     eventTime: "",
     image: null as File | null,
     venue: "",
+    slots: 0,
   });
   const [editForm, setEditForm] = useState({ eventDate: "", eventTime: "" });
 
@@ -271,6 +276,8 @@ const FindingNemoPage: React.FC = () => {
         college: userCollege,
         createdAt: serverTimestamp(),
         venue: addForm.venue,
+        slots: addForm.slots,
+        filledSlots: 0,
       });
       toastSuccess("Event added successfully!");
       setShowAddModal(false);
@@ -278,9 +285,10 @@ const FindingNemoPage: React.FC = () => {
         name: "",
         description: "",
         eventDate: "",
-        venue:"",
+        venue: "",
         eventTime: "",
         image: null,
+        slots: 0,
       });
     } catch (err: any) {
       toastError(err.message || "Failed to add event");
@@ -315,13 +323,26 @@ const FindingNemoPage: React.FC = () => {
 
     setLoading(true);
     try {
+      // 🔥 DELETE ALL EXISTING REGISTRATIONS
+      const q = query(
+        collection(db, REGISTRATIONS_COLLECTION),
+        where("eventId", "==", selectedEvent.id)
+      );
+
+      const snap = await getDocs(q);
+      await Promise.all(snap.docs.map((d) => deleteDoc(d.ref)));
+
+      // 🔥 UPDATE EVENT + RESET SLOTS
       await updateDoc(doc(db, EVENTS_COLLECTION, selectedEvent.id), {
         eventDate: editForm.eventDate,
         eventTime: editForm.eventTime,
+        filledSlots: 0,
       });
-      toastSuccess("Event updated!");
+
+      toastSuccess("Event updated. Registrations cleared.");
       setShowEditModal(false);
-    } catch {
+    } catch (err) {
+      console.error(err);
       toastError("Update failed");
     } finally {
       setLoading(false);
@@ -330,19 +351,18 @@ const FindingNemoPage: React.FC = () => {
 
   /* --------------------------- AUTO REGISTER ----------------------- */
   const handleAutoRegister = async (event: Event) => {
+    const remainingSlots = event.slots - event.filledSlots;
+
+    if (remainingSlots <= 0 || isExpired(event.eventDate, event.eventTime)) {
+      toastError("No slots available");
+      return;
+    }
+
     if (!currentUser) {
       toastError("Please log in to register");
       navigate("/auth");
       return;
     }
-
-    if (registrations.has(event.id)) {
-      alert("You are already registered for this event!");
-      return;
-    }
-
-    const confirmRegister = window.confirm(`Register for "${event.name}"?`);
-    if (!confirmRegister) return;
 
     setLoading(true);
     try {
@@ -354,9 +374,14 @@ const FindingNemoPage: React.FC = () => {
         email: currentUser.email,
         timestamp: serverTimestamp(),
       });
-      alert("Successfully registered!");
+
+      await updateDoc(doc(db, EVENTS_COLLECTION, event.id), {
+        filledSlots: event.filledSlots + 1,
+      });
+
+      toastSuccess("Successfully registered!");
     } catch {
-      alert("Registration failed. Please try again.");
+      toastError("Registration failed");
     } finally {
       setLoading(false);
     }
@@ -467,7 +492,8 @@ const FindingNemoPage: React.FC = () => {
     addForm.eventDate &&
     addForm.eventTime &&
     addForm.image &&
-    new Date(`${addForm.eventDate}T${addForm.eventTime}:00`) > getISTNow();
+    addForm.slots > 0 &&
+    new Date(`${addForm.eventDate}T${addForm.eventTime}:00`) > new Date();
 
   /* ----------------------------------------------------------------- */
   return (
@@ -564,7 +590,12 @@ const FindingNemoPage: React.FC = () => {
               {events.map((event) => {
                 const expired = isExpired(event.eventDate, event.eventTime);
                 const registered = registrations.has(event.id);
-                const canRegister = !expired && !registered && currentUser;
+                const remainingSlots = expired
+                  ? 0
+                  : Math.max(event.slots - event.filledSlots, 0);
+
+                const canRegister =
+                  !expired && remainingSlots > 0 && !registered && currentUser;
 
                 return (
                   <Card
@@ -614,12 +645,13 @@ const FindingNemoPage: React.FC = () => {
                       className="w-full h-48 object-contain"
                     />
                     <CardContent className="flex flex-col flex-1 p-4">
-                      
                       <h3 className="f text-gray-700 text-base mb-2">
-                        <strong>Name : </strong>{event.name}
+                        <strong>Name : </strong>
+                        {event.name}
                       </h3>
                       <p className="text-gray-700 text-sm mb-4">
-                        <strong>Description : </strong>{event.description}
+                        <strong>Description : </strong>
+                        {event.description}
                       </p>
                       <p className="text-sm text-gray-600 mb-2">
                         <strong>Venue : </strong> {event.venue}
@@ -628,11 +660,25 @@ const FindingNemoPage: React.FC = () => {
                       <div className="flex items-center gap-2 text-sm text-gray-700 mb-4">
                         <Calendar className="w-4 h-4" />
                         <span>
-                          <strong>Date: </strong>{format(new Date(event.eventDate), "MMM dd, yyyy")}
+                          <strong>Date: </strong>
+                          {format(new Date(event.eventDate), "MMM dd, yyyy")}
                         </span>
                         <Clock className="w-4 h-4 ml-3" />
-                        <strong>Time: </strong><span>{event.eventTime}</span>
+                        <strong>Time: </strong>
+                        <span>{event.eventTime}</span>
                       </div>
+                      <p className="text-sm text-gray-700 mb-2">
+                        <strong>Slots Available:</strong>{" "}
+                        <span
+                          className={
+                            remainingSlots === 0
+                              ? "text-red-600"
+                              : "text-green-600"
+                          }
+                        >
+                          {remainingSlots}
+                        </span>
+                      </p>
 
                       {/* STUDENT */}
                       {!isAdmin && !isAdminPlus && (
@@ -766,6 +812,19 @@ const FindingNemoPage: React.FC = () => {
                   setAddForm({ ...addForm, venue: e.target.value })
                 }
                 placeholder="Eg: Seminar Hall, Block A"
+                required
+              />
+            </div>
+            <div>
+              <Label>Total Slots</Label>
+              <Input
+                type="number"
+                min={1}
+                value={addForm.slots}
+                className="[background-color:hsl(60,100%,95%)]"
+                onChange={(e) =>
+                  setAddForm({ ...addForm, slots: Number(e.target.value) })
+                }
                 required
               />
             </div>
