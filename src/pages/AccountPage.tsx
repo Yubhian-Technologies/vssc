@@ -1246,7 +1246,7 @@ const AccountPage = () => {
                   </p>
                 )}
 
-                <div className="flex-shrink-0 flex gap-2">
+                <div className="flex-shrink-0 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-2">
                   {userData?.role === "admin+" && (
                     <button
                       onClick={() => navigate("/addAdmin")}
@@ -1256,13 +1256,13 @@ const AccountPage = () => {
                     </button>
                   )}
                   {userData?.role === "admin+" && (
-                <button
-                  onClick={() => navigate("/admin+")}
-                  className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-3 py-2 rounded-lg transition-all backdrop-blur-sm border border-white border-opacity-30 text-sm"
-                >
-                  Appointments
-                </button>
-              )}
+                    <button
+                      onClick={() => navigate("/admin+")}
+                      className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-3 py-2 rounded-lg transition-all backdrop-blur-sm border border-white border-opacity-30 text-sm"
+                    >
+                      Appointments
+                    </button>
+                  )}
                   {userData?.role === "admin+" && (
                     <button
                       onClick={() => setShowTestimonial(true)}
