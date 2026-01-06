@@ -1282,10 +1282,9 @@ const AccountPage = () => {
                   )}
                   <button
                     onClick={handleSignOut}
-                    className="flex items-center gap-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-3 py-2 rounded-lg transition-all backdrop-blur-sm border border-white border-opacity-30 text-sm"
+                    className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-3 py-2 rounded-lg transition-all backdrop-blur-sm border border-white border-opacity-30 text-sm"
                   >
-                    <LogOut className="w-4 h-4" />
-                    Sign Out
+                    ➜] Sign Out
                   </button>
                 </div>
               </div>
