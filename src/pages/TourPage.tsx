@@ -34,32 +34,34 @@ export const campuses = [
       {
         id: "1-1",
         src: gallery7,
-        alt: "Campus front view",
-        description: "Welcome to our beautiful campus entrance.",
+        alt: "Seminars",
+        description:
+          "Expert-led sessions that enhance academic and industry-oriented knowledge.",
       },
       {
         id: "1-2",
         src: gallery10,
-        alt: "Library",
-        description: "State-of-the-art library with thousands of books.",
+        alt: "Workshops",
+        description: "Hands-on training programs to build practical skills.",
       },
       {
         id: "1-3",
         src: gallery12,
-        alt: "Computer Lab",
-        description: "Modern computer labs with high-speed internet.",
+        alt: "Training Programs",
+        description: "Skill-development sessions focused on employability.",
       },
       {
         id: "1-4",
         src: gallery12,
-        alt: "Cafeteria",
-        description: "Spacious cafeteria offering a variety of food options.",
+        alt: "Training Programs",
+        description: "Training Programs to enhance professional skills.",
       },
       {
         id: "1-5",
         src: gallery7,
-        alt: "Sports Complex",
-        description: "Indoor sports complex for various activities.",
+        alt: "Student Development Programs",
+        description:
+          "Activities aimed at improving soft skills and leadership qualities.",
       },
     ],
     description: `Lack of housing often discourages talented faculty from distant regions.
@@ -81,8 +83,9 @@ This initiative enhances faculty attraction by providing affordable, comfortable
       {
         id: "2-2",
         src: gallery7,
-        alt: "Hostel",
-        description: "Comfortable student hostels with modern amenities.",
+        alt: "seminars",
+        description:
+          "Expert-led sessions that enhance academic and industry-oriented knowledge.",
       },
       {
         id: "2-3",
@@ -93,14 +96,14 @@ This initiative enhances faculty attraction by providing affordable, comfortable
       {
         id: "2-4",
         src: gallery13,
-        alt: "Cafeteria",
-        description: "Spacious cafeteria offering a variety of cuisines.",
+        alt: "Soft skills",
+        description: "Improve the communication skills of students.",
       },
       {
         id: "2-5",
         src: gallery15,
-        alt: "Sports Ground",
-        description: "Outdoor sports ground for various activities.",
+        alt: "Open Labs",
+        description: "State-of-the-art labs accessible for extended hours.",
       },
     ],
     description: `From the outset, BVRIT has integrated living and learning within a serene, green campus surrounded by orchards and natural landscapes.
@@ -115,14 +118,14 @@ With rich academic, recreational, and community opportunities, campus life at BV
       {
         id: "3-1",
         src: gallery1,
-        alt: "Auditorium",
+        alt: "Seminar Hall",
         description: "Venue for seminars, events, and cultural programs.",
       },
       {
         id: "3-2",
         src: gallery1,
-        alt: "Auditorium",
-        description: "Venue for seminars. events and culural programs.",
+        alt: "Work Shops",
+        description: "Hands-on training programs to build practical skills.",
       },
       {
         id: "3-3",
@@ -133,14 +136,16 @@ With rich academic, recreational, and community opportunities, campus life at BV
       {
         id: "3-4",
         src: gallery4,
-        alt: "Auditorium",
-        description: "Venue for seminars, events, and cultural programs.",
+        alt: "Technical Talks",
+        description:
+          "Industry experts share insights on latest trends and technologies.",
       },
       {
         id: "3-5",
         src: gallery6,
-        alt: "Special Class",
-        description: "Venue for seminars, events, and cultural programs.",
+        alt: "Orientation Program",
+        description:
+          "Welcomes new students and familiarizes them with campus life and academic culture.",
       },
     ],
     description: `Valley Vista, a lush green campus, houses BVRIT Hyderabad, established in 2012 as the youngest women’s flagship college of Sri Vishnu Educational Society.
