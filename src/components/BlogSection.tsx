@@ -7,8 +7,8 @@ import img2 from "@/assets/yellow2.png";
 import img3 from "@/assets/yellow3.png";
 import img4 from "@/assets/yellow4.png";
 import img5 from "@/assets/green5.png";
-import img6 from "@/assets/green6.png";
-import img7 from "@/assets/green7.png";
+import img6 from "@/assets/hidden2.png";
+import img7 from "@/assets/hidden3.png";
 
 const blogPost = {
   id: 1,
