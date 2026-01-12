@@ -22,7 +22,7 @@ const blogPost = {
 const BlogPage = () => {
   const navigate = useNavigate();
 
-  const images = [img1, img2, img3, img4, img5];
+  const images = [img1, img2, img3, img4, img5, img6, img7];
   const [currentImage, setCurrentImage] = useState(0);
   const [fade, setFade] = useState(true);
 
