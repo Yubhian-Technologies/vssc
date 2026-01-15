@@ -852,7 +852,7 @@ export default function CounselingPage() {
                       />
                       <span className="font-medium text-gray-700">Group Session</span>
                     </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
+                    {/* <label className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="radio"
                         name="isGroup"
@@ -861,10 +861,10 @@ export default function CounselingPage() {
                         onChange={() => setNewSession({ ...newSession, isGroup: false })}
                       />
                       <span className="font-medium text-gray-700">1-on-1</span>
-                    </label>
+                    </label> */}
                   </div>
                 </div>
-                {newSession.isGroup ? (
+                {newSession.isGroup && (
                   <div className="space-y-4 p-2 bg-blue-50 rounded-xl border border-blue-100">
                     <h3 className="font-semibold text-blue-800 flex items-center gap-2">Group Session Details</h3>
                     <div className="grid grid-cols-1 gap-2">
@@ -904,7 +904,8 @@ export default function CounselingPage() {
                       </div>
                     </div>
                   </div>
-                ) : (
+                ) }
+                {/* : (
                   <div className="space-y-4 p-2 bg-green-50 rounded-xl border border-green-100">
                     <h3 className="font-semibold text-green-800 flex items-center gap-2">1-on-1 Session Details</h3>
                     <div className="grid grid-cols-1 gap-4">
@@ -956,7 +957,7 @@ export default function CounselingPage() {
                       </div>
                     </div>
                   </div>
-                )}
+                )} */}
                 <div className="grid grid-cols-1 gap-4">
                   <div className="space-y-2">
                     <label htmlFor="expiryDate" className="flex items-center gap-2 font-semibold text-gray-700">Expiry Date</label>

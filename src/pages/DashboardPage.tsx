@@ -30,9 +30,8 @@ import { useDashboardData } from "@/hooks/useDashboardData";
 import { useAdminDataAutoRefresh } from "@/hooks/usePageAutoRefresh";
 import { format } from "date-fns";
 
-
-const SERVICE_COLORS = [ "#f0150a","#660af0", "#dd02fa", "#02f1fa","#18f060", "#f0d90a"];
-const EVENT_COLORS = ["#18f060", "#f0150a","#dd02fa", "#02f1fa", "#660af0", "#f0d90a"];
+const SERVICE_COLORS = ["#f0150a", "#660af0", "#dd02fa", "#02f1fa", "#18f060", "#f0d90a"];
+const EVENT_COLORS = ["#18f060", "#f0150a", "#dd02fa", "#02f1fa", "#660af0", "#f0d90a"];
 
 const CATEGORY_NAMES: Record<string, string> = {
   nemo_events: "Finding Nemo",
@@ -43,9 +42,20 @@ const CATEGORY_NAMES: Record<string, string> = {
   happyfeet_events: "Happy Feet",
 };
 
+const SERVICE_TYPE_MAP: Record<string, string> = {
+  tutoring: "Tutoring Services",
+  academicadvising: "Academic Advising",
+  studyworkshop: "Study Skills Workshops",
+  counseling: "Counseling Sessions",
+  psychologycounseling: "Psychology Counseling Service",
+  // ← Add any other service collection names here if you have more
+};
+
 const CLIENT_ID = "262638998809-vtupmcq2o7biavf0dfq483v3cc62.apps.googleusercontent.com";
 const API_KEY = "AIzaSyDtD5rRCHlMH7nnV1CGBh5gYaLPohRSyJo";
 const SCOPES = "https://www.googleapis.com/auth/spreadsheets";
+
+const SERVICE_COLLECTIONS = Object.keys(SERVICE_TYPE_MAP);
 
 const DashboardPage: React.FC = () => {
   const [adminCollege, setAdminCollege] = useState<string | null>(null);
@@ -58,6 +68,8 @@ const DashboardPage: React.FC = () => {
     totalRegistrations: 0,
     activeEvents: 0,
   });
+
+  const [serviceSessionCounts, setServiceSessionCounts] = useState<Record<string, number>>({});
 
   // New states for showing only 5 rows initially
   const [showAllServices, setShowAllServices] = useState(false);
@@ -74,7 +86,7 @@ const DashboardPage: React.FC = () => {
             scope: SCOPES,
           })
           .then(() => {
-            // Initialization successful – you can add sign-in logic here if needed
+            // Initialization successful
           })
           .catch((error: any) => {
             console.error("Error initializing gapi client:", error);
@@ -103,6 +115,7 @@ const DashboardPage: React.FC = () => {
     }
   };
 
+  // ── Real-time listener for EVENTS ────────────────────────────────────────
   useEffect(() => {
     const eventCollections = Object.keys(CATEGORY_NAMES);
     const unsubscribers: (() => void)[] = [];
@@ -128,6 +141,52 @@ const DashboardPage: React.FC = () => {
     return () => unsubscribers.forEach((u) => u());
   }, []);
 
+  // ── Real-time listener for SERVICES active session counts ────────────────
+  useEffect(() => {
+    const unsubs: (() => void)[] = [];
+
+    SERVICE_COLLECTIONS.forEach((collName) => {
+      const q = query(collection(db, collName));
+      const unsub = onSnapshot(q, (snap) => {
+        let validCount = 0;
+
+        snap.docs.forEach((docSnap) => {
+          const data = docSnap.data();
+          const isValidated = data.validated === true;
+
+          let isExpired = false;
+          if (data.expiryDate && data.expiryTime) {
+            try {
+              const [y, m, d] = data.expiryDate.split("-").map(Number);
+              const [h, min] = data.expiryTime.split(":").map(Number);
+              if ([y, m, d, h, min].every((n) => Number.isInteger(n) && n >= 0)) {
+                const expiry = new Date(y, m - 1, d, h, min);
+                if (!isNaN(expiry.getTime()) && new Date() > expiry) {
+                  isExpired = true;
+                }
+              }
+            } catch {
+              
+            }
+          }
+
+          if (!isValidated && !isExpired) {
+            validCount++;
+          }
+        });
+
+        setServiceSessionCounts((prev) => ({
+          ...prev,
+          [collName]: validCount,
+        }));
+      });
+
+      unsubs.push(unsub);
+    });
+
+    return () => unsubs.forEach((u) => u());
+  }, []);
+
   useEffect(() => {
     const totalEvents = allEvents.length;
     const totalRegistrations = allEvents.reduce((sum, e) => sum + (e.filledSlots || 0), 0);
@@ -140,11 +199,18 @@ const DashboardPage: React.FC = () => {
     });
   }, [allEvents]);
 
-  const servicesPieData = aggregated.map((item, index) => ({
-    name: item.name.length > 15 ? item.name.slice(0, 12) + "..." : item.name,
-    value: item.totalDuration,
-    fullName: item.name,
-  }));
+  // ── Services Pie Data – now by service TYPE + active count ───────────────
+  const servicesPieData = SERVICE_COLLECTIONS
+    .map((coll) => {
+      const title = SERVICE_TYPE_MAP[coll] || coll;
+      const count = serviceSessionCounts[coll] || 0;
+      return {
+        name: title.length > 15 ? title.slice(0, 12) + "..." : title,
+        value: count,
+        fullName: title,
+      };
+    })
+    .filter((item) => item.value > 0); // optional: hide services with 0 active
 
   const eventsByCategory = Object.entries(
     allEvents.reduce((acc, e) => {
@@ -185,41 +251,38 @@ const DashboardPage: React.FC = () => {
     XLSX.writeFile(workbook, "services_data.xlsx");
   };
 
- const downloadEventsExcel = () => {
-  const data = allEvents.map((e) => ({
-    Category: e.category,
-    "Event Name": e.name,
-    Date: format(new Date(e.eventDate), "dd/MM/yyyy"), 
-    Time: e.eventTime || "",
-    Venue: e.venue || "",
-    "Slots Filled": e.filledSlots || 0,
-    "Total Slots": e.slots || 0,
-    Status: e.expired ? "Expired" : "Active",
-  }));
+  const downloadEventsExcel = () => {
+    const data = allEvents.map((e) => ({
+      Category: e.category,
+      "Event Name": e.name,
+      Date: format(new Date(e.eventDate), "dd/MM/yyyy"),
+      Time: e.eventTime || "",
+      Venue: e.venue || "",
+      "Slots Filled": e.filledSlots || 0,
+      "Total Slots": e.slots || 0,
+      Status: e.expired ? "Expired" : "Active",
+    }));
 
-  const worksheet = XLSX.utils.json_to_sheet(data);
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    worksheet["!cols"] = [
+      { wch: 20 },
+      { wch: 35 },
+      { wch: 15 },
+      { wch: 12 },
+      { wch: 30 },
+      { wch: 15 },
+      { wch: 15 },
+      { wch: 12 },
+    ];
 
- 
-  worksheet["!cols"] = [
-    { wch: 20 }, 
-    { wch: 35 }, 
-    { wch: 15 },
-    { wch: 12 },
-    { wch: 30 }, 
-    { wch: 15 },
-    { wch: 15 }, 
-    { wch: 12 },
-  ];
-
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Events Data");
-  XLSX.writeFile(workbook, "events_data.xlsx");
-};
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Events Data");
+    XLSX.writeFile(workbook, "events_data.xlsx");
+  };
 
   if (isLoading || !adminCollege)
     return (
       <div className="flex flex-col justify-center items-center h-[80vh] gap-6">
-        
         <p className="text-2xl text-gray-600 font-medium">Loading dashboard...</p>
       </div>
     );
@@ -243,7 +306,7 @@ const DashboardPage: React.FC = () => {
         animate={{ y: 0 }}
         transition={{ delay: 0.2 }}
       >
-        {adminCollege} Dashboard 
+        {adminCollege} Dashboard
       </motion.h1>
 
       {/* Compact Cute Stats Cards */}
@@ -251,7 +314,7 @@ const DashboardPage: React.FC = () => {
         <motion.div whileHover={{ scale: 1.1, rotate: 2 }}>
           <Card className="bg-white/80 backdrop-blur-md border-pink-200 shadow-xl">
             <CardContent className="p-4 text-center">
-              <p className="text-md text-gray-600">Total Users</p>
+              <p className="text-sm text-gray-600">Total Users(services)</p>
               <p className="text-2xl font-bold text-pink-600">{aggregated.length}</p>
             </CardContent>
           </Card>
@@ -260,7 +323,7 @@ const DashboardPage: React.FC = () => {
         <motion.div whileHover={{ scale: 1.1, rotate: -2 }}>
           <Card className="bg-white/80 backdrop-blur-md border-purple-200 shadow-xl">
             <CardContent className="p-4 text-center">
-              <p className="text-md text-gray-600">Total Duration</p>
+              <p className="text-sm text-gray-600">Total Duration(services)</p>
               <p className="text-2xl font-bold text-purple-600">{totalDurationSum}</p>
             </CardContent>
           </Card>
@@ -269,7 +332,7 @@ const DashboardPage: React.FC = () => {
         <motion.div whileHover={{ scale: 1.1, rotate: 2 }}>
           <Card className="bg-white/80 backdrop-blur-md border-blue-200 shadow-xl">
             <CardContent className="p-4 text-center">
-              <p className="text-md text-gray-600">Total Events</p>
+              <p className="text-sm text-gray-600">Total Events</p>
               <p className="text-2xl font-bold text-blue-600">{aggregatedEvents.totalEvents}</p>
             </CardContent>
           </Card>
@@ -278,7 +341,7 @@ const DashboardPage: React.FC = () => {
         <motion.div whileHover={{ scale: 1.1, rotate: -2 }}>
           <Card className="bg-white/80 backdrop-blur-md border-green-200 shadow-xl">
             <CardContent className="p-4 text-center">
-              <p className="text-md text-gray-600">Active Events</p>
+              <p className="text-sm text-gray-600">Active Events</p>
               <p className="text-2xl font-bold text-green-600">{aggregatedEvents.activeEvents}</p>
             </CardContent>
           </Card>
@@ -287,7 +350,7 @@ const DashboardPage: React.FC = () => {
         <motion.div whileHover={{ scale: 1.1, rotate: 2 }}>
           <Card className="bg-white/80 backdrop-blur-md border-yellow-200 shadow-xl">
             <CardContent className="p-4 text-center">
-              <p className="text-md text-gray-600">Registrations</p>
+              <p className="text-sm text-gray-600">Registrations</p>
               <p className="text-2xl font-bold text-yellow-600">{aggregatedEvents.totalRegistrations}</p>
             </CardContent>
           </Card>
@@ -296,7 +359,7 @@ const DashboardPage: React.FC = () => {
         <motion.div whileHover={{ scale: 1.1, rotate: -2 }}>
           <Card className="bg-white/80 backdrop-blur-md border-orange-200 shadow-xl">
             <CardContent className="p-4 text-center">
-              <p className="text-md text-gray-600">Avg Duration</p>
+              <p className="text-sm text-gray-600">Avg Duration(services)</p>
               <p className="text-2xl font-bold text-orange-600">
                 {(totalDurationSum / (aggregated.length || 1)).toFixed(1)}
               </p>
@@ -421,8 +484,8 @@ const DashboardPage: React.FC = () => {
         <h2 className="text-3xl font-bold mb-6 text-center text-primary">Events Overview</h2>
         <div className="flex justify-center mb-6">
           <Button onClick={downloadEventsExcel} className="bg-primary hover:bg-blue-800 text-white shadow-lg">
-  Download Excel
-</Button>
+            Download Excel
+          </Button>
         </div>
 
         <div className="overflow-x-auto shadow-2xl bg-white/90 backdrop-blur-md rounded-lg">
