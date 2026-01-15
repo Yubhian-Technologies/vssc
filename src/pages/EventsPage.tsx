@@ -11,7 +11,7 @@ import event3 from "@/assets/event3.png";
 import event4 from "@/assets/event4.png";
 import event5 from "@/assets/event5.png";
 import event6 from "@/assets/event6.png";
-import eventsbanner from "@/assets/eventsbanner.png";
+import eventsbanner from "@/assets/red4.png";
 
 interface Service {
   id: string;
