@@ -1,189 +1,152 @@
-import React from "react";
+﻿import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Tilt from "react-parallax-tilt";
 import { motion } from "framer-motion";
-
-import green1 from "@/assets/green1.png";
-import green2 from "@/assets/green2.png";
-import green3 from "@/assets/green3.png";
-
-import gallery1 from "../assets/gallery1.jpg";
-import gallery2 from "../assets/gallery2.jpg";
-import gallery3 from "../assets/gallery3.jpg";
-import gallery4 from "../assets/gallery4.jpg";
-import gallery5 from "../assets/gallery5.jpg";
-import gallery6 from "../assets/gallery6.jpg";
-import gallery7 from "../assets/gallery7.jpg";
-import gallery8 from "../assets/gallery8.jpg";
-import gallery9 from "../assets/gallery9.jpg";
-import gallery10 from "../assets/gallery10.jpg";
-import gallery11 from "../assets/gallery11.jpg";
-import gallery12 from "../assets/gallery12.jpg";
-import gallery13 from "../assets/gallery13.jpg";
-import gallery14 from "../assets/gallery14.jpg";
-import gallery15 from "../assets/gallery15.jpg";
+import {
+  collection,
+  getDocs,
+  deleteDoc,
+  doc,
+  updateDoc,
+} from "firebase/firestore";
+import { db } from "@/firebase";
+import { useAuth } from "@/AuthContext";
+import AddCampusModal from "@/components/AddCampusModal";
+import { Button } from "@/components/ui/button";
+import { Plus, Loader2, Trash2, Edit } from "lucide-react";
+import toast from "react-hot-toast";
 
 import Land1 from "../assets/Land1.jpg";
 
-export const campuses = [
-  {
-    id: 1,
-    name: "Green Meadows",
-    cover: green1,
-    gallery: [
-      {
-        id: "1-1",
-        src: gallery7,
-        alt: "Seminars",
-        description:
-          "Expert-led sessions that enhance academic and industry-oriented knowledge.",
-      },
-      {
-        id: "1-2",
-        src: gallery10,
-        alt: "Workshops",
-        description: "Hands-on training programs to build practical skills.",
-      },
-      {
-        id: "1-3",
-        src: gallery12,
-        alt: "Training Programs",
-        description: "Skill-development sessions focused on employability.",
-      },
-      {
-        id: "1-4",
-        src: gallery12,
-        alt: "Training Programs",
-        description: "Training Programs to enhance professional skills.",
-      },
-      {
-        id: "1-5",
-        src: gallery7,
-        alt: "Student Development Programs",
-        description:
-          "Activities aimed at improving soft skills and leadership qualities.",
-      },
-    ],
-    description: `Lack of housing often discourages talented faculty from distant regions.
-VISHNU campus addresses this through its on-campus gated community, Green Meadows, offering a serene environment with modern amenities.
-This initiative enhances faculty attraction by providing affordable, comfortable, and healthy living aligned with VISHNU’s vision.`,
-  },
+interface GalleryItem {
+  id: string;
+  imageUrl: string;
+  alt: string;
+  description: string;
+}
 
-  {
-    id: 2,
-    name: "Orchard Park",
-    cover: green2,
-    gallery: [
-      {
-        id: "2-1",
-        src: gallery10,
-        alt: "Innovation Lab",
-        description: "Where students experiment and innovate.",
-      },
-      {
-        id: "2-2",
-        src: gallery7,
-        alt: "seminars",
-        description:
-          "Expert-led sessions that enhance academic and industry-oriented knowledge.",
-      },
-      {
-        id: "2-3",
-        src: gallery8,
-        alt: "Auditorium",
-        description: "Venue for seminars, events, and cultural programs.",
-      },
-      {
-        id: "2-4",
-        src: gallery13,
-        alt: "Soft skills",
-        description: "Improve the communication skills of students.",
-      },
-      {
-        id: "2-5",
-        src: gallery15,
-        alt: "Open Labs",
-        description: "State-of-the-art labs accessible for extended hours.",
-      },
-    ],
-    description: `From the outset, BVRIT has integrated living and learning within a serene, green campus surrounded by orchards and natural landscapes.
-The lush environment enhances cognitive development, reduces stress, and supports strong academic and personal growth for nearly 5000 students.
-With rich academic, recreational, and community opportunities, campus life at BVRIT fosters lifelong experiences and friendships.`,
-  },
-  {
-    id: 3,
-    name: "Valley Vista",
-    cover: green3,
-    gallery: [
-      {
-        id: "3-1",
-        src: gallery1,
-        alt: "Seminar Hall",
-        description: "Venue for seminars, events, and cultural programs.",
-      },
-      {
-        id: "3-2",
-        src: gallery1,
-        alt: "Work Shops",
-        description: "Hands-on training programs to build practical skills.",
-      },
-      {
-        id: "3-3",
-        src: gallery11,
-        alt: "Special Class",
-        description: "cultural programs and a friendly atmosphere.",
-      },
-      {
-        id: "3-4",
-        src: gallery4,
-        alt: "Technical Talks",
-        description:
-          "Industry experts share insights on latest trends and technologies.",
-      },
-      {
-        id: "3-5",
-        src: gallery6,
-        alt: "Orientation Program",
-        description:
-          "Welcomes new students and familiarizes them with campus life and academic culture.",
-      },
-    ],
-    description: `Valley Vista, a lush green campus, houses BVRIT Hyderabad, established in 2012 as the youngest women’s flagship college of Sri Vishnu Educational Society.
-Despite its young age, the institution has earned numerous prestigious awards for academic excellence, skills, leadership, and employability.
-Driven by aspiring students, committed faculty, supportive parents, and visionary management, BVRIT Hyderabad continues to make a strong impact in education.`,
-  },
-];
+interface VideoItem {
+  id: string;
+  videoUrl: string;
+  title: string;
+  description: string;
+}
+
+interface Campus {
+  id: string;
+  name: string;
+  coverImage: string;
+  description: string;
+  gallery: GalleryItem[];
+  videos?: VideoItem[];
+  collegeId?: string;
+}
 
 const TourPage: React.FC = () => {
   const navigate = useNavigate();
+  const { userData } = useAuth();
+  const [campuses, setCampuses] = useState<Campus[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [editingCampus, setEditingCampus] = useState<Campus | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
 
-  const campusBgColors = [
-    "bg-[hsl(60,100%,95%)]",
-    "bg-[hsl(60,100%,95%)]",
-    "bg-[hsl(60,100%,95%)]",
-    "bg-[hsl(60,100%,95%)]",
-  ];
+  // Fetch campuses from Firestore
+  useEffect(() => {
+    const fetchCampuses = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "campuses"));
+        const campusesList: Campus[] = [];
+        querySnapshot.forEach((doc) => {
+          campusesList.push({
+            id: doc.id,
+            ...doc.data(),
+          } as Campus);
+        });
+        setCampuses(campusesList);
+      } catch (error) {
+        console.error("Error fetching campuses:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCampuses();
+  }, []);
+
+  const handleCampusAdded = async () => {
+    try {
+      const querySnapshot = await getDocs(collection(db, "campuses"));
+      const campusesList: Campus[] = [];
+      querySnapshot.forEach((doc) => {
+        campusesList.push({
+          id: doc.id,
+          ...doc.data(),
+        } as Campus);
+      });
+      setCampuses(campusesList);
+      setEditingCampus(null);
+      setIsEditModalOpen(false);
+    } catch (error) {
+      console.error("Error refreshing campuses:", error);
+    }
+  };
+
+  const handleDeleteCampus = async (campusId: string) => {
+    if (!window.confirm("Are you sure you want to delete this campus?")) {
+      return;
+    }
+
+    try {
+      toast.loading("Deleting campus...");
+      await deleteDoc(doc(db, "campuses", campusId));
+      setCampuses(campuses.filter((c) => c.id !== campusId));
+      toast.dismiss();
+      toast.success("Campus deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting campus:", error);
+      toast.dismiss();
+      toast.error("Failed to delete campus");
+    }
+  };
+
+  const handleEditCampus = (campus: Campus) => {
+    setEditingCampus(campus);
+    setIsEditModalOpen(true);
+  };
+
+  const isAdminPlus = userData?.role === "admin+";
 
   return (
     <div className="bg-gray-50">
+      <AddCampusModal
+        isOpen={isModalOpen || isEditModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setIsEditModalOpen(false);
+          setEditingCampus(null);
+        }}
+        onCampusAdded={handleCampusAdded}
+        editingCampus={editingCampus}
+      />
+
       {/* Banner */}
-      <div className="relative w-full h-72 md:h-96 lg:h-[28rem]">
+      <div className="relative w-full h-64 md:h-80 lg:h-96">
         <img
           src={Land1}
           alt="About Banner"
-          className="w-full h-full object-contain object-top"
+          className="w-full h-full object-cover object-center"
         />
-        <div className="absolute inset-0 bg-black bg-opacity-60"></div>
-        <div className="absolute inset-0 flex flex-col justify-center items-center text-center text-white px-4">
+        <div className="absolute inset-0 bg-black bg-opacity-50"></div>
+        <div className="absolute inset-0 flex flex-col justify-center items-center text-center text-white px-6">
           <motion.h1
-            className="text-3xl md:text-5xl font-bold text-white mb-6 drop-shadow-lg"
+            className="text-4xl md:text-5xl font-bold text-white mb-4 drop-shadow-lg"
             initial={{ opacity: 0, y: -40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7 }}
           >
             VISHNU GALLERY
           </motion.h1>
-          <p className="max-w-2xl text-lg">
+          <p className="max-w-2xl text-base md:text-lg leading-relaxed drop-shadow-md">
             Explore the beautiful campuses of the Vishnu Educational Society.
             Each campus offers world-class facilities, a vibrant student life,
             and a commitment to academic excellence.
@@ -191,82 +154,141 @@ const TourPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Campus Section (Updated layout) */}
-      <section className="[background-color:hsl(60,100%,95%)] w-full py-8">
-        <div className="max-w-6xl mx-auto flex flex-col gap-12 px-5">
-          {campuses.map((campus, index) => (
-            <div
-              key={campus.id}
-              className={`flex flex-col md:flex-row items-center md:items-stretch
-                 w-full  ${index % 2 !== 0 ? "md:flex-row-reverse" : ""}`}
-            >
-              {/* Image */}
-              <div className=" flex justify-center bg-background">
-                <img
-                  src={campus.cover}
-                  alt={campus.name}
-                  className="w-full h-full  md:max-w-sm object-cover"
-                />
-              </div>
+      {/* Admin+ Add Button - Only shows for admin+ users */}
+      {isAdminPlus && (
+        <div className="flex justify-end max-w-6xl mx-auto px-5 py-6">
+          <Button
+            onClick={() => {
+              setEditingCampus(null);
+              setIsModalOpen(true);
+            }}
+            className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
+          >
+            <Plus size={18} />
+            Add Campus Event
+          </Button>
+        </div>
+      )}
 
-              {/* Text block */}
-              <div className="flex-1 flex flex-col justify-center items-center md:items-start text-center md:text-left gap-4 p-10 mt-0 md:mt-0 bg-background">
-                <h2
-                  className="text-xl sm:text-3xl font-extrabold leading-tight"
-                  style={{ color: "hsl(220, 70%, 20%)" }}
-                >
-                  {campus.name}
-                </h2>
-                <p className="text-gray-700 text-sm sm:text-lg max-w-md mx-auto text-justify">
-                  {campus.description}
-                </p>
-                <button
-                  onClick={() => {
-                    window.scrollTo(0, 0);
-                    navigate(`/campus/${campus.id}`);
-                  }}
-                  className="mt-4 text-white px-6 py-2 rounded-lg transition"
-                  style={{
-                    backgroundColor: "hsl(220, 70%, 20%)",
-                  }}
-                  onMouseOver={(e) =>
-                    (e.currentTarget.style.backgroundColor =
-                      "hsl(220, 70%, 15%)")
-                  }
-                  onMouseOut={(e) =>
-                    (e.currentTarget.style.backgroundColor =
-                      "hsl(220, 70%, 20%)")
-                  }
-                >
-                  Explore
-                </button>
-              </div>
+      {/* Campus Section */}
+      <section className="[background-color:hsl(60,100%,95%)] w-full py-16 ">
+        <div className="max-w-6xl mx-auto flex flex-col gap-16 px-5">
+          {loading ? (
+            <div className="flex justify-center items-center py-12">
+              <Loader2 className="animate-spin text-blue-600" size={40} />
             </div>
-          ))}
+          ) : campuses.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-600 text-lg">No campuses available yet</p>
+              {isAdminPlus && (
+                <p className="text-gray-500 mt-2">
+                  Click "Add Campus Tour" to create one
+                </p>
+              )}
+            </div>
+          ) : (
+            campuses.map((campus, index) => (
+              <div
+                key={campus.id}
+                className={`flex flex-col md:flex-row items-center gap-8 md:gap-12 p-5 bg-background w-full ${
+                  index % 2 !== 0 ? "md:flex-row-reverse" : ""
+                }`}
+              >
+                {/* Image Container */}
+                <div className="w-full md:w-2/5 flex-shrink-0">
+                  <div className="w-full aspect-square rounded-lg overflow-hidden p-2 flex items-center justify-center">
+                    <img
+                      src={campus.coverImage}
+                      alt={campus.name}
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                </div>
+
+                {/* Text Container */}
+                <div className="w-full md:w-3/5 flex flex-col gap-5">
+                  <div>
+                    <h2
+                      className="text-3xl font-extrabold leading-snug break-words"
+                      style={{ color: "hsl(220, 70%, 20%)" }}
+                    >
+                      {campus.name}
+                    </h2>
+                  </div>
+                  <p className="text-gray-700 text-base leading-relaxed">
+                    {campus.description}
+                  </p>
+                  <div className="flex flex-wrap gap-3 justify-center md:justify-start">
+                    <button
+                      onClick={() => {
+                        window.scrollTo(0, 0);
+                        navigate(`/campus/${campus.id}`);
+                      }}
+                      className="text-white px-6 py-2 rounded-lg font-semibold transition hover:bg-opacity-90"
+                      style={{
+                        backgroundColor: "hsl(220, 70%, 20%)",
+                      }}
+                    >
+                      Explore
+                    </button>
+
+                    {/* Edit Button - Only for admin+ */}
+                    {isAdminPlus && (
+                      <button
+                        onClick={() => handleEditCampus(campus)}
+                        className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg font-semibold transition"
+                      >
+                        <Edit size={18} />
+                        Edit
+                      </button>
+                    )}
+
+                    {/* Delete Button - Only for admin+ */}
+                    {isAdminPlus && (
+                      <button
+                        onClick={() => handleDeleteCampus(campus.id)}
+                        className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold transition"
+                      >
+                        <Trash2 size={18} />
+                        Delete
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </section>
 
-      <section className="flex flex-col md:flex-row items-center justify-center gap-10 px-6 md:px-20 py-16 bg-[hsl(60,100%,95%)]">
-        <div className="w-full md:w-[45%] rounded-xl overflow-hidden shadow-lg">
-          <iframe
+      {/* VSSC Info Section */}
+      <section className="w-full py-16 bg-white">
+        <div className="max-w-6xl mx-auto px-5">
+          <div className="flex flex-col md:flex-row gap-8 items-center">
+            <div className="w-full md:w-1/2">
+              <iframe
             className="w-full h-52 md:h-64 rounded-xl"
             src="https://www.youtube.com/embed/uUIUE1hQ6_s?autoplay=1&mute=1&loop=1&playlist=uUIUE1hQ6_s&controls=1&modestbranding=1"
             title="VSSC Overview"
             allow="autoplay; encrypted-media; fullscreen"
             allowFullScreen
           ></iframe>
-        </div>
-
-        <div className="w-full md:w-[45%] flex flex-col gap-3 text-gray-800">
-          <h2 className="text-2xl font-bold text-primary">
-            Vishnu Student Success Centre (VSSC)
-          </h2>
-          <p className="text-base leading-relaxed">
-            The Vishnu Student Support Center (VSSC) is dedicated to guiding and
-            mentoring students in their academic journey. It fosters innovation,
-            collaboration, and personal development through regular workshops
-            and counseling sessions.
-          </p>
+            </div>
+            <div className="w-full md:w-1/2">
+              <h3
+                className="text-3xl font-bold mb-4"
+                style={{ color: "hsl(220, 70%, 20%)" }}
+              >
+                Vishnu Educational Society
+              </h3>
+              <p className="text-gray-700 leading-relaxed">
+                The Vishnu Educational Society is committed to providing quality
+                education across multiple campuses. Our state-of-the-art
+                facilities and dedicated faculty ensure that students have
+                access to the best educational resources available.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
     </div>
