@@ -92,37 +92,37 @@ const CampusPage: React.FC = () => {
   }
 
   return (
-    <section className="w-full py-12 px-6 md:px-12 lg:px-20 [background-color:hsl(60,100%,90%)]">
-      <div className="min-h-screen bg-gray-50 px-6 lg:px-16 py-10 [background-color:hsl(60,100%,90%)]">
+    <section className="w-full py-8 md:py-12 px-4 sm:px-6 md:px-12 lg:px-20 [background-color:hsl(60,100%,90%)]">
+      <div className="min-h-screen bg-gray-50 px-4 sm:px-6 md:px-12 lg:px-16 py-8 md:py-10 [background-color:hsl(60,100%,90%)]">
         {/* Back Button */}
         <button
           onClick={() => navigate(-1)}
-          className="mb-6 bg-primary hover:bg-blue-900 text-white px-4 py-2 rounded-lg"
+          className="mb-4 md:mb-6 bg-primary hover:bg-blue-900 text-white px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base"
         >
           ← Back
         </button>
 
         {/* Campus Title */}
         <h1
-          className="text-4xl font-bold text-center mb-6"
+          className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-4 md:mb-6"
           style={{ color: "hsl(220, 70%, 20%)" }}
         >
           {campus.name}
         </h1>
 
         {/* Campus Description */}
-        <div className="max-w-4xl mx-auto px-6 mb-12 text-center">
-          <p className="text-lg text-gray-700 leading-relaxed">
+        <div className="max-w-4xl mx-auto px-2 sm:px-4 md:px-6 mb-8 md:mb-12 text-center">
+          <p className="text-sm sm:text-base md:text-lg text-gray-700 leading-relaxed">
             {campus.description}
           </p>
         </div>
 
         {/* Gallery Section */}
-        <section className="w-full py-16 px-6 md:px-12 lg:px-20 [background-color:hsl(60,100%,95%)]">
-          <h2 className="text-3xl font-bold mb-12 text-gray-800 text-center">
+        <section className="w-full py-10 md:py-16 px-4 sm:px-6 md:px-12 lg:px-20 [background-color:hsl(60,100%,95%)]">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-8 md:mb-12 text-gray-800 text-center">
             Gallery
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8 max-w-6xl mx-auto">
             {campus.gallery && campus.gallery.length > 0 ? (
               campus.gallery.map((img) => (
                 <div
@@ -136,14 +136,14 @@ const CampusPage: React.FC = () => {
                       className="w-full h-full object-contain"
                     />
                   </div>
-                  <div className="p-5">
+                  <div className="p-3 sm:p-4 md:p-5">
                     <p className="text-xs font-bold text-black mb-2 uppercase tracking-wide">
                       {campus.collegeName || "College"}
                     </p>
-                    <h3 className="font-bold text-gray-800 text-lg mb-2">
+                    <h3 className="font-bold text-gray-800 text-sm md:text-lg mb-2">
                       {img.alt}
                     </h3>
-                    <p className="text-gray-600 text-sm leading-relaxed line-clamp-3">
+                    <p className="text-gray-600 text-xs sm:text-sm leading-relaxed line-clamp-3">
                       {img.description}
                     </p>
                   </div>
@@ -159,11 +159,11 @@ const CampusPage: React.FC = () => {
 
         {/* Videos Section */}
         {campus.videos && campus.videos.length > 0 && (
-          <section className="w-full [background-color:hsl(60,100%,95%)] py-16 px-6 md:px-12 lg:px-20">
-            <h2 className="text-3xl font-bold mb-12 text-gray-800 text-center">
+          <section className="w-full [background-color:hsl(60,100%,95%)] py-10 md:py-16 px-4 sm:px-6 md:px-12 lg:px-20">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-8 md:mb-12 text-gray-800 text-center">
               Videos
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8 max-w-6xl mx-auto">
               {campus.videos.map((video) => (
                 <div
                   key={video.id}
@@ -176,14 +176,14 @@ const CampusPage: React.FC = () => {
                       className="w-full h-full object-contain"
                     ></video>
                   </div>
-                  <div className="p-5">
+                  <div className="p-3 sm:p-4 md:p-5">
                     <p className="text-xs font-bold text-black mb-2 uppercase tracking-wide">
                       {campus.collegeName || "College"}
                     </p>
-                    <h3 className="font-bold text-gray-800 text-lg mb-2">
+                    <h3 className="font-bold text-gray-800 text-sm md:text-lg mb-2">
                       {video.title}
                     </h3>
-                    <p className="text-gray-600 text-sm leading-relaxed line-clamp-3">
+                    <p className="text-gray-600 text-xs sm:text-sm leading-relaxed line-clamp-3">
                       {video.description}
                     </p>
                   </div>

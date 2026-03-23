@@ -85,18 +85,18 @@ const Slide = ({
     : (item as FallbackPost).description;
 
   return (
-    <div className={`${className} cursor-pointer`} onClick={onClick}>
-      <img
-        src={imageUrl}
-        alt={title}
-        className="w-full h-full object-contain rounded-xl"
-      />
-      <div className="absolute inset-0 bg-black bg-opacity-40 rounded-xl"></div>
-      <div className="absolute inset-0 flex flex-col justify-center items-center text-center text-white px-4">
-        <h1 className="text-3xl md:text-5xl font-bold drop-shadow-lg">
+    <div
+      className={`${className} cursor-pointer flex flex-col h-full border-2 border-yellow-300 rounded-xl shadow-2xl overflow-hidden`}
+      onClick={onClick}
+    >
+      <img src={imageUrl} alt={title} className="w-full h-3/5 object-contain" />
+      <div className="w-full h-2/5 flex flex-col justify-center items-center text-center bg-[hsl(48,_100%,95%)] px-2 sm:px-4 py-2 sm:py-4">
+        <h1 className="text-lg sm:text-2xl md:text-3xl lg:text-4xl font-bold text-foreground line-clamp-2">
           {title}
         </h1>
-        <p className="max-w-2xl mt-4 text-lg">{description}</p>
+        <p className="max-w-sm sm:max-w-lg md:max-w-2xl mt-1 sm:mt-2 text-xs sm:text-sm md:text-base lg:text-lg line-clamp-2 text-gray-700">
+          {description}
+        </p>
       </div>
     </div>
   );
@@ -249,7 +249,7 @@ const BlogPage = () => {
 
         {/* 🔹 Hero Section Slideshow with Enhanced 3D Effect */}
         <div
-          className="relative w-full h-72 sm:h-80 md:h-96 lg:h-[28rem] overflow-hidden rounded-xl mb-6 shadow-2xl"
+          className="relative w-full h-72 sm:h-80 md:h-96 lg:h-[28rem] overflow-hidden rounded-xl mb-6"
           style={{ perspective: "1500px" }}
         >
           {loading ? (

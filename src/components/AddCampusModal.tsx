@@ -328,17 +328,19 @@ const AddCampusModal: React.FC<AddCampusModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-full max-w-sm sm:max-w-xl md:max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className="text-lg sm:text-xl md:text-2xl">
             {editingCampus ? "Edit Campus Event" : "Add New Campus Event"}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-5 md:space-y-6">
           {/* College Selection */}
           <div>
-            <label className="block text-sm font-medium mb-2">College</label>
+            <label className="block text-xs sm:text-sm font-medium mb-2">
+              College
+            </label>
             {userData?.college ? (
               <div className="p-3 bg-gray-100 rounded-md text-gray-800 font-medium">
                 {userData.college}
@@ -370,7 +372,7 @@ const AddCampusModal: React.FC<AddCampusModalProps> = ({
 
           {/* Campus Name */}
           <div>
-            <label className="block text-sm font-medium mb-2">
+            <label className="block text-xs sm:text-sm font-medium mb-2">
               Campus Event Name
             </label>
             <Input
@@ -382,7 +384,7 @@ const AddCampusModal: React.FC<AddCampusModalProps> = ({
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium mb-2">
+            <label className="block text-xs sm:text-sm font-medium mb-2">
               Description
             </label>
             <Textarea
@@ -395,7 +397,7 @@ const AddCampusModal: React.FC<AddCampusModalProps> = ({
 
           {/* Cover Image */}
           <div>
-            <label className="block text-sm font-medium mb-2">
+            <label className="block text-xs sm:text-sm font-medium mb-2">
               Cover Image
             </label>
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
@@ -427,9 +429,9 @@ const AddCampusModal: React.FC<AddCampusModalProps> = ({
                     </button>
                   </div>
                 ) : (
-                  <div className="text-center py-8">
-                    <Upload className="mx-auto mb-2 text-gray-400" />
-                    <p className="text-sm text-gray-500">
+                  <div className="text-center py-6 sm:py-8">
+                    <Upload className="mx-auto mb-2 text-gray-400 w-6 h-6 sm:w-8 sm:h-8" />
+                    <p className="text-xs sm:text-sm text-gray-500">
                       Click to upload cover image
                     </p>
                   </div>
@@ -440,14 +442,16 @@ const AddCampusModal: React.FC<AddCampusModalProps> = ({
 
           {/* Gallery Items */}
           <div>
-            <label className="block text-sm font-medium mb-2">
+            <label className="block text-xs sm:text-sm font-medium mb-2">
               Gallery Items (Max 2 photos) - {galleryItems.length}/2
             </label>
             <div className="space-y-4">
               <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
                 <div className="space-y-3">
                   <div>
-                    <label className="text-sm font-medium">Image</label>
+                    <label className="text-xs sm:text-sm font-medium">
+                      Image
+                    </label>
                     <input
                       type="file"
                       accept="image/*"
@@ -517,7 +521,7 @@ const AddCampusModal: React.FC<AddCampusModalProps> = ({
 
           {/* Video Items */}
           <div>
-            <label className="block text-sm font-medium mb-2">
+            <label className="block text-xs sm:text-sm font-medium mb-2">
               Videos (Max 1 video) - {videoItems.length}/1
             </label>
             <div className="space-y-4">
