@@ -44,7 +44,7 @@ interface AcademicAdvisingSession {
   totalDuration?: number;
   slotDuration?: number;
   createdBy?: string;
-  venue?:string;
+  venue?: string;
   date?: string; // YYYY-MM-DD
   startTime?: string; // "10:00 PM"
   participants?: string[];
@@ -69,25 +69,35 @@ interface UserData {
 
 export default function AcademicAdvisingPage() {
   const [sessions, setSessions] = useState<AcademicAdvisingSession[]>([]);
-  const [filteredSessions, setFilteredSessions] = useState<AcademicAdvisingSession[]>([]);
+  const [filteredSessions, setFilteredSessions] = useState<
+    AcademicAdvisingSession[]
+  >([]);
   const { user, userData } = useAuth();
   const userCollege = userData?.college;
 
-  const [selectedSession, setSelectedSession] = useState<AcademicAdvisingSession | null>(null);
+  const [selectedSession, setSelectedSession] =
+    useState<AcademicAdvisingSession | null>(null);
   const [showCalendar, setShowCalendar] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [availableSlots, setAvailableSlots] = useState<AcademicAdvisingSession["bookedSlots"]>([]);
+  const [availableSlots, setAvailableSlots] = useState<
+    AcademicAdvisingSession["bookedSlots"]
+  >([]);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [showDialog, setShowDialog] = useState(false);
   const [bookingInProgress, setBookingInProgress] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
-  const [sessionToCancel, setSessionToCancel] = useState<AcademicAdvisingSession | null>(null);
+  const [sessionToCancel, setSessionToCancel] =
+    useState<AcademicAdvisingSession | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [showParticipants, setShowParticipants] = useState(false);
-  const [selectedParticipants, setSelectedParticipants] = useState<UserData[]>([]);
-  const [activeTab, setActiveTab] = useState<"validated" | "non-validated">("non-validated");
+  const [selectedParticipants, setSelectedParticipants] = useState<UserData[]>(
+    [],
+  );
+  const [activeTab, setActiveTab] = useState<"validated" | "non-validated">(
+    "non-validated",
+  );
   const [selectedCollege, setSelectedCollege] = useState<string>(
-    userData?.role === "admin+" && userCollege ? userCollege : "all"
+    userData?.role === "admin+" && userCollege ? userCollege : "all",
   );
   const [showProofsModal, setShowProofsModal] = useState(false);
   const [proofsToView, setProofsToView] = useState<string[]>([]);
@@ -98,8 +108,15 @@ export default function AcademicAdvisingPage() {
     { name: "Vishnu Dental College", domain: "@vdc.edu.in" },
     { name: "Shri Vishnu College of Pharmacy", domain: "@svcp.edu.in" },
     { name: "BV Raju Institute of Technology", domain: "@bvrit.ac.in" },
-    { name: "BVRIT Hyderabad College of Engineering", domain: "@bvrithyderabad.ac.in" },
-    { name: "Shri Vishnu Engineering College for Women", domain: "@svecw.edu.in" },
+    {
+      name: "BVRIT Hyderabad College of Engineering",
+      domain: "@bvrithyderabad.ac.in",
+    },
+    {
+      name: "Shri Vishnu Engineering College for Women",
+      domain: "@svecw.edu.in",
+    },
+    { name: "Smt B Seetha Polytechnic College", domain: "@seethapoly.edu.in" },
   ];
 
   const [newSession, setNewSession] = useState({
@@ -110,7 +127,7 @@ export default function AcademicAdvisingPage() {
     totalDuration: 0,
     slotDuration: 0,
     slots: 1,
-    venue:"",
+    venue: "",
     colleges: [] as string[],
     description: "",
     tutorName: "",
@@ -132,24 +149,34 @@ export default function AcademicAdvisingPage() {
   useEffect(() => {
     if (!userCollege || !user) return;
 
-    const q = query(collection(db, "academicadvising"), orderBy("createdAt", "desc"));
+    const q = query(
+      collection(db, "academicadvising"),
+      orderBy("createdAt", "desc"),
+    );
 
     const unsubscribe = onSnapshot(q, async (snapshot) => {
-      const allSessions: AcademicAdvisingSession[] = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...(doc.data() as AcademicAdvisingSession),
-        proofs: doc.data().proofs || [],
-      }));
+      const allSessions: AcademicAdvisingSession[] = snapshot.docs.map(
+        (doc) => ({
+          id: doc.id,
+          ...(doc.data() as AcademicAdvisingSession),
+          proofs: doc.data().proofs || [],
+        }),
+      );
 
       let filtered: AcademicAdvisingSession[];
       if (userData?.role === "admin") {
-        filtered = allSessions.filter((session) => session.createdBy === user.uid);
+        filtered = allSessions.filter(
+          (session) => session.createdBy === user.uid,
+        );
       } else if (userData?.role === "admin+") {
         filtered = allSessions.filter((session) => {
           const matchesValidation =
-            activeTab === "validated" ? session.validated === true : session.validated !== true;
+            activeTab === "validated"
+              ? session.validated === true
+              : session.validated !== true;
           const matchesCollege =
-            selectedCollege === "all" || session.colleges.includes(selectedCollege);
+            selectedCollege === "all" ||
+            session.colleges.includes(selectedCollege);
           return matchesValidation && matchesCollege;
         });
       } else {
@@ -157,36 +184,55 @@ export default function AcademicAdvisingPage() {
           (session) =>
             session.colleges.includes(userCollege) &&
             !isSessionExpired(session) &&
-            !session.validated
+            !session.validated,
         );
       }
 
       const updatedSessions = await Promise.all(
         filtered.map(async (session) => {
-          if (!session.isGroup && session.slotDuration && session.totalDuration && session.date) {
-            const slotCount = Math.floor(session.totalDuration / session.slotDuration);
+          if (
+            !session.isGroup &&
+            session.slotDuration &&
+            session.totalDuration &&
+            session.date
+          ) {
+            const slotCount = Math.floor(
+              session.totalDuration / session.slotDuration,
+            );
 
             if (!Array.isArray(session.bookedSlots)) {
-              const [hoursStr, minutesStrWithSuffix] = session.startTime!.split(":");
+              const [hoursStr, minutesStrWithSuffix] =
+                session.startTime!.split(":");
               let hours = parseInt(hoursStr);
               let minutesStr = minutesStrWithSuffix;
               let suffix = "";
-              if (minutesStrWithSuffix.includes("AM") || minutesStrWithSuffix.includes("PM")) {
+              if (
+                minutesStrWithSuffix.includes("AM") ||
+                minutesStrWithSuffix.includes("PM")
+              ) {
                 suffix = minutesStrWithSuffix.slice(-2);
                 minutesStr = minutesStrWithSuffix.slice(0, -2).trim();
               }
               const minutes = parseInt(minutesStr);
               if (suffix.toLowerCase() === "pm" && hours < 12) hours += 12;
 
-              const generatedSlots = Array.from({ length: slotCount }, (_, i) => {
-                const slotDate = new Date(session.date!);
-                slotDate.setHours(hours, minutes + i * session.slotDuration, 0, 0);
-                const timeStr = `${slotDate.getHours().toString().padStart(2, "0")}:${slotDate
-                  .getMinutes()
-                  .toString()
-                  .padStart(2, "0")}`;
-                return { time: timeStr, booked: false, user: null };
-              });
+              const generatedSlots = Array.from(
+                { length: slotCount },
+                (_, i) => {
+                  const slotDate = new Date(session.date!);
+                  slotDate.setHours(
+                    hours,
+                    minutes + i * session.slotDuration,
+                    0,
+                    0,
+                  );
+                  const timeStr = `${slotDate.getHours().toString().padStart(2, "0")}:${slotDate
+                    .getMinutes()
+                    .toString()
+                    .padStart(2, "0")}`;
+                  return { time: timeStr, booked: false, user: null };
+                },
+              );
 
               const sessionRef = doc(db, "academicadvising", session.id);
               await updateDoc(sessionRef, {
@@ -194,14 +240,20 @@ export default function AcademicAdvisingPage() {
                 slotAvailable: generatedSlots.length,
               });
 
-              return { ...session, bookedSlots: generatedSlots, slotAvailable: generatedSlots.length };
+              return {
+                ...session,
+                bookedSlots: generatedSlots,
+                slotAvailable: generatedSlots.length,
+              };
             }
 
-            const slotAvailable = session.bookedSlots.filter((s) => !s.booked).length;
+            const slotAvailable = session.bookedSlots.filter(
+              (s) => !s.booked,
+            ).length;
             return { ...session, slotAvailable };
           }
           return session;
-        })
+        }),
       );
 
       setSessions(updatedSessions);
@@ -217,13 +269,16 @@ export default function AcademicAdvisingPage() {
     return new Date(year, month - 1, day);
   };
 
-  const normalizeDate = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const normalizeDate = (d: Date) =>
+    new Date(d.getFullYear(), d.getMonth(), d.getDate());
 
   const tileClassName = ({ date }: any) => {
     if (!selectedSession || !selectedSession.date) return "";
     const sessionDate = normalizeDate(parseDate(selectedSession.date));
     const currentDate = normalizeDate(date);
-    const hasAvailableSlot = selectedSession.bookedSlots?.some((s) => !s.booked);
+    const hasAvailableSlot = selectedSession.bookedSlots?.some(
+      (s) => !s.booked,
+    );
     return sessionDate.getTime() === currentDate.getTime() && hasAvailableSlot
       ? "bg-green-300 rounded-full"
       : "";
@@ -260,7 +315,13 @@ export default function AcademicAdvisingPage() {
   };
 
   const confirmJoin = async () => {
-    if (bookingInProgress || !user?.uid || !selectedSession || (!selectedSession.isGroup && !selectedSlot)) return;
+    if (
+      bookingInProgress ||
+      !user?.uid ||
+      !selectedSession ||
+      (!selectedSession.isGroup && !selectedSlot)
+    )
+      return;
 
     setBookingInProgress(true);
     const sessionRef = doc(db, "academicadvising", selectedSession.id);
@@ -289,8 +350,8 @@ export default function AcademicAdvisingPage() {
                   participants: [...(s.participants || []), user.uid],
                   slots: (s.slots || 1) - 1,
                 }
-              : s
-          )
+              : s,
+          ),
         );
         setFilteredSessions((prev) =>
           prev.map((s) =>
@@ -300,8 +361,8 @@ export default function AcademicAdvisingPage() {
                   participants: [...(s.participants || []), user.uid],
                   slots: (s.slots || 1) - 1,
                 }
-              : s
-          )
+              : s,
+          ),
         );
 
         await addDoc(collection(db, "bookings"), {
@@ -321,16 +382,23 @@ export default function AcademicAdvisingPage() {
           if (!sessionSnap.exists()) throw new Error("Session not found");
 
           const sessionData = sessionSnap.data() as AcademicAdvisingSession;
-          if (!sessionData.bookedSlots) throw new Error("Slots not initialized");
+          if (!sessionData.bookedSlots)
+            throw new Error("Slots not initialized");
 
-          const alreadyBooked = sessionData.bookedSlots.some((s) => s.user === user.uid);
-          if (alreadyBooked) throw new Error("You already booked a slot in this session.");
+          const alreadyBooked = sessionData.bookedSlots.some(
+            (s) => s.user === user.uid,
+          );
+          if (alreadyBooked)
+            throw new Error("You already booked a slot in this session.");
 
-          const slotIndex = sessionData.bookedSlots.findIndex((s) => s.time === selectedSlot);
+          const slotIndex = sessionData.bookedSlots.findIndex(
+            (s) => s.time === selectedSlot,
+          );
           if (slotIndex < 0) throw new Error("Slot not found");
 
           const slot = sessionData.bookedSlots[slotIndex];
-          if (slot.booked) throw new Error("Slot already booked by someone else.");
+          if (slot.booked)
+            throw new Error("Slot already booked by someone else.");
 
           const updatedSlots = [...sessionData.bookedSlots];
           updatedSlots[slotIndex] = { ...slot, booked: true, user: user.uid };
@@ -352,13 +420,16 @@ export default function AcademicAdvisingPage() {
               ? {
                   ...s,
                   bookedSlots: s.bookedSlots?.map((slot) =>
-                    slot.time === selectedSlot ? { ...slot, booked: true, user: user.uid } : slot
+                    slot.time === selectedSlot
+                      ? { ...slot, booked: true, user: user.uid }
+                      : slot,
                   ),
-                  slotAvailable: s.bookedSlots?.filter((slot) => !slot.booked).length,
+                  slotAvailable: s.bookedSlots?.filter((slot) => !slot.booked)
+                    .length,
                   participants: [...(s.participants || []), user.uid],
                 }
-              : s
-          )
+              : s,
+          ),
         );
         setFilteredSessions((prev) =>
           prev.map((s) =>
@@ -366,13 +437,16 @@ export default function AcademicAdvisingPage() {
               ? {
                   ...s,
                   bookedSlots: s.bookedSlots?.map((slot) =>
-                    slot.time === selectedSlot ? { ...slot, booked: true, user: user.uid } : slot
+                    slot.time === selectedSlot
+                      ? { ...slot, booked: true, user: user.uid }
+                      : slot,
                   ),
-                  slotAvailable: s.bookedSlots?.filter((slot) => !slot.booked).length,
+                  slotAvailable: s.bookedSlots?.filter((slot) => !slot.booked)
+                    .length,
                   participants: [...(s.participants || []), user.uid],
                 }
-              : s
-          )
+              : s,
+          ),
         );
 
         await addDoc(collection(db, "bookings"), {
@@ -401,149 +475,175 @@ export default function AcademicAdvisingPage() {
   };
 
   const handleAddSession = async () => {
-  if (
-    !newSession.title ||
-    !newSession.description ||
-    !newSession.tutorName ||
-    !newSession.skills.length ||
-    !newSession.venue ||
-    !newSession.date ||
-    newSession.isGroup === undefined ||
-    (!newSession.isGroup &&
-      (!newSession.startTime || !newSession.totalDuration || !newSession.slotDuration)) ||
-    (newSession.isGroup && !newSession.startTime) ||
-    !newSession.expiryDate ||
-    !newSession.expiryTime
-  ) {
-    toastError(
-      "Please fill in all required fields (title, description, tutor name, skills, date, session type, expiry date, and expiry time). For 1-on-1, include start time, total duration, and slot duration. For group, include start time."
-    );
-    return;
-  }
-
-  if (!user?.uid) {
-    toastError("No authenticated user found. Please sign in again.");
-    console.error("No authenticated user found when adding session.");
-    return;
-  }
-
-  try {
-    // Check if user document exists in the users collection
-    const userRef = doc(db, "users", user.uid);
-    const userSnap = await getDoc(userRef);
-    if (!userSnap.exists()) {
-      // Create user document if it doesn't exist
-      const userName = user.displayName || newSession.tutorName || "Anonymous User";
-      await setDoc(userRef, {
-        name: userName,
-        college: userData?.college || newSession.colleges[0] || "Unknown College",
-        email: user.email || "",
-        role: userData?.role || "user",
-        createdAt: serverTimestamp(),
-      });
-      console.log(`Created user document for UID: ${user.uid}`);
-    } else {
-      // Ensure the existing user document has a name field
-      const userDocData = userSnap.data();
-      if (!userDocData.name) {
-        await updateDoc(userRef, {
-          name: user.displayName || newSession.tutorName || "Anonymous User",
-        });
-        console.log(`Updated name for user UID: ${user.uid}`);
-      }
-    }
-
-    const sessionDate = new Date(newSession.date);
-    const [expiryYear, expiryMonth, expiryDay] = newSession.expiryDate.split("-").map(Number);
-    const [expiryHour, expiryMinute] = newSession.expiryTime.split(":").map(Number);
-    const expiryDateTime = new Date(expiryYear, expiryMonth - 1, expiryDay, expiryHour, expiryMinute);
-    const sessionStartDateTime = new Date(newSession.date + "T" + newSession.startTime + ":00");
-
-    if (expiryDateTime <= sessionStartDateTime) {
-      toastError("Expiry date and time must be after the session start date and time.");
+    if (
+      !newSession.title ||
+      !newSession.description ||
+      !newSession.tutorName ||
+      !newSession.skills.length ||
+      !newSession.venue ||
+      !newSession.date ||
+      newSession.isGroup === undefined ||
+      (!newSession.isGroup &&
+        (!newSession.startTime ||
+          !newSession.totalDuration ||
+          !newSession.slotDuration)) ||
+      (newSession.isGroup && !newSession.startTime) ||
+      !newSession.expiryDate ||
+      !newSession.expiryTime
+    ) {
+      toastError(
+        "Please fill in all required fields (title, description, tutor name, skills, date, session type, expiry date, and expiry time). For 1-on-1, include start time, total duration, and slot duration. For group, include start time.",
+      );
       return;
     }
 
-    const sessionData: any = {
-      title: newSession.title,
-      createdBy: user.uid, // Use user.uid directly since we validated it
-      colleges: newSession.colleges || [],
-      description: newSession.description,
-      tutorName: newSession.tutorName,
-      skills: newSession.skills,
-      venue: newSession.venue || "Not specified",
-      createdAt: serverTimestamp(),
-      isGroup: newSession.isGroup,
-      expiryDate: newSession.expiryDate,
-      expiryTime: newSession.expiryTime,
-      validated: false,
-      proofs: [],
-    };
-
-    if (newSession.isGroup) {
-      sessionData.slots = newSession.slots || 1;
-      sessionData.participants = [];
-      sessionData.date = newSession.date;
-      sessionData.totalDuration = newSession.totalDuration;
-      sessionData.startTime = newSession.startTime;
-    } else {
-      sessionData.date = newSession.date;
-      sessionData.startTime = newSession.startTime;
-      sessionData.totalDuration = newSession.totalDuration;
-      sessionData.slotDuration = newSession.slotDuration;
-      sessionData.slotAvailable = Math.floor(newSession.totalDuration / newSession.slotDuration);
-      sessionData.participants = [];
-
-      const [hoursStr, minutesStrWithSuffix] = newSession.startTime!.split(":");
-      let hours = parseInt(hoursStr);
-      let minutesStr = minutesStrWithSuffix;
-      let suffix = "";
-      if (minutesStrWithSuffix.includes("AM") || minutesStrWithSuffix.includes("PM")) {
-        suffix = minutesStrWithSuffix.slice(-2);
-        minutesStr = minutesStrWithSuffix.slice(0, -2).trim();
-      }
-      const minutes = parseInt(minutesStr);
-      if (suffix.toLowerCase() === "pm" && hours < 12) hours += 12;
-
-      const slotCount = Math.floor(newSession.totalDuration / newSession.slotDuration);
-      const bookedSlots = Array.from({ length: slotCount }, (_, i) => {
-        const slotDate = new Date(newSession.date!);
-        slotDate.setHours(hours, minutes + i * newSession.slotDuration, 0, 0);
-        const timeStr = `${slotDate.getHours().toString().padStart(2, "0")}:${slotDate
-          .getMinutes()
-          .toString()
-          .padStart(2, "0")}`;
-        return { time: timeStr, booked: false, user: null };
-      });
-
-      sessionData.bookedSlots = bookedSlots;
+    if (!user?.uid) {
+      toastError("No authenticated user found. Please sign in again.");
+      console.error("No authenticated user found when adding session.");
+      return;
     }
 
-    await addDoc(collection(db, "academicadvising"), sessionData);
+    try {
+      // Check if user document exists in the users collection
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+      if (!userSnap.exists()) {
+        // Create user document if it doesn't exist
+        const userName =
+          user.displayName || newSession.tutorName || "Anonymous User";
+        await setDoc(userRef, {
+          name: userName,
+          college:
+            userData?.college || newSession.colleges[0] || "Unknown College",
+          email: user.email || "",
+          role: userData?.role || "user",
+          createdAt: serverTimestamp(),
+        });
+        console.log(`Created user document for UID: ${user.uid}`);
+      } else {
+        // Ensure the existing user document has a name field
+        const userDocData = userSnap.data();
+        if (!userDocData.name) {
+          await updateDoc(userRef, {
+            name: user.displayName || newSession.tutorName || "Anonymous User",
+          });
+          console.log(`Updated name for user UID: ${user.uid}`);
+        }
+      }
 
-    setShowForm(false);
-    setNewSession({
-      title: "",
-      isGroup: undefined,
-      date: "",
-      startTime: "",
-      totalDuration: 0,
-      slotDuration: 0,
-      slots: 1,
-      venue:"",
-      colleges: [],
-      description: "",
-      tutorName: "",
-      skills: [],
-      expiryDate: "",
-      expiryTime: "",
-    });
-    toastSuccess("Session Added Successfully");
-  } catch (err) {
-    console.error("Error adding session:", err);
-    toastError("Failed to add session. Try again.");
-  }
-};
+      const sessionDate = new Date(newSession.date);
+      const [expiryYear, expiryMonth, expiryDay] = newSession.expiryDate
+        .split("-")
+        .map(Number);
+      const [expiryHour, expiryMinute] = newSession.expiryTime
+        .split(":")
+        .map(Number);
+      const expiryDateTime = new Date(
+        expiryYear,
+        expiryMonth - 1,
+        expiryDay,
+        expiryHour,
+        expiryMinute,
+      );
+      const sessionStartDateTime = new Date(
+        newSession.date + "T" + newSession.startTime + ":00",
+      );
+
+      if (expiryDateTime <= sessionStartDateTime) {
+        toastError(
+          "Expiry date and time must be after the session start date and time.",
+        );
+        return;
+      }
+
+      const sessionData: any = {
+        title: newSession.title,
+        createdBy: user.uid, // Use user.uid directly since we validated it
+        colleges: newSession.colleges || [],
+        description: newSession.description,
+        tutorName: newSession.tutorName,
+        skills: newSession.skills,
+        venue: newSession.venue || "Not specified",
+        createdAt: serverTimestamp(),
+        isGroup: newSession.isGroup,
+        expiryDate: newSession.expiryDate,
+        expiryTime: newSession.expiryTime,
+        validated: false,
+        proofs: [],
+      };
+
+      if (newSession.isGroup) {
+        sessionData.slots = newSession.slots || 1;
+        sessionData.participants = [];
+        sessionData.date = newSession.date;
+        sessionData.totalDuration = newSession.totalDuration;
+        sessionData.startTime = newSession.startTime;
+      } else {
+        sessionData.date = newSession.date;
+        sessionData.startTime = newSession.startTime;
+        sessionData.totalDuration = newSession.totalDuration;
+        sessionData.slotDuration = newSession.slotDuration;
+        sessionData.slotAvailable = Math.floor(
+          newSession.totalDuration / newSession.slotDuration,
+        );
+        sessionData.participants = [];
+
+        const [hoursStr, minutesStrWithSuffix] =
+          newSession.startTime!.split(":");
+        let hours = parseInt(hoursStr);
+        let minutesStr = minutesStrWithSuffix;
+        let suffix = "";
+        if (
+          minutesStrWithSuffix.includes("AM") ||
+          minutesStrWithSuffix.includes("PM")
+        ) {
+          suffix = minutesStrWithSuffix.slice(-2);
+          minutesStr = minutesStrWithSuffix.slice(0, -2).trim();
+        }
+        const minutes = parseInt(minutesStr);
+        if (suffix.toLowerCase() === "pm" && hours < 12) hours += 12;
+
+        const slotCount = Math.floor(
+          newSession.totalDuration / newSession.slotDuration,
+        );
+        const bookedSlots = Array.from({ length: slotCount }, (_, i) => {
+          const slotDate = new Date(newSession.date!);
+          slotDate.setHours(hours, minutes + i * newSession.slotDuration, 0, 0);
+          const timeStr = `${slotDate.getHours().toString().padStart(2, "0")}:${slotDate
+            .getMinutes()
+            .toString()
+            .padStart(2, "0")}`;
+          return { time: timeStr, booked: false, user: null };
+        });
+
+        sessionData.bookedSlots = bookedSlots;
+      }
+
+      await addDoc(collection(db, "academicadvising"), sessionData);
+
+      setShowForm(false);
+      setNewSession({
+        title: "",
+        isGroup: undefined,
+        date: "",
+        startTime: "",
+        totalDuration: 0,
+        slotDuration: 0,
+        slots: 1,
+        venue: "",
+        colleges: [],
+        description: "",
+        tutorName: "",
+        skills: [],
+        expiryDate: "",
+        expiryTime: "",
+      });
+      toastSuccess("Session Added Successfully");
+    } catch (err) {
+      console.error("Error adding session:", err);
+      toastError("Failed to add session. Try again.");
+    }
+  };
 
   const handleViewParticipants = async (participants: string[] = []) => {
     if (!participants || participants.length === 0) {
@@ -578,10 +678,12 @@ export default function AcademicAdvisingPage() {
       const bookingsQuery = query(
         collection(db, "bookings"),
         where("sessionId", "==", sessionToCancel.id),
-        where("serviceType", "==", "Academic Advising")
+        where("serviceType", "==", "Academic Advising"),
       );
       const bookingsSnapshot = await getDocs(bookingsQuery);
-      const deleteBookingPromises = bookingsSnapshot.docs.map((d) => deleteDoc(d.ref));
+      const deleteBookingPromises = bookingsSnapshot.docs.map((d) =>
+        deleteDoc(d.ref),
+      );
       await Promise.all(deleteBookingPromises);
 
       await deleteDoc(doc(db, "academicadvising", sessionToCancel.id));
@@ -621,7 +723,11 @@ export default function AcademicAdvisingPage() {
   return (
     <div>
       <div className="relative w-full h-72 md:h-96 lg:h-[28rem]">
-        <img src={green4} alt="About Banner" className="w-full h-full object-contain object-top" />
+        <img
+          src={green4}
+          alt="About Banner"
+          className="w-full h-full object-contain object-top"
+        />
         <div className="absolute inset-0 bg-black bg-opacity-60"></div>
         <div className="absolute inset-0 flex flex-col justify-center items-center text-center text-white px-4">
           <motion.h1
@@ -681,7 +787,9 @@ export default function AcademicAdvisingPage() {
         <SearchFilter data={sessions} onFilteredData={setFilteredSessions} />
 
         {filteredSessions.length === 0 ? (
-          <p className="text-center text-gray-600">No sessions available for your college.</p>
+          <p className="text-center text-gray-600">
+            No sessions available for your college.
+          </p>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredSessions.map((session) => (
@@ -691,17 +799,26 @@ export default function AcademicAdvisingPage() {
               >
                 <div className="absolute top-0 right-0 px-3 py-1 text-xs font-semibold bg-primary text-white rounded-bl-lg">
                   {session.isGroup ? "Group" : "1-on-1"}
-                  {(userData?.role === "admin" || userData?.role === "admin+") && isSessionExpired(session) && (
-                    <span className="ml-2 bg-red-600 px-2 rounded">Expired</span>
-                  )}
-                  {(userData?.role === "admin" || userData?.role === "admin+") && (
-                    <span className="ml-2 bg-green-600 px-2 rounded">{session.validated ? "Validated" : "Non-Validated"}</span>
+                  {(userData?.role === "admin" ||
+                    userData?.role === "admin+") &&
+                    isSessionExpired(session) && (
+                      <span className="ml-2 bg-red-600 px-2 rounded">
+                        Expired
+                      </span>
+                    )}
+                  {(userData?.role === "admin" ||
+                    userData?.role === "admin+") && (
+                    <span className="ml-2 bg-green-600 px-2 rounded">
+                      {session.validated ? "Validated" : "Non-Validated"}
+                    </span>
                   )}
                 </div>
                 <h2 className="text-xl font-bold text-gray-800 group-hover:text-primary transition">
                   {session.title}
                 </h2>
-                <p className="text-gray-600 mt-2 flex-1">{session.description}</p>
+                <p className="text-gray-600 mt-2 flex-1">
+                  {session.description}
+                </p>
                 <div className="mt-4 space-y-2 text-sm text-gray-700">
                   <p className="flex items-center gap-2">
                     <UserIcon className="w-4 h-4 text-primary" />
@@ -716,11 +833,11 @@ export default function AcademicAdvisingPage() {
                     </span>
                   </p>
                   <p className="flex items-center gap-2">
-  <Clock className="w-4 h-4 text-indigo-600" />
-  <span>
-    <strong>Venue:</strong> {session.venue || "Not specified"}
-  </span>
-</p>
+                    <Clock className="w-4 h-4 text-indigo-600" />
+                    <span>
+                      <strong>Venue:</strong> {session.venue || "Not specified"}
+                    </span>
+                  </p>
                   <p className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-blue-600" />
                     <span>
@@ -730,7 +847,8 @@ export default function AcademicAdvisingPage() {
                   <p className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-red-600" />
                     <span>
-                      <strong>Expiry:</strong> {session.expiryDate} {session.expiryTime}
+                      <strong>Expiry:</strong> {session.expiryDate}{" "}
+                      {session.expiryTime}
                     </span>
                   </p>
                   {session.isGroup ? (
@@ -744,46 +862,57 @@ export default function AcademicAdvisingPage() {
                     <p className="flex items-center gap-2">
                       <Clock className="w-4 h-4 text-purple-600" />
                       <span>
-                        <strong>One-to-One Slots:</strong> {session.slotAvailable}
+                        <strong>One-to-One Slots:</strong>{" "}
+                        {session.slotAvailable}
                       </span>
                     </p>
                   )}
                 </div>
-                {!session.validated && userData?.role !== "admin" && userData?.role !== "admin+" && (
-                  <button
-                    className={`mt-5 w-full py-2 rounded-lg font-semibold text-white transition 
+                {!session.validated &&
+                  userData?.role !== "admin" &&
+                  userData?.role !== "admin+" && (
+                    <button
+                      className={`mt-5 w-full py-2 rounded-lg font-semibold text-white transition 
                       ${
                         isSessionExpired(session)
                           ? "bg-gray-400 cursor-not-allowed"
                           : session.isGroup
-                          ? session.slots && session.slots > 0
-                            ? "bg-gradient-to-r from-primary to-indigo-800 hover:from-indigo-800 hover:to-blue-600"
-                            : "bg-gray-400 cursor-not-allowed"
-                          : session.slotAvailable && session.slotAvailable > 0
-                          ? "bg-gradient-to-r from-primary to-indigo-800 hover:from-indigo-800 hover:to-blue-600"
-                          : "bg-gray-400 cursor-not-allowed"
+                            ? session.slots && session.slots > 0
+                              ? "bg-gradient-to-r from-primary to-indigo-800 hover:from-indigo-800 hover:to-blue-600"
+                              : "bg-gray-400 cursor-not-allowed"
+                            : session.slotAvailable && session.slotAvailable > 0
+                              ? "bg-gradient-to-r from-primary to-indigo-800 hover:from-indigo-800 hover:to-blue-600"
+                              : "bg-gray-400 cursor-not-allowed"
                       }`}
-                    onClick={() => handleBookSlot(session)}
-                    disabled={
-                      isSessionExpired(session) ||
-                      (session.isGroup && (!session.slots || session.slots <= 0)) ||
-                      (!session.isGroup && (!session.slotAvailable || session.slotAvailable <= 0))
-                    }
-                  >
-                    {session.isGroup
-                      ? session.slots && session.slots > 0
-                        ? "Enroll Now"
-                        : "Full"
-                      : session.slotAvailable && session.slotAvailable > 0
-                      ? "Book a Slot"
-                      : "Full"}
-                  </button>
-                )}
-                {(userData?.role === "admin" || userData?.role === "admin+") && (
+                      onClick={() => handleBookSlot(session)}
+                      disabled={
+                        isSessionExpired(session) ||
+                        (session.isGroup &&
+                          (!session.slots || session.slots <= 0)) ||
+                        (!session.isGroup &&
+                          (!session.slotAvailable ||
+                            session.slotAvailable <= 0))
+                      }
+                    >
+                      {session.isGroup
+                        ? session.slots && session.slots > 0
+                          ? "Enroll Now"
+                          : "Full"
+                        : session.slotAvailable && session.slotAvailable > 0
+                          ? "Book a Slot"
+                          : "Full"}
+                    </button>
+                  )}
+                {(userData?.role === "admin" ||
+                  userData?.role === "admin+") && (
                   <div className="absolute top-3 right-3 mt-4">
                     <div className="relative">
                       <button
-                        onClick={() => setOpenMenuId(openMenuId === session.id ? null : session.id)}
+                        onClick={() =>
+                          setOpenMenuId(
+                            openMenuId === session.id ? null : session.id,
+                          )
+                        }
                         className="text-white font-bold bg-primary rounded-full p-2 shadow-sm hover:bg-blue-900 transition mt-5"
                       >
                         ⋮
@@ -792,7 +921,9 @@ export default function AcademicAdvisingPage() {
                         <div className="absolute right-0 mt-2 w-44 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
                           <p
                             onClick={() => {
-                              handleViewParticipants(session.participants || []);
+                              handleViewParticipants(
+                                session.participants || [],
+                              );
                               setOpenMenuId(null);
                             }}
                             className="px-4 py-2 text-sm hover:bg-gray-100 cursor-pointer"
@@ -856,11 +987,16 @@ export default function AcademicAdvisingPage() {
                 <h2 className="text-2xl text-primary font-bold bg-gradient-to-r from-primary to-blue-600 bg-clip-text">
                   Add New Academic Advising Session
                 </h2>
-                <p className="text-gray-500 text-sm mt-1">Fill in the details to create a new advising session</p>
+                <p className="text-gray-500 text-sm mt-1">
+                  Fill in the details to create a new advising session
+                </p>
               </div>
               <form className="space-y-6">
                 <div className="space-y-2">
-                  <label htmlFor="title" className="flex items-center gap-2 font-semibold text-gray-700">
+                  <label
+                    htmlFor="title"
+                    className="flex items-center gap-2 font-semibold text-gray-700"
+                  >
                     Title
                   </label>
                   <input
@@ -870,11 +1006,16 @@ export default function AcademicAdvisingPage() {
                     placeholder="Enter session title"
                     className="w-full p-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
                     value={newSession.title || ""}
-                    onChange={(e) => setNewSession({ ...newSession, title: e.target.value })}
+                    onChange={(e) =>
+                      setNewSession({ ...newSession, title: e.target.value })
+                    }
                   />
                 </div>
                 <div className="space-y-2">
-                  <label htmlFor="description" className="flex items-center gap-2 font-semibold text-gray-700">
+                  <label
+                    htmlFor="description"
+                    className="flex items-center gap-2 font-semibold text-gray-700"
+                  >
                     Description
                   </label>
                   <textarea
@@ -884,11 +1025,19 @@ export default function AcademicAdvisingPage() {
                     rows={2}
                     className="w-full p-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 resize-none bg-gray-50 hover:bg-white"
                     value={newSession.description || ""}
-                    onChange={(e) => setNewSession({ ...newSession, description: e.target.value })}
+                    onChange={(e) =>
+                      setNewSession({
+                        ...newSession,
+                        description: e.target.value,
+                      })
+                    }
                   />
                 </div>
                 <div className="space-y-2">
-                  <label htmlFor="tutorName" className="flex items-center gap-2 font-semibold text-gray-700">
+                  <label
+                    htmlFor="tutorName"
+                    className="flex items-center gap-2 font-semibold text-gray-700"
+                  >
                     Tutor Name
                   </label>
                   <input
@@ -898,11 +1047,19 @@ export default function AcademicAdvisingPage() {
                     placeholder="Enter tutor name"
                     className="w-full p-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
                     value={newSession.tutorName || ""}
-                    onChange={(e) => setNewSession({ ...newSession, tutorName: e.target.value })}
+                    onChange={(e) =>
+                      setNewSession({
+                        ...newSession,
+                        tutorName: e.target.value,
+                      })
+                    }
                   />
                 </div>
                 <div className="space-y-2">
-                  <label htmlFor="skills" className="flex items-center gap-2 font-semibold text-gray-700">
+                  <label
+                    htmlFor="skills"
+                    className="flex items-center gap-2 font-semibold text-gray-700"
+                  >
                     Skills
                   </label>
                   <input
@@ -915,7 +1072,10 @@ export default function AcademicAdvisingPage() {
                     onChange={(e) =>
                       setNewSession({
                         ...newSession,
-                        skills: e.target.value.split(",").map((s) => s.trim()).filter((s) => s),
+                        skills: e.target.value
+                          .split(",")
+                          .map((s) => s.trim())
+                          .filter((s) => s),
                       })
                     }
                   />
@@ -924,7 +1084,10 @@ export default function AcademicAdvisingPage() {
                   </p>
                 </div>
                 <div className="space-y-3">
-                  <label htmlFor="colleges" className="flex items-center gap-2 font-semibold text-gray-700">
+                  <label
+                    htmlFor="colleges"
+                    className="flex items-center gap-2 font-semibold text-gray-700"
+                  >
                     Colleges
                   </label>
                   <select
@@ -932,11 +1095,18 @@ export default function AcademicAdvisingPage() {
                     id="colleges"
                     className="w-full p-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white h-40"
                     multiple
-                    value={newSession.colleges && newSession.colleges.length > 0 ? newSession.colleges : []}
+                    value={
+                      newSession.colleges && newSession.colleges.length > 0
+                        ? newSession.colleges
+                        : []
+                    }
                     onChange={(e) =>
                       setNewSession({
                         ...newSession,
-                        colleges: Array.from(e.target.selectedOptions, (option) => option.value),
+                        colleges: Array.from(
+                          e.target.selectedOptions,
+                          (option) => option.value,
+                        ),
                       })
                     }
                   >
@@ -954,21 +1124,24 @@ export default function AcademicAdvisingPage() {
                   </p>
                 </div>
                 <div className="space-y-2">
-  <label htmlFor="venue" className="flex items-center gap-2 font-semibold text-gray-700">
-    Venue
-  </label>
-  <input
-    type="text"
-    name="venue"
-    id="venue"
-    placeholder="Eg: Room 204 / Seminar Hall / Online (Google Meet)"
-    className="w-full p-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary bg-gray-50 hover:bg-white"
-    value={newSession.venue}
-    onChange={(e) =>
-      setNewSession({ ...newSession, venue: e.target.value })
-    }
-  />
-</div>
+                  <label
+                    htmlFor="venue"
+                    className="flex items-center gap-2 font-semibold text-gray-700"
+                  >
+                    Venue
+                  </label>
+                  <input
+                    type="text"
+                    name="venue"
+                    id="venue"
+                    placeholder="Eg: Room 204 / Seminar Hall / Online (Google Meet)"
+                    className="w-full p-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary bg-gray-50 hover:bg-white"
+                    value={newSession.venue}
+                    onChange={(e) =>
+                      setNewSession({ ...newSession, venue: e.target.value })
+                    }
+                  />
+                </div>
                 <div className="space-y-3">
                   <label className="flex items-center gap-2 font-semibold text-gray-700">
                     Session Type
@@ -980,7 +1153,9 @@ export default function AcademicAdvisingPage() {
                         name="isGroup"
                         className="w-4 h-4 text-primary focus:ring-primary"
                         checked={newSession.isGroup === true}
-                        onChange={() => setNewSession({ ...newSession, isGroup: true })}
+                        onChange={() =>
+                          setNewSession({ ...newSession, isGroup: true })
+                        }
                       />
                       <span className="font-medium text-gray-700">Group</span>
                     </label>
@@ -990,7 +1165,9 @@ export default function AcademicAdvisingPage() {
                         name="isGroup"
                         className="w-4 h-4 text-primary focus:ring-primary"
                         checked={newSession.isGroup === false}
-                        onChange={() => setNewSession({ ...newSession, isGroup: false })}
+                        onChange={() =>
+                          setNewSession({ ...newSession, isGroup: false })
+                        }
                       />
                       <span className="font-medium text-gray-700">1-on-1</span>
                     </label>
@@ -1003,7 +1180,10 @@ export default function AcademicAdvisingPage() {
                     </h3>
                     <div className="grid grid-cols-1 gap-2">
                       <div className="space-y-2">
-                        <label htmlFor="date" className="font-semibold text-gray-700 text-sm">
+                        <label
+                          htmlFor="date"
+                          className="font-semibold text-gray-700 text-sm"
+                        >
                           Date
                         </label>
                         <input
@@ -1012,11 +1192,19 @@ export default function AcademicAdvisingPage() {
                           id="date"
                           className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white"
                           value={newSession.date || ""}
-                          onChange={(e) => setNewSession({ ...newSession, date: e.target.value })}
+                          onChange={(e) =>
+                            setNewSession({
+                              ...newSession,
+                              date: e.target.value,
+                            })
+                          }
                         />
                       </div>
                       <div className="space-y-2">
-                        <label htmlFor="totalDuration" className="font-semibold text-gray-700 text-sm">
+                        <label
+                          htmlFor="totalDuration"
+                          className="font-semibold text-gray-700 text-sm"
+                        >
                           Total Duration (minutes)
                         </label>
                         <input
@@ -1027,12 +1215,18 @@ export default function AcademicAdvisingPage() {
                           className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white"
                           value={newSession.totalDuration || ""}
                           onChange={(e) =>
-                            setNewSession({ ...newSession, totalDuration: parseInt(e.target.value) })
+                            setNewSession({
+                              ...newSession,
+                              totalDuration: parseInt(e.target.value),
+                            })
                           }
                         />
                       </div>
                       <div className="space-y-2">
-                        <label htmlFor="startTime" className="font-semibold text-gray-700 text-sm">
+                        <label
+                          htmlFor="startTime"
+                          className="font-semibold text-gray-700 text-sm"
+                        >
                           Start Time
                         </label>
                         <input
@@ -1041,11 +1235,19 @@ export default function AcademicAdvisingPage() {
                           id="startTime"
                           className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white"
                           value={newSession.startTime || ""}
-                          onChange={(e) => setNewSession({ ...newSession, startTime: e.target.value })}
+                          onChange={(e) =>
+                            setNewSession({
+                              ...newSession,
+                              startTime: e.target.value,
+                            })
+                          }
                         />
                       </div>
                       <div className="space-y-2">
-                        <label htmlFor="slots" className="font-semibold text-gray-700 text-sm">
+                        <label
+                          htmlFor="slots"
+                          className="font-semibold text-gray-700 text-sm"
+                        >
                           Number of Slots
                         </label>
                         <input
@@ -1055,7 +1257,12 @@ export default function AcademicAdvisingPage() {
                           placeholder="Enter number of slots"
                           className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white"
                           value={newSession.slots || ""}
-                          onChange={(e) => setNewSession({ ...newSession, slots: parseInt(e.target.value) })}
+                          onChange={(e) =>
+                            setNewSession({
+                              ...newSession,
+                              slots: parseInt(e.target.value),
+                            })
+                          }
                         />
                       </div>
                     </div>
@@ -1068,7 +1275,10 @@ export default function AcademicAdvisingPage() {
                     </h3>
                     <div className="grid grid-cols-1 gap-2">
                       <div className="space-y-2">
-                        <label htmlFor="date" className="font-semibold text-gray-700 text-sm">
+                        <label
+                          htmlFor="date"
+                          className="font-semibold text-gray-700 text-sm"
+                        >
                           Date
                         </label>
                         <input
@@ -1077,11 +1287,19 @@ export default function AcademicAdvisingPage() {
                           id="date"
                           className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white"
                           value={newSession.date || ""}
-                          onChange={(e) => setNewSession({ ...newSession, date: e.target.value })}
+                          onChange={(e) =>
+                            setNewSession({
+                              ...newSession,
+                              date: e.target.value,
+                            })
+                          }
                         />
                       </div>
                       <div className="space-y-2">
-                        <label htmlFor="startTime" className="font-semibold text-gray-700 text-sm">
+                        <label
+                          htmlFor="startTime"
+                          className="font-semibold text-gray-700 text-sm"
+                        >
                           Start Time
                         </label>
                         <input
@@ -1090,11 +1308,19 @@ export default function AcademicAdvisingPage() {
                           id="startTime"
                           className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white"
                           value={newSession.startTime || ""}
-                          onChange={(e) => setNewSession({ ...newSession, startTime: e.target.value })}
+                          onChange={(e) =>
+                            setNewSession({
+                              ...newSession,
+                              startTime: e.target.value,
+                            })
+                          }
                         />
                       </div>
                       <div className="space-y-2">
-                        <label htmlFor="totalDuration" className="font-semibold text-gray-700 text-sm">
+                        <label
+                          htmlFor="totalDuration"
+                          className="font-semibold text-gray-700 text-sm"
+                        >
                           Total Duration (minutes)
                         </label>
                         <input
@@ -1105,12 +1331,18 @@ export default function AcademicAdvisingPage() {
                           className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white"
                           value={newSession.totalDuration || ""}
                           onChange={(e) =>
-                            setNewSession({ ...newSession, totalDuration: parseInt(e.target.value) })
+                            setNewSession({
+                              ...newSession,
+                              totalDuration: parseInt(e.target.value),
+                            })
                           }
                         />
                       </div>
                       <div className="space-y-2">
-                        <label htmlFor="slotDuration" className="font-semibold text-gray-700 text-sm">
+                        <label
+                          htmlFor="slotDuration"
+                          className="font-semibold text-gray-700 text-sm"
+                        >
                           Slot Duration (minutes)
                         </label>
                         <input
@@ -1121,7 +1353,10 @@ export default function AcademicAdvisingPage() {
                           className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white"
                           value={newSession.slotDuration || ""}
                           onChange={(e) =>
-                            setNewSession({ ...newSession, slotDuration: parseInt(e.target.value) })
+                            setNewSession({
+                              ...newSession,
+                              slotDuration: parseInt(e.target.value),
+                            })
                           }
                         />
                       </div>
@@ -1130,7 +1365,10 @@ export default function AcademicAdvisingPage() {
                 )}
                 <div className="grid grid-cols-1 gap-2">
                   <div className="space-y-2">
-                    <label htmlFor="expiryDate" className="flex items-center gap-2 font-semibold text-gray-700">
+                    <label
+                      htmlFor="expiryDate"
+                      className="flex items-center gap-2 font-semibold text-gray-700"
+                    >
                       Expiry Date
                     </label>
                     <input
@@ -1139,11 +1377,19 @@ export default function AcademicAdvisingPage() {
                       id="expiryDate"
                       className="w-full p-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
                       value={newSession.expiryDate || ""}
-                      onChange={(e) => setNewSession({ ...newSession, expiryDate: e.target.value })}
+                      onChange={(e) =>
+                        setNewSession({
+                          ...newSession,
+                          expiryDate: e.target.value,
+                        })
+                      }
                     />
                   </div>
                   <div className="space-y-2">
-                    <label htmlFor="expiryTime" className="flex items-center gap-2 font-semibold text-gray-700">
+                    <label
+                      htmlFor="expiryTime"
+                      className="flex items-center gap-2 font-semibold text-gray-700"
+                    >
                       Expiry Time
                     </label>
                     <input
@@ -1152,7 +1398,12 @@ export default function AcademicAdvisingPage() {
                       id="expiryTime"
                       className="w-full p-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
                       value={newSession.expiryTime || ""}
-                      onChange={(e) => setNewSession({ ...newSession, expiryTime: e.target.value })}
+                      onChange={(e) =>
+                        setNewSession({
+                          ...newSession,
+                          expiryTime: e.target.value,
+                        })
+                      }
                     />
                   </div>
                 </div>
@@ -1186,7 +1437,8 @@ export default function AcademicAdvisingPage() {
                 <ul className="list-disc pl-5 space-y-2">
                   {selectedParticipants.map((user) => (
                     <li key={user.id}>
-                      <span className="font-medium">{user.name || "N/A"}</span> - {user.email || "No email"} (
+                      <span className="font-medium">{user.name || "N/A"}</span>{" "}
+                      - {user.email || "No email"} (
                       {user.college || "No college"})
                     </li>
                   ))}
@@ -1207,26 +1459,42 @@ export default function AcademicAdvisingPage() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4 sm:p-0">
             <div className="bg-[hsl(60,100%,95%)] rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-xl">
               <h2 className="text-xl sm:text-2xl font-bold mb-4 text-center text-gray-800">
-                {selectedSession.validated ? "View Proofs" : "View and Validate Proofs"}
+                {selectedSession.validated
+                  ? "View Proofs"
+                  : "View and Validate Proofs"}
               </h2>
               <div className="mb-4 p-4 bg-yellow-100 rounded-lg border border-yellow-200 text-sm sm:text-base">
                 <p className="font-semibold text-gray-800 break-words">
-                  Session: <span className="font-normal">{selectedSession.title}</span>
+                  Session:{" "}
+                  <span className="font-normal">{selectedSession.title}</span>
                 </p>
                 <p className="text-gray-700 break-words">
-                  Tutor: <span className="font-normal">{selectedSession.tutorName}</span>
+                  Tutor:{" "}
+                  <span className="font-normal">
+                    {selectedSession.tutorName}
+                  </span>
                 </p>
                 <p className="text-gray-700">
-                  Date: <span className="font-normal">{selectedSession.date} {selectedSession.startTime}</span>
+                  Date:{" "}
+                  <span className="font-normal">
+                    {selectedSession.date} {selectedSession.startTime}
+                  </span>
                 </p>
               </div>
               {proofsToView.length === 0 ? (
-                <p className="text-sm text-gray-500 text-center">No proofs available</p>
+                <p className="text-sm text-gray-500 text-center">
+                  No proofs available
+                </p>
               ) : (
                 <div className="space-y-4">
                   {proofsToView.map((proof, index) => (
-                    <div key={index} className="border p-2 rounded-lg bg-yellow-100 flex flex-col items-center">
-                      {proof.endsWith(".jpg") || proof.endsWith(".png") || proof.endsWith(".jpeg") ? (
+                    <div
+                      key={index}
+                      className="border p-2 rounded-lg bg-yellow-100 flex flex-col items-center"
+                    >
+                      {proof.endsWith(".jpg") ||
+                      proof.endsWith(".png") ||
+                      proof.endsWith(".jpeg") ? (
                         <img
                           src={proof}
                           alt={`Proof ${index + 1}`}
@@ -1272,7 +1540,9 @@ export default function AcademicAdvisingPage() {
         {showCalendar && selectedSession && !selectedSession.isGroup && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
             <div className="[background-color:hsl(60,100%,90%)] rounded-xl p-6 w-full max-w-md">
-              <h2 className="text-xl font-bold mb-4">{selectedSession.title} - Select Date</h2>
+              <h2 className="text-xl font-bold mb-4">
+                {selectedSession.title} - Select Date
+              </h2>
               <Calendar
                 className="[background-color:hsl(60,100%,90%)]"
                 onClickDay={handleDateClick}
@@ -1280,7 +1550,9 @@ export default function AcademicAdvisingPage() {
               />
               {selectedDate && availableSlots.length > 0 && (
                 <div className="mt-4">
-                  <p className="mb-2 font-semibold">Available Slots on {selectedDate.toDateString()}:</p>
+                  <p className="mb-2 font-semibold">
+                    Available Slots on {selectedDate.toDateString()}:
+                  </p>
                   <div className="grid grid-cols-2 gap-2 mb-4">
                     {availableSlots.map((slot) => {
                       const isUserSlot = slot.user === user?.uid;
@@ -1298,7 +1570,12 @@ export default function AcademicAdvisingPage() {
                           onClick={() => handleSlotSelect(slot.time)}
                           disabled={slot.booked}
                         >
-                          {slot.time} {slot.booked ? (isUserSlot ? "(Your Booking)" : "(Booked)") : ""}
+                          {slot.time}{" "}
+                          {slot.booked
+                            ? isUserSlot
+                              ? "(Your Booking)"
+                              : "(Booked)"
+                            : ""}
                         </button>
                       );
                     })}
@@ -1316,38 +1593,49 @@ export default function AcademicAdvisingPage() {
             </div>
           </div>
         )}
-        {showDialog && selectedSession && (selectedSession.isGroup || selectedSlot) && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-            <div className="[background-color:hsl(60,100%,95%)] rounded-xl p-6 w-96">
-              <h2 className="text-xl font-bold mb-4">Confirm Booking</h2>
-              <p className="mb-4">
-                Are you sure you want to {selectedSession.isGroup ? "join" : "book"} <strong>{selectedSession.title}</strong>
-                {!selectedSession.isGroup && selectedSlot ? ` at ${selectedSlot}` : ""}?
-              </p>
-              <div className="flex justify-end gap-4">
-                <button
-                  className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-800 text-white"
-                  onClick={() => setShowDialog(false)}
-                >
-                  Cancel
-                </button>
-                <button
-                  className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-blue-800"
-                  onClick={confirmJoin}
-                  disabled={bookingInProgress}
-                >
-                  {bookingInProgress ? "Processing..." : "Confirm"}
-                </button>
+        {showDialog &&
+          selectedSession &&
+          (selectedSession.isGroup || selectedSlot) && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+              <div className="[background-color:hsl(60,100%,95%)] rounded-xl p-6 w-96">
+                <h2 className="text-xl font-bold mb-4">Confirm Booking</h2>
+                <p className="mb-4">
+                  Are you sure you want to{" "}
+                  {selectedSession.isGroup ? "join" : "book"}{" "}
+                  <strong>{selectedSession.title}</strong>
+                  {!selectedSession.isGroup && selectedSlot
+                    ? ` at ${selectedSlot}`
+                    : ""}
+                  ?
+                </p>
+                <div className="flex justify-end gap-4">
+                  <button
+                    className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-800 text-white"
+                    onClick={() => setShowDialog(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-blue-800"
+                    onClick={confirmJoin}
+                    disabled={bookingInProgress}
+                  >
+                    {bookingInProgress ? "Processing..." : "Confirm"}
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
         {showCancelDialog && sessionToCancel && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
             <div className="[background-color:hsl(60,100%,95%)] rounded-xl p-6 w-96">
-              <h2 className="text-xl font-bold text-red-600 mb-4">Cancel Session</h2>
+              <h2 className="text-xl font-bold text-red-600 mb-4">
+                Cancel Session
+              </h2>
               <p className="mb-4 text-gray-700">
-                Are you sure you want to cancel <strong>{sessionToCancel.title}</strong>? This will delete the session and all related bookings.
+                Are you sure you want to cancel{" "}
+                <strong>{sessionToCancel.title}</strong>? This will delete the
+                session and all related bookings.
               </p>
               <div className="flex justify-end gap-4">
                 <button
