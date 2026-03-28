@@ -123,7 +123,17 @@ const CampusPage: React.FC = () => {
     }
 
     // Verify that the user's college matches the college that uploaded the media
-    if (!mediaItem || mediaItem.uploadedBy !== userData?.college) {
+    if (!mediaItem) {
+      toast.error("Media not found");
+      return;
+    }
+
+    // Check authorization: uploadedBy matches college, or uploadedBy missing and campus college matches
+    const isAuthorized =
+      (mediaItem.uploadedBy && mediaItem.uploadedBy === userData?.college) ||
+      (!mediaItem.uploadedBy && userData?.college === campus?.collegeName);
+
+    if (!isAuthorized) {
       toast.error("You can only delete media uploaded by your college");
       return;
     }
@@ -168,7 +178,12 @@ const CampusPage: React.FC = () => {
       return;
     }
 
-    if (media.uploadedBy !== userData.college) {
+    // Check authorization: uploadedBy matches college, or uploadedBy missing and campus college matches
+    const isAuthorized =
+      (media.uploadedBy && media.uploadedBy === userData?.college) ||
+      (!media.uploadedBy && userData?.college === campus?.collegeName);
+
+    if (!isAuthorized) {
       toast.error("You can only edit media uploaded by your college");
       return;
     }
@@ -194,10 +209,20 @@ const CampusPage: React.FC = () => {
     if (!campus || !editingMediaItem || !userData) return;
 
     // Verify authorization: user's college must match the college that uploaded the media
-    if (
-      userData.role !== "admin+" ||
-      editingMediaItem.uploadedBy !== userData.college
-    ) {
+    if (userData.role !== "admin+") {
+      toast.error("You can only edit media uploaded by your college");
+      setIsEditingMedia(false);
+      return;
+    }
+
+    // Check authorization: uploadedBy matches college, or uploadedBy missing and campus college matches
+    const isAuthorized =
+      (editingMediaItem.uploadedBy &&
+        editingMediaItem.uploadedBy === userData?.college) ||
+      (!editingMediaItem.uploadedBy &&
+        userData?.college === campus?.collegeName);
+
+    if (!isAuthorized) {
       toast.error("You can only edit media uploaded by your college");
       setIsEditingMedia(false);
       return;
@@ -266,9 +291,19 @@ const CampusPage: React.FC = () => {
   };
 
   const canEditMedia = (media: GalleryItem | VideoItem) => {
-    return (
-      userData?.role === "admin+" && media.uploadedBy === userData?.college
-    );
+    // Allow edit if user is admin+ and either:
+    // 1. uploadedBy matches their college
+    // 2. uploadedBy is missing/undefined (for legacy media) and their college matches campus's college
+    if (userData?.role !== "admin+") {
+      return false;
+    }
+
+    if (media.uploadedBy) {
+      return media.uploadedBy === userData?.college;
+    }
+
+    // Fallback for legacy media without uploadedBy field
+    return userData?.college === campus?.collegeName;
   };
 
   if (loading) {

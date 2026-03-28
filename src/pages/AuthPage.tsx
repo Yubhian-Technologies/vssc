@@ -164,6 +164,23 @@ export default function AuthPage() {
         toastError("Please fill all details");
         return;
       }
+
+      // ✅ Validate email domain matches selected college
+      const selectedCollege = colleges.find((c) => c.name === college);
+      if (selectedCollege) {
+        const emailDomain = email.substring(email.lastIndexOf("@"));
+        if (emailDomain !== selectedCollege.domain) {
+          setError(
+            `❌ Email domain must be ${selectedCollege.domain} for ${college}`,
+          );
+          toastError(
+            `Email domain must be ${selectedCollege.domain} for ${college}`,
+          );
+          setLoading(false);
+          return;
+        }
+      }
+
       if (password !== confirmPassword) {
         setError("Passwords do not match.");
         toastError("Passwords do not match.");
@@ -422,6 +439,13 @@ export default function AuthPage() {
                       placeholder="College Email"
                       className="w-full border rounded-md p-3 bg-[hsl(60,100%,95%)]"
                     />
+                    <p className="text-xs text-blue-600 mt-1">
+                      📧 Use your college email ending with:{" "}
+                      <strong>
+                        {colleges.find((c) => c.name === college)?.domain ||
+                          "@college.edu.in"}
+                      </strong>
+                    </p>
                     <div className="relative">
                       <input
                         type={showPassword ? "text" : "password"}
@@ -803,6 +827,13 @@ export default function AuthPage() {
                 placeholder="College Email"
                 className="w-full border rounded-md p-2 bg-[hsl(60,100%,95%)]"
               />
+              {/* <p className="text-xs text-blue-600 mt-1">
+                📧 Use your college email ending with:{" "}
+                <strong>
+                  {colleges.find((c) => c.name === college)?.domain ||
+                    "@college.edu.in"}
+                </strong>
+              </p> */}
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
