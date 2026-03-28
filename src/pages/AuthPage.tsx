@@ -36,10 +36,6 @@ const colleges = [
     name: "Smt B Seetha Polytechnic College",
     domain: "@seethapoly.edu.in",
   },
-   {
-    name: "BV Raju Degree College",
-    domain: "@bvricedegree.edu.in",
-  },
 ];
 
 const generateKeywords = (name: string, email: string): string[] => {
