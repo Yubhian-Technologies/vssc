@@ -24,6 +24,7 @@ const colleges = [
   { name: "Vishnu Dental College", domain: "@vdc.edu.in" },
   { name: "Shri Vishnu College of Pharmacy", domain: "@svcp.edu.in" },
   { name: "BV Raju Institute of Technology", domain: "@bvrit.ac.in" },
+  { name: "B.V. Raju College", domain: "@bvricedegree.edu.in" },
   {
     name: "BVRIT Hyderabad College of Engineering",
     domain: "@bvrithyderabad.ac.in",
