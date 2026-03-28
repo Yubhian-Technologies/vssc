@@ -11,8 +11,9 @@ import {
 import { db } from "@/firebase";
 import { useAuth } from "@/AuthContext";
 import AddCampusModal from "@/components/AddCampusModal";
+import UploadMediaModal from "@/components/UploadMediaModal";
 import { Button } from "@/components/ui/button";
-import { Plus, Loader2, Trash2, Edit } from "lucide-react";
+import { Plus, Loader2, Trash2, Edit, Upload } from "lucide-react";
 import toast from "react-hot-toast";
 
 import Land1 from "../assets/Land1.jpg";
@@ -22,6 +23,7 @@ interface GalleryItem {
   imageUrl: string;
   alt: string;
   description: string;
+  uploadedBy?: string;
 }
 
 interface VideoItem {
@@ -29,6 +31,7 @@ interface VideoItem {
   videoUrl: string;
   title: string;
   description: string;
+  uploadedBy?: string;
 }
 
 interface Campus {
@@ -49,6 +52,9 @@ const TourPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [editingCampus, setEditingCampus] = useState<Campus | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState<boolean>(false);
+  const [selectedCampusForUpload, setSelectedCampusForUpload] =
+    useState<Campus | null>(null);
 
   // Fetch campuses from Firestore
   useEffect(() => {
@@ -114,6 +120,28 @@ const TourPage: React.FC = () => {
     setIsEditModalOpen(true);
   };
 
+  const handleOpenUploadModal = (campus: Campus) => {
+    setSelectedCampusForUpload(campus);
+    setIsUploadModalOpen(true);
+  };
+
+  const handleMediaAdded = async () => {
+    // Refresh campuses list after media is added
+    try {
+      const querySnapshot = await getDocs(collection(db, "campuses"));
+      const campusesList: Campus[] = [];
+      querySnapshot.forEach((doc) => {
+        campusesList.push({
+          id: doc.id,
+          ...doc.data(),
+        } as Campus);
+      });
+      setCampuses(campusesList);
+    } catch (error) {
+      console.error("Error refreshing campuses:", error);
+    }
+  };
+
   const isAdminPlus = userData?.role === "admin+";
 
   return (
@@ -127,6 +155,17 @@ const TourPage: React.FC = () => {
         }}
         onCampusAdded={handleCampusAdded}
         editingCampus={editingCampus}
+      />
+
+      <UploadMediaModal
+        isOpen={isUploadModalOpen}
+        onClose={() => {
+          setIsUploadModalOpen(false);
+          setSelectedCampusForUpload(null);
+        }}
+        campusId={selectedCampusForUpload?.id || ""}
+        campusName={selectedCampusForUpload?.name}
+        onMediaAdded={handleMediaAdded}
       />
 
       {/* Banner */}
@@ -232,14 +271,14 @@ const TourPage: React.FC = () => {
                       Explore
                     </button>
 
-                    {/* Edit Button - Only for admin+ */}
+                    {/* Upload Media Button - Only for admin+ */}
                     {isAdminPlus && (
                       <button
-                        onClick={() => handleEditCampus(campus)}
-                        className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg font-semibold transition"
+                        onClick={() => handleOpenUploadModal(campus)}
+                        className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-semibold transition text-sm sm:text-base"
                       >
-                        <Edit size={18} />
-                        Edit
+                        <Upload size={18} />
+                        Upload Media
                       </button>
                     )}
 
@@ -247,7 +286,7 @@ const TourPage: React.FC = () => {
                     {isAdminPlus && (
                       <button
                         onClick={() => handleDeleteCampus(campus.id)}
-                        className="flex items-center  gap-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold transition"
+                        className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold transition text-sm sm:text-base"
                       >
                         <Trash2 size={18} />
                         Delete

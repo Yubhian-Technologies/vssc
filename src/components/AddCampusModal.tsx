@@ -43,6 +43,7 @@ interface GalleryItem {
   imageUrl: string;
   alt: string;
   description: string;
+  uploadedBy?: string;
 }
 
 interface VideoItem {
@@ -50,12 +51,30 @@ interface VideoItem {
   videoUrl: string;
   title: string;
   description: string;
+  uploadedBy?: string;
 }
 
 interface College {
   id: string;
   name: string;
 }
+
+// Helper function to merge media items from all colleges with updated items from current college
+const mergeMediaItems = (
+  allItems: any[],
+  currentCollegeItems: any[],
+  currentCollege?: string,
+): any[] => {
+  if (!currentCollege) return allItems;
+
+  // Filter out items from current college from allItems
+  const otherCollegeItems = allItems.filter(
+    (item) => item.uploadedBy && item.uploadedBy !== currentCollege,
+  );
+
+  // Merge: other colleges' items + current college's items
+  return [...otherCollegeItems, ...currentCollegeItems];
+};
 
 const AddCampusModal: React.FC<AddCampusModalProps> = ({
   isOpen,
@@ -73,6 +92,8 @@ const AddCampusModal: React.FC<AddCampusModalProps> = ({
   const [coverImagePreview, setCoverImagePreview] = useState<string>("");
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
   const [videoItems, setVideoItems] = useState<VideoItem[]>([]);
+  const [allGalleryItems, setAllGalleryItems] = useState<GalleryItem[]>([]);
+  const [allVideoItems, setAllVideoItems] = useState<VideoItem[]>([]);
   const [currentGalleryImage, setCurrentGalleryImage] = useState<File | null>(
     null,
   );
@@ -97,9 +118,32 @@ const AddCampusModal: React.FC<AddCampusModalProps> = ({
       setCampusName(editingCampus.name || "");
       setDescription(editingCampus.description || "");
       setCoverImagePreview(editingCampus.coverImage || "");
-      setGalleryItems(editingCampus.gallery || []);
-      setVideoItems(editingCampus.videos || []);
-      setCustomCollege(editingCampus.collegeName || userData?.college || "");
+
+      // Keep full list of gallery and videos (all colleges' items)
+      const fullGallery = editingCampus.gallery || [];
+      const fullVideos = editingCampus.videos || [];
+      setAllGalleryItems(fullGallery);
+      setAllVideoItems(fullVideos);
+
+      // Filter to show ONLY items from CURRENT USER's college (not the campus creator's college)
+      const currentUserCollege = userData?.college;
+      const filteredGallery = currentUserCollege
+        ? fullGallery.filter(
+            (item: GalleryItem) =>
+              !item.uploadedBy || item.uploadedBy === currentUserCollege,
+          )
+        : [];
+      const filteredVideos = currentUserCollege
+        ? fullVideos.filter(
+            (item: VideoItem) =>
+              !item.uploadedBy || item.uploadedBy === currentUserCollege,
+          )
+        : [];
+
+      setGalleryItems(filteredGallery);
+      setVideoItems(filteredVideos);
+      // Set customCollege to CURRENT USER's college, not the campus creator's
+      setCustomCollege(userData?.college || "");
     } else if (isOpen) {
       // Reset form for new campus
       setCampusName("");
@@ -108,6 +152,8 @@ const AddCampusModal: React.FC<AddCampusModalProps> = ({
       setCoverImagePreview("");
       setGalleryItems([]);
       setVideoItems([]);
+      setAllGalleryItems([]);
+      setAllVideoItems([]);
       setCoverImage(null);
       setCustomCollege(userData?.college || "");
     }
@@ -175,12 +221,6 @@ const AddCampusModal: React.FC<AddCampusModalProps> = ({
       return;
     }
 
-    // Check gallery item limit (max 2 per college)
-    if (galleryItems.length >= 2) {
-      toast.error("Maximum 2 photos allowed per college");
-      return;
-    }
-
     try {
       toast.loading("Uploading gallery image...");
       const imageUrl = await uploadToCloudinary(currentGalleryImage);
@@ -189,6 +229,7 @@ const AddCampusModal: React.FC<AddCampusModalProps> = ({
         imageUrl,
         alt: currentGalleryAlt,
         description: currentGalleryDesc,
+        uploadedBy: customCollege,
       };
       setGalleryItems([...galleryItems, newItem]);
       setCurrentGalleryImage(null);
@@ -209,12 +250,6 @@ const AddCampusModal: React.FC<AddCampusModalProps> = ({
       return;
     }
 
-    // Check video item limit (max 1 per college)
-    if (videoItems.length >= 1) {
-      toast.error("Maximum 1 video allowed per college");
-      return;
-    }
-
     try {
       toast.loading("Uploading video...");
       const videoUrl = await uploadVideoToCloudinary(currentVideoFile);
@@ -223,6 +258,7 @@ const AddCampusModal: React.FC<AddCampusModalProps> = ({
         videoUrl,
         title: currentVideoTitle,
         description: currentVideoDesc,
+        uploadedBy: customCollege,
       };
       setVideoItems([...videoItems, newItem]);
       setCurrentVideoFile(null);
@@ -238,11 +274,35 @@ const AddCampusModal: React.FC<AddCampusModalProps> = ({
   };
 
   const removeGalleryItem = (id: string) => {
+    const itemToRemove = galleryItems.find((item) => item.id === id);
+
+    // Only allow deletion if item belongs to THIS college (current user's college)
+    if (
+      itemToRemove &&
+      itemToRemove.uploadedBy &&
+      itemToRemove.uploadedBy !== userData?.college
+    ) {
+      toast.error("You can only delete photos uploaded by your college");
+      return;
+    }
+
     setGalleryItems(galleryItems.filter((item) => item.id !== id));
     toast.success("Gallery item removed");
   };
 
   const removeVideoItem = (id: string) => {
+    const itemToRemove = videoItems.find((item) => item.id === id);
+
+    // Only allow deletion if item belongs to THIS college (current user's college)
+    if (
+      itemToRemove &&
+      itemToRemove.uploadedBy &&
+      itemToRemove.uploadedBy !== userData?.college
+    ) {
+      toast.error("You can only delete videos uploaded by your college");
+      return;
+    }
+
     setVideoItems(videoItems.filter((item) => item.id !== id));
     toast.success("Video removed");
   };
@@ -283,8 +343,12 @@ const AddCampusModal: React.FC<AddCampusModalProps> = ({
         name: campusName,
         description,
         coverImage: coverImageUrl,
-        gallery: galleryItems,
-        videos: videoItems,
+        gallery: editingCampus
+          ? mergeMediaItems(allGalleryItems, galleryItems, userData?.college)
+          : galleryItems,
+        videos: editingCampus
+          ? mergeMediaItems(allVideoItems, videoItems, userData?.college)
+          : videoItems,
         updatedAt: new Date(),
       };
 
@@ -400,7 +464,7 @@ const AddCampusModal: React.FC<AddCampusModalProps> = ({
             <label className="block text-xs sm:text-sm font-medium mb-2">
               Cover Image
             </label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 hover:border-gray-400 transition">
               <input
                 type="file"
                 accept="image/*"
@@ -408,14 +472,23 @@ const AddCampusModal: React.FC<AddCampusModalProps> = ({
                 className="hidden"
                 id="cover-image-input"
               />
-              <label htmlFor="cover-image-input" className="cursor-pointer">
+              <label
+                htmlFor="cover-image-input"
+                className="cursor-pointer block"
+              >
                 {coverImagePreview ? (
-                  <div className="relative">
+                  <div className="relative group">
                     <img
                       src={coverImagePreview}
                       alt="Cover preview"
-                      className="max-h-48 mx-auto rounded"
+                      className="max-h-48 mx-auto rounded transition group-hover:opacity-75"
                     />
+                    <div className="absolute inset-0 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition bg-black bg-opacity-30 rounded">
+                      <Upload className="text-white mb-2" size={32} />
+                      <p className="text-white text-sm font-medium">
+                        Click to change image
+                      </p>
+                    </div>
                     <button
                       type="button"
                       onClick={(e) => {
@@ -423,13 +496,14 @@ const AddCampusModal: React.FC<AddCampusModalProps> = ({
                         setCoverImage(null);
                         setCoverImagePreview("");
                       }}
-                      className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full"
+                      className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white p-1 rounded-full transition z-10"
+                      title="Remove image"
                     >
                       <X size={16} />
                     </button>
                   </div>
                 ) : (
-                  <div className="text-center py-6 sm:py-8">
+                  <div className="text-center py-6 sm:py-8 hover:bg-gray-50 rounded transition">
                     <Upload className="mx-auto mb-2 text-gray-400 w-6 h-6 sm:w-8 sm:h-8" />
                     <p className="text-xs sm:text-sm text-gray-500">
                       Click to upload cover image
@@ -443,7 +517,7 @@ const AddCampusModal: React.FC<AddCampusModalProps> = ({
           {/* Gallery Items */}
           <div>
             <label className="block text-xs sm:text-sm font-medium mb-2">
-              Gallery Items (Max 2 photos) - {galleryItems.length}/2
+              Gallery Photos - {galleryItems.length} added
             </label>
             <div className="space-y-4">
               <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
@@ -456,8 +530,7 @@ const AddCampusModal: React.FC<AddCampusModalProps> = ({
                       type="file"
                       accept="image/*"
                       onChange={handleGalleryImageChange}
-                      disabled={galleryItems.length >= 2}
-                      className="w-full border border-gray-300 rounded px-3 py-2 disabled:opacity-50"
+                      className="w-full border border-gray-300 rounded px-3 py-2"
                     />
                     {currentGalleryImage && (
                       <p className="text-sm text-green-600 mt-1">
@@ -469,29 +542,21 @@ const AddCampusModal: React.FC<AddCampusModalProps> = ({
                     placeholder="Image alt text"
                     value={currentGalleryAlt}
                     onChange={(e) => setCurrentGalleryAlt(e.target.value)}
-                    disabled={galleryItems.length >= 2}
                   />
                   <Textarea
                     placeholder="Image description"
                     value={currentGalleryDesc}
                     onChange={(e) => setCurrentGalleryDesc(e.target.value)}
                     rows={2}
-                    disabled={galleryItems.length >= 2}
                   />
                   <Button
                     onClick={addGalleryItem}
-                    disabled={
-                      loading ||
-                      !currentGalleryImage ||
-                      galleryItems.length >= 2
-                    }
+                    disabled={loading || !currentGalleryImage}
                     variant="outline"
                     className="w-full"
                   >
                     {loading ? <Loader2 className="animate-spin mr-2" /> : null}
-                    {galleryItems.length >= 2
-                      ? "Max photos reached"
-                      : "Add Gallery Item"}
+                    Add Photo
                   </Button>
                 </div>
               </div>
@@ -522,7 +587,7 @@ const AddCampusModal: React.FC<AddCampusModalProps> = ({
           {/* Video Items */}
           <div>
             <label className="block text-xs sm:text-sm font-medium mb-2">
-              Videos (Max 1 video) - {videoItems.length}/1
+              Videos - {videoItems.length} added
             </label>
             <div className="space-y-4">
               <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
@@ -533,8 +598,7 @@ const AddCampusModal: React.FC<AddCampusModalProps> = ({
                       type="file"
                       accept="video/*"
                       onChange={handleVideoChange}
-                      disabled={videoItems.length >= 1}
-                      className="w-full border border-gray-300 rounded px-3 py-2 disabled:opacity-50"
+                      className="w-full border border-gray-300 rounded px-3 py-2"
                     />
                     {currentVideoFile && (
                       <p className="text-sm text-green-600 mt-1">
@@ -546,25 +610,21 @@ const AddCampusModal: React.FC<AddCampusModalProps> = ({
                     placeholder="Video title"
                     value={currentVideoTitle}
                     onChange={(e) => setCurrentVideoTitle(e.target.value)}
-                    disabled={videoItems.length >= 1}
                   />
                   <Textarea
                     placeholder="Video description"
                     value={currentVideoDesc}
                     onChange={(e) => setCurrentVideoDesc(e.target.value)}
                     rows={2}
-                    disabled={videoItems.length >= 1}
                   />
                   <Button
                     onClick={addVideoItem}
-                    disabled={
-                      loading || !currentVideoFile || videoItems.length >= 1
-                    }
+                    disabled={loading || !currentVideoFile}
                     variant="outline"
                     className="w-full"
                   >
                     {loading ? <Loader2 className="animate-spin mr-2" /> : null}
-                    {videoItems.length >= 1 ? "Max video reached" : "Add Video"}
+                    Add Video
                   </Button>
                 </div>
               </div>
@@ -577,7 +637,7 @@ const AddCampusModal: React.FC<AddCampusModalProps> = ({
                     className="flex items-center justify-between bg-blue-50 p-3 rounded border border-blue-200"
                   >
                     <div className="flex-1">
-                      <p className="font-medium text-sm">Video</p>
+                      <p className="font-medium text-sm">Video {index + 1}</p>
                       <p className="text-xs text-gray-600">{item.title}</p>
                     </div>
                     <button
