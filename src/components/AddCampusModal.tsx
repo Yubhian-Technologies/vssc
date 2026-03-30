@@ -211,7 +211,17 @@ const AddCampusModal: React.FC<AddCampusModalProps> = ({
   const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Check file size (100MB limit)
+      if (file.size > 100 * 1024 * 1024) {
+        toast.error(
+          `Video file is too large (${(file.size / (1024 * 1024)).toFixed(2)}MB). Maximum size is 100MB.`,
+        );
+        return;
+      }
       setCurrentVideoFile(file);
+      toast.success(
+        `File selected: ${(file.size / (1024 * 1024)).toFixed(2)}MB`,
+      );
     }
   };
 
@@ -251,7 +261,10 @@ const AddCampusModal: React.FC<AddCampusModalProps> = ({
     }
 
     try {
-      toast.loading("Uploading video...");
+      const fileSizeMB = (currentVideoFile.size / (1024 * 1024)).toFixed(2);
+      toast.loading(
+        `Uploading video (${fileSizeMB}MB)... This may take a few minutes.`,
+      );
       const videoUrl = await uploadVideoToCloudinary(currentVideoFile);
       const newItem: VideoItem = {
         id: `video-${Date.now()}`,
@@ -265,11 +278,13 @@ const AddCampusModal: React.FC<AddCampusModalProps> = ({
       setCurrentVideoTitle("");
       setCurrentVideoDesc("");
       toast.dismiss();
-      toast.success("Video added");
+      toast.success("Video uploaded successfully!");
     } catch (error) {
       console.error("Error uploading video:", error);
       toast.dismiss();
-      toast.error("Failed to upload video");
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to upload video";
+      toast.error(errorMessage);
     }
   };
 
