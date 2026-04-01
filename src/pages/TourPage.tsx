@@ -11,6 +11,7 @@ import {
 import { db } from "@/firebase";
 import { useAuth } from "@/AuthContext";
 import AddCampusModal from "@/components/AddCampusModal";
+import EditCampusModal from "@/components/EditCampusModal";
 import UploadMediaModal from "@/components/UploadMediaModal";
 import { Button } from "@/components/ui/button";
 import { Plus, Loader2, Trash2, Edit, Upload } from "lucide-react";
@@ -51,7 +52,7 @@ const TourPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [editingCampus, setEditingCampus] = useState<Campus | null>(null);
-  const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
+  const [isEditCampusModalOpen, setIsEditCampusModalOpen] = useState<boolean>(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState<boolean>(false);
   const [selectedCampusForUpload, setSelectedCampusForUpload] =
     useState<Campus | null>(null);
@@ -91,7 +92,6 @@ const TourPage: React.FC = () => {
       });
       setCampuses(campusesList);
       setEditingCampus(null);
-      setIsEditModalOpen(false);
     } catch (error) {
       console.error("Error refreshing campuses:", error);
     }
@@ -117,7 +117,7 @@ const TourPage: React.FC = () => {
 
   const handleEditCampus = (campus: Campus) => {
     setEditingCampus(campus);
-    setIsEditModalOpen(true);
+    setIsEditCampusModalOpen(true);
   };
 
   const handleOpenUploadModal = (campus: Campus) => {
@@ -147,13 +147,20 @@ const TourPage: React.FC = () => {
   return (
     <div className="bg-gray-50">
       <AddCampusModal
-        isOpen={isModalOpen || isEditModalOpen}
+        isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);
-          setIsEditModalOpen(false);
-          setEditingCampus(null);
         }}
         onCampusAdded={handleCampusAdded}
+      />
+
+      <EditCampusModal
+        isOpen={isEditCampusModalOpen}
+        onClose={() => {
+          setIsEditCampusModalOpen(false);
+          setEditingCampus(null);
+        }}
+        onCampusUpdated={handleCampusAdded}
         editingCampus={editingCampus}
       />
 
@@ -270,6 +277,17 @@ const TourPage: React.FC = () => {
                     >
                       Explore
                     </button>
+
+                    {/* Edit Button - Only for admin+ */}
+                    {isAdminPlus && (
+                      <button
+                        onClick={() => handleEditCampus(campus)}
+                        className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold transition text-sm sm:text-base"
+                      >
+                        <Edit size={18} />
+                        Edit
+                      </button>
+                    )}
 
                     {/* Upload Media Button - Only for admin+ */}
                     {isAdminPlus && (

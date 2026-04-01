@@ -336,7 +336,8 @@ const AddCampusModal: React.FC<AddCampusModalProps> = ({
       return;
     }
 
-    if (galleryItems.length === 0) {
+    // Only require gallery items when creating a new campus, not when editing
+    if (!editingCampus && galleryItems.length === 0) {
       toast.error("Please add at least one gallery item");
       return;
     }

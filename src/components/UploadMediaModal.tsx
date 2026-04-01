@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -65,6 +65,39 @@ const UploadMediaModal: React.FC<UploadMediaModalProps> = ({
   const [currentVideoDesc, setCurrentVideoDesc] = useState<string>("");
   const [uploadedVideos, setUploadedVideos] = useState<VideoItem[]>([]);
 
+  // Existing campus data
+  const [existingPhotosCount, setExistingPhotosCount] = useState<number>(0);
+
+  // Fetch existing campus data when modal opens
+  useEffect(() => {
+    if (isOpen && campusId) {
+      const fetchCampusData = async () => {
+        try {
+          const campusRef = doc(db, "campuses", campusId);
+          const campusSnap = await getDoc(campusRef);
+          if (campusSnap.exists()) {
+            const gallery = campusSnap.data().gallery || [];
+            setExistingPhotosCount(gallery.length);
+          }
+        } catch (error) {
+          console.error("Error fetching campus data:", error);
+        }
+      };
+      fetchCampusData();
+    } else if (!isOpen) {
+      // Reset states when modal closes
+      setUploadedPhotos([]);
+      setUploadedVideos([]);
+      setCurrentPhotoFile(null);
+      setCurrentPhotoAlt("");
+      setCurrentPhotoDesc("");
+      setCurrentVideoFile(null);
+      setCurrentVideoTitle("");
+      setCurrentVideoDesc("");
+      setExistingPhotosCount(0);
+    }
+  }, [isOpen, campusId]);
+
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -80,8 +113,17 @@ const UploadMediaModal: React.FC<UploadMediaModalProps> = ({
   };
 
   const addPhoto = async () => {
-    if (!currentPhotoFile || !currentPhotoAlt || !currentPhotoDesc) {
-      toast.error("Please fill all photo fields");
+    if (!currentPhotoFile) {
+      toast.error("Please select a photo file");
+      return;
+    }
+
+    // Check if adding this photo would exceed the limit (considering existing photos)
+    const totalPhotosAfterAdd = existingPhotosCount + uploadedPhotos.length + 1;
+    if (totalPhotosAfterAdd > 10) {
+      toast.error(
+        `Maximum 10 photos limit. Current: ${existingPhotosCount} existing + ${uploadedPhotos.length} pending = ${existingPhotosCount + uploadedPhotos.length}. Cannot add more.`
+      );
       return;
     }
 
@@ -92,8 +134,8 @@ const UploadMediaModal: React.FC<UploadMediaModalProps> = ({
       const newPhoto: GalleryItem = {
         id: `gallery-${Date.now()}`,
         imageUrl,
-        alt: currentPhotoAlt,
-        description: currentPhotoDesc,
+        alt: currentPhotoAlt || `Photo ${uploadedPhotos.length + 1}`,
+        description: currentPhotoDesc || "No description provided",
         uploadedBy: userData?.college || "College",
       };
       setUploadedPhotos([...uploadedPhotos, newPhoto]);
@@ -112,8 +154,8 @@ const UploadMediaModal: React.FC<UploadMediaModalProps> = ({
   };
 
   const addVideo = async () => {
-    if (!currentVideoFile || !currentVideoTitle || !currentVideoDesc) {
-      toast.error("Please fill all video fields");
+    if (!currentVideoFile) {
+      toast.error("Please select a video file");
       return;
     }
 
@@ -124,8 +166,8 @@ const UploadMediaModal: React.FC<UploadMediaModalProps> = ({
       const newVideo: VideoItem = {
         id: `video-${Date.now()}`,
         videoUrl,
-        title: currentVideoTitle,
-        description: currentVideoDesc,
+        title: currentVideoTitle || `Video ${uploadedVideos.length + 1}`,
+        description: currentVideoDesc || "No description provided",
         uploadedBy: userData?.college || "College",
       };
       setUploadedVideos([...uploadedVideos, newVideo]);
@@ -176,6 +218,15 @@ const UploadMediaModal: React.FC<UploadMediaModalProps> = ({
       const campusData = campusSnap.data();
       const currentGallery = campusData.gallery || [];
       const currentVideos = campusData.videos || [];
+
+      // Verify photo limit before merging
+      if (currentGallery.length + uploadedPhotos.length > 10) {
+        toast.dismiss();
+        toast.error(
+          `Cannot exceed 10 photos total. Existing: ${currentGallery.length}, Adding: ${uploadedPhotos.length}`
+        );
+        return;
+      }
 
       // Merge new media with existing
       const updatedGallery = [...currentGallery, ...uploadedPhotos];
@@ -229,8 +280,13 @@ const UploadMediaModal: React.FC<UploadMediaModalProps> = ({
           {/* Photos Section */}
           <div>
             <label className="block text-xs sm:text-sm font-medium mb-2">
-              Upload Photos - {uploadedPhotos.length} ready
+              Upload Photos - {existingPhotosCount} existing + {uploadedPhotos.length} pending = {existingPhotosCount + uploadedPhotos.length}/10
             </label>
+            {existingPhotosCount + uploadedPhotos.length >= 10 && (
+              <div className="mb-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
+                ⚠️ Maximum 10 photos limit reached
+              </div>
+            )}
             <div className="space-y-4">
               <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
                 <div className="space-y-3">
@@ -242,7 +298,8 @@ const UploadMediaModal: React.FC<UploadMediaModalProps> = ({
                       type="file"
                       accept="image/*"
                       onChange={handlePhotoChange}
-                      className="w-full border border-gray-300 rounded px-3 py-2"
+                      disabled={existingPhotosCount + uploadedPhotos.length >= 10}
+                      className="w-full border border-gray-300 rounded px-3 py-2 disabled:bg-gray-100 disabled:cursor-not-allowed"
                     />
                     {currentPhotoFile && (
                       <p className="text-sm text-green-600 mt-1">
@@ -251,19 +308,19 @@ const UploadMediaModal: React.FC<UploadMediaModalProps> = ({
                     )}
                   </div>
                   <Input
-                    placeholder="Photo title/alt text"
+                    placeholder="Photo title/alt text (optional)"
                     value={currentPhotoAlt}
                     onChange={(e) => setCurrentPhotoAlt(e.target.value)}
                   />
                   <Textarea
-                    placeholder="Photo description"
+                    placeholder="Photo description (optional)"
                     value={currentPhotoDesc}
                     onChange={(e) => setCurrentPhotoDesc(e.target.value)}
                     rows={2}
                   />
                   <Button
                     onClick={addPhoto}
-                    disabled={loading || !currentPhotoFile}
+                    disabled={loading || !currentPhotoFile || existingPhotosCount + uploadedPhotos.length >= 10}
                     variant="outline"
                     className="w-full"
                   >
@@ -299,7 +356,7 @@ const UploadMediaModal: React.FC<UploadMediaModalProps> = ({
           {/* Videos Section */}
           <div>
             <label className="block text-xs sm:text-sm font-medium mb-2">
-              Upload Videos - {uploadedVideos.length} ready
+              Upload Videos - {uploadedVideos.length} ready (unlimited)
             </label>
             <div className="space-y-4">
               <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
@@ -319,12 +376,12 @@ const UploadMediaModal: React.FC<UploadMediaModalProps> = ({
                     )}
                   </div>
                   <Input
-                    placeholder="Video title"
+                    placeholder="Video title (optional)"
                     value={currentVideoTitle}
                     onChange={(e) => setCurrentVideoTitle(e.target.value)}
                   />
                   <Textarea
-                    placeholder="Video description"
+                    placeholder="Video description (optional)"
                     value={currentVideoDesc}
                     onChange={(e) => setCurrentVideoDesc(e.target.value)}
                     rows={2}
