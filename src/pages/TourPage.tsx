@@ -52,7 +52,8 @@ const TourPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [editingCampus, setEditingCampus] = useState<Campus | null>(null);
-  const [isEditCampusModalOpen, setIsEditCampusModalOpen] = useState<boolean>(false);
+  const [isEditCampusModalOpen, setIsEditCampusModalOpen] =
+    useState<boolean>(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState<boolean>(false);
   const [selectedCampusForUpload, setSelectedCampusForUpload] =
     useState<Campus | null>(null);

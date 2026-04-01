@@ -122,7 +122,7 @@ const UploadMediaModal: React.FC<UploadMediaModalProps> = ({
     const totalPhotosAfterAdd = existingPhotosCount + uploadedPhotos.length + 1;
     if (totalPhotosAfterAdd > 10) {
       toast.error(
-        `Maximum 10 photos limit. Current: ${existingPhotosCount} existing + ${uploadedPhotos.length} pending = ${existingPhotosCount + uploadedPhotos.length}. Cannot add more.`
+        `Maximum 10 photos limit. Current: ${existingPhotosCount} existing + ${uploadedPhotos.length} pending = ${existingPhotosCount + uploadedPhotos.length}. Cannot add more.`,
       );
       return;
     }
@@ -223,7 +223,7 @@ const UploadMediaModal: React.FC<UploadMediaModalProps> = ({
       if (currentGallery.length + uploadedPhotos.length > 10) {
         toast.dismiss();
         toast.error(
-          `Cannot exceed 10 photos total. Existing: ${currentGallery.length}, Adding: ${uploadedPhotos.length}`
+          `Cannot exceed 10 photos total. Existing: ${currentGallery.length}, Adding: ${uploadedPhotos.length}`,
         );
         return;
       }
@@ -280,7 +280,9 @@ const UploadMediaModal: React.FC<UploadMediaModalProps> = ({
           {/* Photos Section */}
           <div>
             <label className="block text-xs sm:text-sm font-medium mb-2">
-              Upload Photos - {existingPhotosCount} existing + {uploadedPhotos.length} pending = {existingPhotosCount + uploadedPhotos.length}/10
+              Upload Photos - {existingPhotosCount} existing +{" "}
+              {uploadedPhotos.length} pending ={" "}
+              {existingPhotosCount + uploadedPhotos.length}/10
             </label>
             {existingPhotosCount + uploadedPhotos.length >= 10 && (
               <div className="mb-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
@@ -298,7 +300,9 @@ const UploadMediaModal: React.FC<UploadMediaModalProps> = ({
                       type="file"
                       accept="image/*"
                       onChange={handlePhotoChange}
-                      disabled={existingPhotosCount + uploadedPhotos.length >= 10}
+                      disabled={
+                        existingPhotosCount + uploadedPhotos.length >= 10
+                      }
                       className="w-full border border-gray-300 rounded px-3 py-2 disabled:bg-gray-100 disabled:cursor-not-allowed"
                     />
                     {currentPhotoFile && (
@@ -320,7 +324,11 @@ const UploadMediaModal: React.FC<UploadMediaModalProps> = ({
                   />
                   <Button
                     onClick={addPhoto}
-                    disabled={loading || !currentPhotoFile || existingPhotosCount + uploadedPhotos.length >= 10}
+                    disabled={
+                      loading ||
+                      !currentPhotoFile ||
+                      existingPhotosCount + uploadedPhotos.length >= 10
+                    }
                     variant="outline"
                     className="w-full"
                   >
