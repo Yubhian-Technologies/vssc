@@ -204,7 +204,7 @@ const AppContent = () => {
             </ProtectedRoute>
           }
         />
-        <Route
+        {/* <Route
           path="/addAdmin"
           element={
             <ProtectedRoute>
@@ -213,8 +213,8 @@ const AppContent = () => {
               </AdminPlusRoute>
             </ProtectedRoute>
           }
-        />
-        {/* <Route path="/addAdmin" element={<AddAdmin></AddAdmin>}></Route> */}
+        /> */}
+        <Route path="/addAdmin" element={<AddAdmin></AddAdmin>}></Route>
         <Route path="/admin+" element={<AdminPlusPage></AdminPlusPage>}></Route>
 
         {/* Catch-all */}

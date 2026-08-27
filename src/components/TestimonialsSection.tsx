@@ -2,8 +2,17 @@
 import { useEffect, useRef, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Star } from "lucide-react";
-import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
+import {
+  collection,
+  deleteDoc,
+  doc,
+  onSnapshot,
+  orderBy,
+  query,
+} from "firebase/firestore";
 import { db } from "../firebase";
+import { Trash2 } from "lucide-react";
+import { useAuth } from "../AuthContext";
 
 type Testimonial = {
   id: string;
@@ -16,6 +25,7 @@ type Testimonial = {
 };
 
 const TestimonialsSection = () => {
+  const { userData } = useAuth();
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const trackRef = useRef<HTMLDivElement | null>(null);
@@ -24,7 +34,7 @@ const TestimonialsSection = () => {
   useEffect(() => {
     const q = query(
       collection(db, "testimonials"),
-      orderBy("createdAt", "desc")
+      orderBy("createdAt", "desc"),
     );
 
     const unsubscribe = onSnapshot(
@@ -44,14 +54,13 @@ const TestimonialsSection = () => {
         }));
         setTestimonials(data);
       },
-      (err) => console.error("Testimonials listener error:", err)
+      (err) => console.error("Testimonials listener error:", err),
     );
 
     return () => unsubscribe();
   }, []);
 
-  // duplicate testimonials for seamless marquee
-  const duplicated = [...testimonials, ...testimonials,...testimonials];
+  const duplicated = testimonials;
 
   // calculate animation duration dynamically
   useEffect(() => {
@@ -73,6 +82,18 @@ const TestimonialsSection = () => {
   const resumeAnimation = () => {
     if (trackRef.current) {
       trackRef.current.style.animationPlayState = "running";
+    }
+  };
+
+  const handleDeleteTestimonial = async (testimonialId: string) => {
+    if (userData?.role !== "admin+") return;
+    if (!window.confirm("Are you sure you want to delete this testimonial?"))
+      return;
+
+    try {
+      await deleteDoc(doc(db, "testimonials", testimonialId));
+    } catch (error) {
+      console.error("Error deleting testimonial:", error);
     }
   };
 
@@ -113,16 +134,27 @@ const TestimonialsSection = () => {
               onTouchStart={pauseAnimation}
               onTouchEnd={resumeAnimation}
             >
-              <div
-                ref={trackRef}
-                className="marquee-track flex gap-6"
-              >
+              <div ref={trackRef} className="marquee-track flex gap-6">
                 {duplicated.map((t, idx) => (
                   <Card
                     key={`${t.id}-${idx}`}
                     className="min-w-[320px] max-w-[320px] flex-shrink-0 bg-[hsl(60,100%,90%)] shadow-lg transition-all"
                   >
-                    <CardContent className="p-6 space-y-4">
+                    <CardContent className="relative p-6 space-y-4">
+                      {userData?.role === "admin+" && (
+                        <button
+                          type="button"
+                          aria-label={`Delete testimonial from ${t.name}`}
+                          title={`Delete testimonial from ${t.name}`}
+                          className="absolute right-4 top-4 rounded-md p-2 text-red-600 transition-colors hover:bg-red-100"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            void handleDeleteTestimonial(t.id);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      )}
                       <div className="flex items-center gap-1">
                         {[...Array(5)].map((_, i) => (
                           <Star

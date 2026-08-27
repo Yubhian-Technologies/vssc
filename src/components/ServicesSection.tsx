@@ -1,6 +1,5 @@
 import { useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const services = [
   { title: "Academic Advice", icon: "" },

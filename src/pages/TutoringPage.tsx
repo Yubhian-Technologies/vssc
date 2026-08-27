@@ -638,6 +638,21 @@ export default function TutoringPage() {
     }
   };
 
+  const handleDeleteSession = async (session: TutoringSession) => {
+    if (userData?.role !== "admin+") return;
+    if (!window.confirm("Are you sure you want to delete this session?"))
+      return;
+
+    try {
+      await deleteDoc(doc(db, "tutoring", session.id));
+      setOpenMenuId(null);
+      toastSuccess("Session deleted successfully.");
+    } catch (err) {
+      console.error("Error deleting session:", err);
+      toastError("Failed to delete session. Try again.");
+    }
+  };
+
   const handleCompleteSession = (session: TutoringSession) => {
     console.log("Complete session:", session.id);
   };
@@ -873,6 +888,14 @@ export default function TutoringPage() {
                           >
                             View Participants
                           </p>
+                          {userData?.role === "admin+" && (
+                            <p
+                              onClick={() => void handleDeleteSession(session)}
+                              className="px-4 py-2 text-sm hover:bg-gray-100 cursor-pointer text-red-600"
+                            >
+                              Delete
+                            </p>
+                          )}
                           {userData?.role === "admin" && !session.validated && (
                             <>
                               <p

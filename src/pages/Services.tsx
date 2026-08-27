@@ -92,42 +92,46 @@ const Services = () => {
       const updatedServices = await Promise.all(
         services.map(async (service) => {
           try {
-            const snapshot = await getDocs(collection(db, service.collectionName));
+            const snapshot = await getDocs(
+              collection(db, service.collectionName),
+            );
             let count = 0;
 
             for (const doc of snapshot.docs) {
               const data = doc.data();
 
-              
               if (data.validated === true) continue;
 
-            
               if (isAdmin) {
                 if (data.createdBy === currentUser.uid) count++;
                 continue;
               }
 
-              
-              if (!data.colleges || !Array.isArray(data.colleges) || !data.colleges.includes(userCollege)) {
+              if (
+                !data.colleges ||
+                !Array.isArray(data.colleges) ||
+                !data.colleges.includes(userCollege)
+              ) {
                 continue;
               }
 
-          
               let isExpired = false;
               if (data.expiryDate && data.expiryTime) {
                 try {
                   const [y, m, d] = data.expiryDate.split("-").map(Number);
                   const [h, min] = data.expiryTime.split(":").map(Number);
 
-                  if ([y, m, d, h, min].every(n => Number.isInteger(n) && n >= 0)) {
+                  if (
+                    [y, m, d, h, min].every(
+                      (n) => Number.isInteger(n) && n >= 0,
+                    )
+                  ) {
                     const expiry = new Date(y, m - 1, d, h, min);
                     if (!isNaN(expiry.getTime()) && new Date() > expiry) {
                       isExpired = true;
                     }
                   }
-                } catch (e) {
-                  
-                }
+                } catch (e) {}
               }
 
               if (!isExpired) count++;
@@ -138,7 +142,7 @@ const Services = () => {
             console.error(`Error fetching ${service.title}:`, err);
             return service;
           }
-        })
+        }),
       );
 
       setServices(updatedServices);
@@ -148,7 +152,6 @@ const Services = () => {
     }
   };
 
-  
   useEffect(() => {
     fetchCounts();
   }, []);
@@ -156,7 +159,7 @@ const Services = () => {
   // Search filter
   useEffect(() => {
     const filtered = services.filter((service) =>
-      service.title.toLowerCase().includes(search.toLowerCase())
+      service.title.toLowerCase().includes(search.toLowerCase()),
     );
     setFilteredServices(filtered);
   }, [search, services]);
